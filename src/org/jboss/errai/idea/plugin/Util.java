@@ -166,11 +166,11 @@ public class Util {
   }
 
 
-  public static Map<String, DataFieldReference> findAllDataFieldTags(TemplateMetaData templateMetaData, Project project) {
-    return findAllDataFieldTags(templateMetaData.getTemplateFile(), templateMetaData.getRootTag(), project);
+  public static Map<String, DataFieldReference> findAllDataFieldTags(TemplateMetaData templateMetaData, Project project, boolean includeRoot) {
+    return findAllDataFieldTags(templateMetaData.getTemplateFile(), templateMetaData.getRootTag(), project, includeRoot);
   }
 
-  private static Map<String, DataFieldReference> findAllDataFieldTags(VirtualFile vf, XmlTag rootTag, Project project) {
+  private static Map<String, DataFieldReference> findAllDataFieldTags(VirtualFile vf, XmlTag rootTag, Project project, boolean includeRoot) {
     if (vf == null) {
       return Collections.emptyMap();
     }
@@ -182,10 +182,10 @@ public class Util {
       rootTag = ((XmlFile) file).getRootTag();
     }
 
-    return findAllDataFieldTags(file, rootTag);
+    return findAllDataFieldTags(file, rootTag, includeRoot);
   }
 
-  private static Map<String, DataFieldReference> findAllDataFieldTags(PsiFile file, XmlTag rootTag) {
+  private static Map<String, DataFieldReference> findAllDataFieldTags(PsiFile file, XmlTag rootTag, boolean includeRoot) {
     final DataFieldCacheHolder copyableUserData = file.getCopyableUserData(dataFieldsCacheKey);
     if (copyableUserData != null
         && copyableUserData.getTime() == file.getModificationStamp()
@@ -193,14 +193,14 @@ public class Util {
       return copyableUserData.getValue();
     }
 
-    final Map<String, DataFieldReference> allDataFieldTags = findAllDataFieldTags(rootTag);
+    final Map<String, DataFieldReference> allDataFieldTags = findAllDataFieldTags(rootTag, includeRoot);
     file.putCopyableUserData(dataFieldsCacheKey, new DataFieldCacheHolder(file.getModificationStamp(), rootTag, allDataFieldTags));
     return allDataFieldTags;
   }
 
-  private static Map<String, DataFieldReference> findAllDataFieldTags(XmlTag rootTag) {
+  private static Map<String, DataFieldReference> findAllDataFieldTags(XmlTag rootTag, boolean includeRoot) {
     Map<String, DataFieldReference> references = new HashMap<String, DataFieldReference>();
-    if (rootTag.getAttribute("data-field") != null) {
+    if (includeRoot && rootTag.getAttribute("data-field") != null) {
       final String value = rootTag.getAttribute("data-field").getValue();
       references.put(value, new DataFieldReference(rootTag, value));
     }
@@ -265,11 +265,11 @@ public class Util {
     final VirtualFile virtualFile = containerDir.getVirtualFile();
     final VirtualFile fileByRelativePath = virtualFile.findFileByRelativePath(reference.getFileName());
 
-    final Map<String, DataFieldReference> allDataFieldTags = findAllDataFieldTags(fileByRelativePath, null, project);
+    final Map<String, DataFieldReference> allDataFieldTags = findAllDataFieldTags(fileByRelativePath, null, project, true);
 
     final XmlTag rootTag;
     if (fileByRelativePath == null) {
-       rootTag = null;
+      rootTag = null;
     }
     else if (reference.getRootNode().equals("")) {
       rootTag = ((XmlFile) PsiManager.getInstance(project).findFile(fileByRelativePath)).getRootTag();

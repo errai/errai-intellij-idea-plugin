@@ -96,20 +96,22 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     final Util.TemplateMetaData metaData = Util.getTemplateMetaData(annotation, holder.getProject());
 
     final VirtualFile templateVF = metaData.getTemplateFile();
+    final PsiNameValuePair attribute = metaData.getAttribute();
+
     if (templateVF == null) {
-      if (metaData.isDefaultReference()) {
+      if (annotation != null && metaData.isDefaultReference()) {
         holder.registerProblem(annotation, "Could not find companion Errai UI template: " + metaData.getTemplateReference().getFileName());
       }
-      else {
-        holder.registerProblem(metaData.getAttribute(), "Errai UI template file cannot be resolved.");
+      else if (attribute != null) {
+        holder.registerProblem(attribute, "Errai UI template file cannot be resolved.");
       }
     }
-    else if (!metaData.getTemplateReference().getRootNode().equals("")) {
+    else if (attribute != null && !metaData.getTemplateReference().getRootNode().equals("")) {
       final Map<String, Util.DataFieldReference> allDataFieldTags
-          = Util.findAllDataFieldTags(metaData, holder.getProject());
+          = Util.findAllDataFieldTags(metaData, holder.getProject(), true);
 
       if (!allDataFieldTags.containsKey(metaData.getTemplateReference().getRootNode())) {
-        holder.registerProblem(metaData.getAttribute(), "The data-field element specified for the root " +
+        holder.registerProblem(attribute, "The data-field element specified for the root " +
             "note does not exist: " + metaData.getTemplateReference().getRootNode());
       }
     }
@@ -126,6 +128,10 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     }
 
     if (!isComposite) {
+      if (templateClass == null) {
+        return;
+      }
+
       holder.registerProblem(templateClass, "Errai UI @Templated bean must extend " + ErraiUISupport.GWT_COMPOSITE_REF,
           new LocalQuickFix() {
             @NotNull
@@ -170,7 +176,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     final Util.TemplateMetaData templateMetaData = Util.getTemplateMetaData(annotation, holder.getProject());
     final Project project = holder.getProject();
     final Map<String, Util.DataFieldReference> allDataFieldTags
-        = Util.findAllDataFieldTags(templateMetaData, project);
+        = Util.findAllDataFieldTags(templateMetaData, project, false);
 
     final PsiAnnotationParameterList parameterList = annotation.getParameterList();
     final PsiNameValuePair[] attributes = parameterList.getAttributes();
@@ -189,6 +195,9 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
       errorElement = attributes[0];
     }
 
+    if (errorElement == null) {
+      return;
+    }
 
     if (!allDataFieldTags.containsKey(dataFieldName)) {
       holder.registerProblem(errorElement, "No corresponding data-field element in template: " + dataFieldName);

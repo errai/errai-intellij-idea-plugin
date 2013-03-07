@@ -106,7 +106,7 @@ public class ErraiUISupport implements ProjectComponent {
       if (templateFile != null) {
         final ArrayList<Object> list = new ArrayList<Object>();
         final String rootNode = templateFile.getTemplateReference().getRootNode();
-        for (final String value : Util.findAllDataFieldTags(templateFile, project).keySet()) {
+        for (final String value : Util.findAllDataFieldTags(templateFile, project, false).keySet()) {
           if (rootNode.equals(value)) continue;
 
           list.add(LookupElementBuilder.create(value));
@@ -163,7 +163,7 @@ public class ErraiUISupport implements ProjectComponent {
 
       final Collection<Util.DataFieldReference> allDataFieldTags;
       if (file != null) {
-        allDataFieldTags = Util.findAllDataFieldTags(templateMetaData, project).values();
+        allDataFieldTags = Util.findAllDataFieldTags(templateMetaData, project, true).values();
       }
       else {
         allDataFieldTags = Collections.emptyList();

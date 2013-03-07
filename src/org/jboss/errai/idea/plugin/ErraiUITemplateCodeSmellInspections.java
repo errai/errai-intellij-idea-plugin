@@ -110,8 +110,11 @@ public class ErraiUITemplateCodeSmellInspections extends BaseJavaLocalInspection
           }
         }
       };
-      holder.registerProblem(ownerElement, "Injected @DataField element has a default value which will be overwritten at runtime.",
-          localQuickFix);
+
+      if (ownerElement != null) {
+        holder.registerProblem(ownerElement, "Injected @DataField element has a default value which will be overwritten at runtime.",
+            localQuickFix);
+      }
     }
   }
 }
