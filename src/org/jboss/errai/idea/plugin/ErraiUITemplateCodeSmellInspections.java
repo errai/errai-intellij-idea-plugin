@@ -78,9 +78,9 @@ public class ErraiUITemplateCodeSmellInspections extends BaseJavaLocalInspection
   public static void ensureDataFieldIsValid(final ProblemsHolder holder,
                                             final PsiAnnotation annotation) {
 
-    final PsiElement ownerElement = Util.getDataFieldOwnerElement(annotation);
+    final PsiElement ownerElement = Util.getImmediateOwnerElement(annotation);
 
-    final boolean fieldIsInject = Util.fieldIsAnnotatedWith(ownerElement, ErraiUISupport.JAVAX_INJECT);
+    final boolean fieldIsInject = Util.fieldOrMethodIsAnnotated(ownerElement, ErraiUISupport.JAVAX_INJECT);
     final boolean fieldInitialized = Util.fieldElementIsInitialized(ownerElement);
     if (!fieldIsInject && !fieldInitialized) {
       holder.registerProblem(ownerElement, "Un-injected @DataField element is not initialized and may fail at runtime.");
@@ -101,7 +101,7 @@ public class ErraiUITemplateCodeSmellInspections extends BaseJavaLocalInspection
 
         @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-          final PsiElement psiElement = Util.getDataFieldOwnerElement(annotation);
+          final PsiElement psiElement = Util.getImmediateOwnerElement(annotation);
           final PsiField psiField = (PsiField) psiElement;
           for (PsiAnnotation psiAnnotation : psiField.getModifierList().getAnnotations()) {
             if (psiAnnotation.getQualifiedName().equals(ErraiUISupport.JAVAX_INJECT)) {

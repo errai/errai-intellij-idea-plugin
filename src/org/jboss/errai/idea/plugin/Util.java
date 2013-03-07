@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -12,6 +13,9 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -20,10 +24,14 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -148,6 +156,48 @@ public class Util {
     }
   }
 
+  public static class AnnotationValueElement {
+    private final boolean isDefault;
+    private final String value;
+    private final PsiElement logicalElement;
+
+    public AnnotationValueElement(boolean aDefault, String value, PsiElement logicalElement) {
+      isDefault = aDefault;
+      this.value = value;
+      this.logicalElement = logicalElement;
+    }
+
+    public boolean isDefault() {
+      return isDefault;
+    }
+
+    public String getValue() {
+      return value;
+    }
+
+    public PsiElement getLogicalElement() {
+      return logicalElement;
+    }
+  }
+
+  public static class AnnotationSearchResult {
+    private final PsiAnnotation annotation;
+    private final PsiElement owningElement;
+
+    public AnnotationSearchResult(PsiAnnotation annotation, PsiElement owningElement) {
+      this.annotation = annotation;
+      this.owningElement = owningElement;
+    }
+
+    public PsiAnnotation getAnnotation() {
+      return annotation;
+    }
+
+    public PsiElement getOwningElement() {
+      return owningElement;
+    }
+  }
+
   public static TemplateReference parseReference(String referenceString) {
     int nodeSpecifier = referenceString.indexOf('#');
 
@@ -166,17 +216,40 @@ public class Util {
   }
 
 
-  public static Map<String, DataFieldReference> findAllDataFieldTags(TemplateMetaData templateMetaData, Project project, boolean includeRoot) {
+  /**
+   * Finds all "data-field" tags for the specified {@link TemplateMetaData}.
+   *
+   * @param templateMetaData
+   *     the {@link TemplateMetaData} to use to find the tag.
+   * @param project
+   *     the IntelliJ <tt>Project</tt> reference.
+   * @param includeRoot
+   *     boolean indicating whether or not to consider the root node in the search. If set to <tt>false</tt>,
+   *     only children of the node are considered. If Set to <tt>true</tt>, the root node itself is checked
+   *     to see if it is a data-field.
+   *
+   * @return
+   */
+  public static Map<String, DataFieldReference> findAllDataFieldTags(TemplateMetaData templateMetaData,
+                                                                     Project project,
+                                                                     boolean includeRoot) {
     return findAllDataFieldTags(templateMetaData.getTemplateFile(), templateMetaData.getRootTag(), project, includeRoot);
   }
 
-  private static Map<String, DataFieldReference> findAllDataFieldTags(VirtualFile vf, XmlTag rootTag, Project project, boolean includeRoot) {
+  private static Map<String, DataFieldReference> findAllDataFieldTags(VirtualFile vf,
+                                                                      XmlTag rootTag,
+                                                                      Project project,
+                                                                      boolean includeRoot) {
     if (vf == null) {
       return Collections.emptyMap();
     }
 
     final PsiManager instance = PsiManager.getInstance(project);
     final PsiFile file = instance.findFile(vf);
+
+    if (file == null) {
+      return Collections.emptyMap();
+    }
 
     if (rootTag == null) {
       rootTag = ((XmlFile) file).getRootTag();
@@ -272,7 +345,13 @@ public class Util {
       rootTag = null;
     }
     else if (reference.getRootNode().equals("")) {
-      rootTag = ((XmlFile) PsiManager.getInstance(project).findFile(fileByRelativePath)).getRootTag();
+      final PsiFile file = PsiManager.getInstance(project).findFile(fileByRelativePath);
+      if (file != null) {
+        rootTag = ((XmlFile) file).getRootTag();
+      }
+      else {
+        rootTag = null;
+      }
     }
     else {
       final DataFieldReference dataFieldReference = allDataFieldTags.get(reference.getRootNode());
@@ -292,7 +371,7 @@ public class Util {
         rootTag);
   }
 
-  public static PsiElement getDataFieldOwnerElement(PsiElement element) {
+  public static PsiElement getImmediateOwnerElement(PsiElement element) {
     PsiElement el = element;
     while ((el = el.getParent()) != null) {
       if (el instanceof PsiField) {
@@ -301,20 +380,183 @@ public class Util {
       else if (el instanceof PsiParameter) {
         return el;
       }
+      else if (el instanceof PsiMethod) {
+        return el;
+      }
+      else if (el instanceof PsiClass) {
+        return el;
+      }
     }
     return null;
   }
 
-  public static boolean fieldIsAnnotatedWith(PsiElement element, String annotationType) {
-    if (element instanceof PsiField) {
-      for (PsiAnnotation psiAnnotation : ((PsiField) element).getModifierList().getAnnotations()) {
-        if (psiAnnotation.getQualifiedName().equals(annotationType)) {
+  private static PsiElement findFieldOrMethod(final PsiElement element) {
+    PsiElement e = element;
+    do {
+      if (e instanceof PsiField) {
+        return e;
+      }
+      else if (e instanceof PsiMethod) {
+        return e;
+      }
+      else if (e instanceof PsiClass) {
+        return null;
+      }
+    }
+    while ((e = e.getParent()) != null);
+    return null;
+  }
+
+  public static PsiAnnotation getAnnotationFromElement(PsiElement element, String annotationType) {
+    if (element instanceof PsiModifierListOwner) {
+      final PsiModifierList modifierList = ((PsiModifierListOwner) element).getModifierList();
+      if (modifierList != null) {
+        for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+          if (annotationType.equals(annotation.getQualifiedName())) {
+            return annotation;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean elementIsAnnotated(PsiElement element, String annotationType) {
+    return getAnnotationFromElement(element, annotationType) != null;
+  }
+
+  public static boolean fieldOrMethodIsAnnotated(PsiElement element, String annotationType) {
+    final PsiElement e = findFieldOrMethod(element);
+
+    if (e instanceof PsiField) {
+      final PsiModifierList modifierList = ((PsiField) e).getModifierList();
+
+      if (modifierList != null) {
+        for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
+          final String qualifiedName = psiAnnotation.getQualifiedName();
+          if (qualifiedName != null && qualifiedName.equals(annotationType)) {
+            return true;
+          }
+        }
+      }
+    }
+    else if (e instanceof PsiMethod) {
+      for (PsiAnnotation psiAnnotation : ((PsiMethod) e).getModifierList().getAnnotations()) {
+        final String qualifiedName = psiAnnotation.getQualifiedName();
+        if (qualifiedName != null && qualifiedName.equals(annotationType)) {
           return true;
         }
       }
     }
+
     return false;
   }
+
+  public static Collection<String> extractDataFieldList(Collection<AnnotationSearchResult> dataFieldElements) {
+    final List<String> elements = new ArrayList<String>();
+    for (AnnotationSearchResult element : dataFieldElements) {
+      elements.add(getValueStringFromAnnotationWithDefault(element.getAnnotation()).getValue());
+    }
+    return elements;
+  }
+
+  public static AnnotationValueElement getValueStringFromAnnotationWithDefault(PsiAnnotation annotation) {
+    final PsiAnnotationParameterList parameterList = annotation.getParameterList();
+    final PsiNameValuePair[] attributes = parameterList.getAttributes();
+    final PsiElement logicalElement = Util.getImmediateOwnerElement(annotation);
+
+    if (logicalElement == null) {
+      return null;
+    }
+
+    final String value;
+    final PsiElement errorElement;
+
+    if (attributes.length == 0) {
+      value = Util.getNameOfElement(logicalElement);
+      errorElement = annotation;
+    }
+    else {
+      final String text = attributes[0].getText();
+      value = text.substring(1, text.length() - 1);
+      errorElement = attributes[0];
+    }
+
+    return new AnnotationValueElement(attributes.length == 0, value, errorElement);
+  }
+
+  public static Collection<AnnotationSearchResult> findAllAnnotatedElements(PsiElement element, String annotation) {
+    final PsiClass bean = PsiUtil.getTopLevelClass(element);
+
+    final List<AnnotationSearchResult> elementList = new ArrayList<AnnotationSearchResult>();
+    PsiAnnotation a;
+    for (PsiField e : bean.getAllFields()) {
+      a = getAnnotationFromElement(e, annotation);
+      if (a != null) {
+        elementList.add(new AnnotationSearchResult(a, e));
+      }
+    }
+
+    for (PsiMethod e : bean.getAllMethods()) {
+      a = getAnnotationFromElement(e, annotation);
+
+      if (a != null) {
+        elementList.add(new AnnotationSearchResult(a, e));
+      }
+
+      for (PsiParameter p : e.getParameterList().getParameters()) {
+        a = getAnnotationFromElement(p, annotation);
+
+        if (a != null) {
+          elementList.add(new AnnotationSearchResult(a, p));
+        }
+      }
+    }
+    for (PsiMethod e : bean.getConstructors()) {
+      a = getAnnotationFromElement(e, annotation);
+
+      if (a != null) {
+        elementList.add(new AnnotationSearchResult(a, e));
+      }
+
+      for (PsiParameter p : e.getParameterList().getParameters()) {
+        a = getAnnotationFromElement(p, annotation);
+
+        if (a != null) {
+          elementList.add(new AnnotationSearchResult(a, p));
+        }
+      }
+    }
+
+    return elementList;
+  }
+
+  public static Map<String, ConsolidateDataFieldElementResult> getConsolidatedDataFields(PsiElement element, Project project) {
+
+    final Util.TemplateMetaData metaData = Util.getTemplateMetaData(element, project);
+    final String beanClass = PsiUtil.getTopLevelClass(element).getQualifiedName();
+
+    final Map<String, ConsolidateDataFieldElementResult> results = new LinkedHashMap<String, ConsolidateDataFieldElementResult>();
+
+    final Collection<Util.AnnotationSearchResult> allInjectionPoints
+        = Util.findAllAnnotatedElements(element, ErraiUISupport.DATAFIELD_ANNOTATION_NAME);
+
+    for (Util.AnnotationSearchResult r : allInjectionPoints) {
+      final String value = Util.getValueStringFromAnnotationWithDefault(r.getAnnotation()).getValue();
+      results.put(value, new ConsolidateDataFieldElementResult(value, beanClass, r.getOwningElement(), true));
+    }
+
+    final Map<String, Util.DataFieldReference> allDataFieldTags = Util.findAllDataFieldTags(metaData, project, false);
+    for (Util.DataFieldReference ref : allDataFieldTags.values()) {
+      if (results.containsKey(ref.getDataFieldName())) continue;
+
+      results.put(ref.getDataFieldName(), new ConsolidateDataFieldElementResult(ref.getDataFieldName(),
+          metaData.getTemplateReference().getFileName(), ref.getTag(), false));
+    }
+
+    return results;
+  }
+
 
   public static boolean fieldElementIsInitialized(PsiElement element) {
     if (element instanceof PsiField) {
@@ -364,7 +606,6 @@ public class Util {
           return true;
         }
       }
-
     }
     while ((cls = cls.getSuperClass()) != null);
 
