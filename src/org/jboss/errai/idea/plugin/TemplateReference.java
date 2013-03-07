@@ -84,9 +84,7 @@ class TemplateReference extends PsiReferenceBase<PsiLiteralExpression> {
   }
 
   public Object[] getVariants() {
-
     Map<String, PsiElement> completions = getTemplateCompletions();
-    System.out.println("completions: " + completions);
 
     List<Object> list = new ArrayList<Object>();
 

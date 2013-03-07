@@ -273,7 +273,11 @@ public class Util {
 
   private static Map<String, DataFieldReference> findAllDataFieldTags(XmlTag rootTag, boolean includeRoot) {
     Map<String, DataFieldReference> references = new HashMap<String, DataFieldReference>();
-    if (includeRoot && rootTag.getAttribute("data-field") != null) {
+    if (rootTag == null) {
+      return references;
+    }
+
+    if (includeRoot &&  rootTag.getAttribute("data-field") != null) {
       final String value = rootTag.getAttribute("data-field").getValue();
       references.put(value, new DataFieldReference(rootTag, value));
     }
@@ -336,7 +340,10 @@ public class Util {
     final Util.TemplateReference reference = Util.parseReference(templateName);
 
     final VirtualFile virtualFile = containerDir.getVirtualFile();
-    final VirtualFile fileByRelativePath = virtualFile.findFileByRelativePath(reference.getFileName());
+    VirtualFile fileByRelativePath = virtualFile.findFileByRelativePath(reference.getFileName());
+    if (fileByRelativePath != null && fileByRelativePath.isDirectory()) {
+      fileByRelativePath = null;
+    }
 
     final Map<String, DataFieldReference> allDataFieldTags = findAllDataFieldTags(fileByRelativePath, null, project, true);
 
