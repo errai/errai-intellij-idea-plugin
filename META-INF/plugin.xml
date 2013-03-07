@@ -1,0 +1,38 @@
+<idea-plugin version="2">
+  <id>org.jboss.errai</id>
+  <name>Errai Framework</name>
+  <version>1.0</version>
+  <vendor email="cbrock@redhat.com" url="http://www.jboss.org/errai/">Red Hat, Inc.</vendor>
+
+  <description><![CDATA[
+      Errai Framework Support<br>
+      <small>Add inspections and intentions for the Errai Framework.</small>
+      ]]></description>
+
+  <change-notes>
+  </change-notes>
+
+  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Build+Number+Ranges for description -->
+  <idea-version since-build="107.105"/>
+
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
+
+  <project-components>
+    <!-- Add your project components here -->
+    <component>
+      <implementation-class>org.jboss.errai.idea.plugin.ErraiUISupport</implementation-class>
+    </component>
+  </project-components>
+
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <inspectionToolProvider implementation="org.jboss.errai.idea.plugin.ErraiUIInspectionToolProvider"/>
+
+    <!-- Add your extensions here -->
+  </extensions>
+</idea-plugin>
