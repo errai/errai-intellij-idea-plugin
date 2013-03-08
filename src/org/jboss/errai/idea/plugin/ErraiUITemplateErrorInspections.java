@@ -211,8 +211,20 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     final PsiElement owner = Util.getImmediateOwnerElement(annotation);
     final boolean hasSinkEvent = Util.fieldOrMethodIsAnnotated(owner, ErraiUISupport.SINKNATIVE_ANNOTATION_NAME);
 
+    if (!(owner instanceof PsiMethod)) return;
+
     final PsiMethod psiMethod = (PsiMethod) owner;
-    final PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[0];
+    final PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
+    if (psiParameters.length == 0) {
+      holder.registerProblem(psiMethod.getParameterList(), "Event handler method must accept one parameter");
+      return;
+    }
+    else if (psiParameters.length > 1) {
+      holder.registerProblem(psiMethod.getParameterList(), "Event handler method must only accept one parameter");
+      return;
+    }
+
+    final PsiParameter psiParameter = psiParameters[0];
     final String parameterTypeFQN = psiParameter.getType().getCanonicalText();
     final PsiClass psiClassParameterType = JavaPsiFacade.getInstance(project)
         .findClass(parameterTypeFQN, GlobalSearchScope.allScope(project));
@@ -328,7 +340,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
               final PsiClass psiClass = instance.findClass(ErraiUISupport.GWT_DOM_EVENT_TYPE,
                   GlobalSearchScope.allScope(project));
 
-              final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+              final PsiParameter[] parameters = psiParameters;
               final PsiElementFactory elementFactory = instance.getElementFactory();
               final PsiParameter parameter = parameters[0];
               parameter.replace(elementFactory.createParameter(parameter.getName(), elementFactory.createType(psiClass)));

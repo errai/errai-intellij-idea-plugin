@@ -9,10 +9,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
-* @author Mike Brock
-*/
+ * @author Mike Brock
+ */
 class TemplateDatafieldReference extends PsiReferenceBase<PsiLiteralExpression> {
   private final Project project;
 
@@ -21,28 +23,38 @@ class TemplateDatafieldReference extends PsiReferenceBase<PsiLiteralExpression> 
     this.project = project;
   }
 
+  private Map<String, PsiElement> getAvailableDataFields() {
+    Map<String, PsiElement> map = new HashMap<String, PsiElement>();
+    final Util.TemplateMetaData templateFile = Util.getTemplateMetaData(getElement(), project);
+    if (templateFile != null) {
+      final String rootNode = templateFile.getTemplateReference().getRootNode();
+      final Map<String, Util.DataFieldReference> dataFieldTags = Util.findAllDataFieldTags(templateFile, project, false);
+
+      for (Map.Entry<String, Util.DataFieldReference> entry : dataFieldTags.entrySet()) {
+        if (rootNode.equals(entry.getKey())) continue;
+
+        map.put(entry.getKey(), entry.getValue().getTag());
+      }
+    }
+    return map;
+  }
+
+
   @Nullable
   @Override
   public PsiElement resolve() {
-    return null;
+    return getAvailableDataFields().get(getValue());
   }
 
   @NotNull
   @Override
   public Object[] getVariants() {
-    final Util.TemplateMetaData templateFile = Util.getTemplateMetaData(getElement(), project);
-    if (templateFile != null) {
-      final ArrayList<Object> list = new ArrayList<Object>();
-      final String rootNode = templateFile.getTemplateReference().getRootNode();
-      for (final String value : Util.findAllDataFieldTags(templateFile, project, false).keySet()) {
-        if (rootNode.equals(value)) continue;
+    final Map<String, PsiElement> dataFields = getAvailableDataFields();
+    final ArrayList<Object> list = new ArrayList<Object>();
+    for (final String value : dataFields.keySet()) {
 
-        list.add(LookupElementBuilder.create(value));
-      }
-      return list.toArray();
+      list.add(LookupElementBuilder.create(value));
     }
-    else {
-      return new Object[0];
-    }
+    return list.toArray();
   }
 }
