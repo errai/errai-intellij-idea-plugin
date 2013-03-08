@@ -1,5 +1,6 @@
 package org.jboss.errai.idea.plugin;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -49,6 +50,8 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
   }
 
   private List<DataFieldRef> findLinkedTemplateAndDataFields() {
+    DaemonCodeAnalyzer.getInstance(project).restart();
+
     PsiElement el = getElement();
     while (!(el instanceof XmlFile) && el != null) {
       el = el.getParent();

@@ -32,7 +32,11 @@ public class ErraiFrameworkSupport implements ProjectComponent {
   public static final String GWT_DOM_EVENT_TYPE = "com.google.gwt.user.client.Event";
   public static final String GWT_EVENT_TYPE = "com.google.gwt.event.shared.GwtEvent";
 
+  private final Project project;
+
   public ErraiFrameworkSupport(final Project project, ReferenceProvidersRegistry registry) {
+    this.project = project;
+
     final PsiReferenceRegistrar javaRegistrar = registry.getRegistrar(Language.findInstance(JavaLanguage.class));
     javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(TEMPLATED_ANNOTATION_NAME),
         new PsiReferenceProvider() {
@@ -77,6 +81,7 @@ public class ErraiFrameworkSupport implements ProjectComponent {
   }
 
   public void initComponent() {
+
   }
 
   public void disposeComponent() {

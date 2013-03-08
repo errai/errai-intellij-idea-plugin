@@ -660,26 +660,24 @@ public class Util {
   }
 
   public static void declareOwner(XmlFile file, PsiClass psiClass) {
-    final XmlTag rootTag = file.getRootTag();
-    if (rootTag == null) return;
+//    final XmlTag rootTag = file.getRootTag();
+//    if (rootTag == null) return;
 
-    Set<PsiClass> userData = rootTag.getCopyableUserData(templateClassOwners);
+    Set<PsiClass> userData = file.getOriginalFile().getCopyableUserData(templateClassOwners);
     if (userData == null) {
-      rootTag.putCopyableUserData(templateClassOwners,
+      file.getOriginalFile().putCopyableUserData(templateClassOwners,
           userData = Collections.newSetFromMap(new ConcurrentHashMap<PsiClass, Boolean>()));
     }
     userData.add(psiClass);
-    System.out.println("record owner: " + psiClass.getQualifiedName());
   }
 
   public static Set<PsiClass> getOwners(XmlFile file, Project project) {
-    final XmlTag rootTag = file.getRootTag();
-    if (rootTag == null) {
-      System.out.println("no root tag");
-      return Collections.emptySet();
-    }
+//    final XmlTag rootTag = file.getRootTag();
+//    if (rootTag == null) {
+//      return Collections.emptySet();
+//    }
 
-    Set<PsiClass> userData = rootTag.getCopyableUserData(templateClassOwners);
+    Set<PsiClass> userData = file.getOriginalFile().getCopyableUserData(templateClassOwners);
     if (userData != null) {
       Iterator<PsiClass> userDataIterator = userData.iterator();
 
