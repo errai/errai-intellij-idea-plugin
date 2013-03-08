@@ -18,9 +18,11 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 
@@ -30,15 +32,18 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Mike Brock
  */
 public class Util {
+  private static final Key<Set<PsiClass>> templateClassOwners = Key.create("templateClassOwners");
   private static final Key<DataFieldCacheHolder> dataFieldsCacheKey = Key.create("dataFieldsCache");
 
   public static class TemplateMetaData {
@@ -233,7 +238,28 @@ public class Util {
   public static Map<String, DataFieldReference> findAllDataFieldTags(TemplateMetaData templateMetaData,
                                                                      Project project,
                                                                      boolean includeRoot) {
-    return findAllDataFieldTags(templateMetaData.getTemplateFile(), templateMetaData.getRootTag(), project, includeRoot);
+    VirtualFile vf = templateMetaData.getTemplateFile();
+    XmlTag rootTag = templateMetaData.getRootTag();
+    if (vf == null) {
+      return Collections.emptyMap();
+    }
+
+    final PsiManager instance = PsiManager.getInstance(project);
+    final PsiFile file = instance.findFile(vf);
+
+    if (file == null) {
+      return Collections.emptyMap();
+    }
+
+    final XmlFile xmlFile = (XmlFile) file;
+    if (rootTag == null) {
+
+      rootTag = xmlFile.getRootTag();
+    }
+
+    declareOwner(xmlFile, templateMetaData.getTemplateClass());
+
+    return findAllDataFieldTags(file, rootTag, includeRoot);
   }
 
   private static Map<String, DataFieldReference> findAllDataFieldTags(VirtualFile vf,
@@ -258,7 +284,7 @@ public class Util {
     return findAllDataFieldTags(file, rootTag, includeRoot);
   }
 
-  private static Map<String, DataFieldReference> findAllDataFieldTags(PsiFile file, XmlTag rootTag, boolean includeRoot) {
+  public static Map<String, DataFieldReference> findAllDataFieldTags(PsiFile file, XmlTag rootTag, boolean includeRoot) {
     final DataFieldCacheHolder copyableUserData = file.getCopyableUserData(dataFieldsCacheKey);
     if (copyableUserData != null
         && copyableUserData.getTime() == file.getModificationStamp()
@@ -277,7 +303,7 @@ public class Util {
       return references;
     }
 
-    if (includeRoot &&  rootTag.getAttribute("data-field") != null) {
+    if (includeRoot && rootTag.getAttribute("data-field") != null) {
       final String value = rootTag.getAttribute("data-field").getValue();
       references.put(value, new DataFieldReference(rootTag, value));
     }
@@ -301,7 +327,7 @@ public class Util {
 
     final PsiAnnotation[] annotations = topLevelClass.getModifierList().getAnnotations();
     for (PsiAnnotation psiAnnotation : annotations) {
-      if (psiAnnotation.getQualifiedName().equals(ErraiUISupport.TEMPLATED_ANNOTATION_NAME)) {
+      if (psiAnnotation.getQualifiedName().equals(ErraiFrameworkSupport.TEMPLATED_ANNOTATION_NAME)) {
         return psiAnnotation;
       }
     }
@@ -315,7 +341,7 @@ public class Util {
   public static TemplateMetaData getTemplateMetaData(PsiAnnotation annotation, Project project) {
     if (annotation == null) return null;
 
-    if (!annotation.getQualifiedName().equals(ErraiUISupport.TEMPLATED_ANNOTATION_NAME)) {
+    if (!annotation.getQualifiedName().equals(ErraiFrameworkSupport.TEMPLATED_ANNOTATION_NAME)) {
       annotation = findTemplatedAnnotation(annotation);
       if (annotation == null) return null;
     }
@@ -546,7 +572,7 @@ public class Util {
     final Map<String, ConsolidateDataFieldElementResult> results = new LinkedHashMap<String, ConsolidateDataFieldElementResult>();
 
     final Collection<Util.AnnotationSearchResult> allInjectionPoints
-        = Util.findAllAnnotatedElements(element, ErraiUISupport.DATAFIELD_ANNOTATION_NAME);
+        = Util.findAllAnnotatedElements(element, ErraiFrameworkSupport.DATAFIELD_ANNOTATION_NAME);
 
     for (Util.AnnotationSearchResult r : allInjectionPoints) {
       final String value = Util.getValueStringFromAnnotationWithDefault(r.getAnnotation()).getValue();
@@ -555,10 +581,14 @@ public class Util {
 
     final Map<String, Util.DataFieldReference> allDataFieldTags = Util.findAllDataFieldTags(metaData, project, false);
     for (Util.DataFieldReference ref : allDataFieldTags.values()) {
-      if (results.containsKey(ref.getDataFieldName())) continue;
+      final XmlAttributeValue valueElement = ref.getTag().getAttribute("data-field").getValueElement();
+      if (results.containsKey(ref.getDataFieldName())) {
+        results.get(ref.getDataFieldName()).setLinkingElement(valueElement);
+        continue;
+      }
 
       results.put(ref.getDataFieldName(), new ConsolidateDataFieldElementResult(ref.getDataFieldName(),
-          metaData.getTemplateReference().getFileName(), ref.getTag(), false));
+          metaData.getTemplateReference().getFileName(), valueElement, false));
     }
 
     return results;
@@ -617,5 +647,75 @@ public class Util {
     while ((cls = cls.getSuperClass()) != null);
 
     return false;
+  }
+
+  public static void declareOwner(XmlFile file, PsiClass psiClass) {
+    final XmlTag rootTag = file.getRootTag();
+    if (rootTag == null) return;
+
+    Set<PsiClass> userData = rootTag.getCopyableUserData(templateClassOwners);
+    if (userData == null) {
+      rootTag.putCopyableUserData(templateClassOwners,
+          userData = Collections.newSetFromMap(new ConcurrentHashMap<PsiClass, Boolean>()));
+
+    }
+    userData.add(psiClass);
+  }
+
+  public static Set<PsiClass> getOwners(XmlFile file, Project project) {
+    final XmlTag rootTag = file.getRootTag();
+    if (rootTag == null) {
+      return Collections.emptySet();
+    }
+
+    Set<PsiClass> userData = rootTag.getCopyableUserData(templateClassOwners);
+    if (userData != null) {
+      Iterator<PsiClass> userDataIterator = userData.iterator();
+
+      /**
+       * Here we look for reasons to purge entries from the ownership claim set (ie. template classes no
+       * longer point to this file)
+       */
+      while (userDataIterator.hasNext()) {
+        final TemplateMetaData templateMetaData = getTemplateMetaData(userDataIterator.next(), project);
+        final PsiManager manager = PsiManager.getInstance(project);
+        final VirtualFile templateFile = templateMetaData.getTemplateFile();
+
+        if (templateFile == null) {
+          userDataIterator.remove();
+          continue;
+        }
+
+        final PsiFile psiFile = manager.findFile(templateFile);
+
+        if (psiFile == null) {
+          userDataIterator.remove();
+          continue;
+        }
+
+        if (!(psiFile instanceof XmlFile)) {
+          userDataIterator.remove();
+          continue;
+        }
+
+        final XmlTag rootTag1 = ((HtmlFileImpl) psiFile).getRootTag();
+        final XmlTag rootTag2 = file.getRootTag();
+
+        if (rootTag1 == null || rootTag2 == null) {
+          userDataIterator.remove();
+          continue;
+        }
+
+        if (rootTag1.getCopyableUserData(templateClassOwners)
+            != rootTag2.getCopyableUserData(templateClassOwners)) {
+          userDataIterator.remove();
+        }
+      }
+
+      return userData;
+    }
+    else {
+      return Collections.emptySet();
+    }
   }
 }

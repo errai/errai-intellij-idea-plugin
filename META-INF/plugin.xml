@@ -22,7 +22,7 @@
   <project-components>
     <!-- Add your project components here -->
     <component>
-      <implementation-class>org.jboss.errai.idea.plugin.ErraiUISupport</implementation-class>
+      <implementation-class>org.jboss.errai.idea.plugin.ErraiFrameworkSupport</implementation-class>
     </component>
   </project-components>
 

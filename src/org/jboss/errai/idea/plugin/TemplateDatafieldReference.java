@@ -33,7 +33,7 @@ class TemplateDatafieldReference extends PsiReferenceBase<PsiLiteralExpression> 
       for (Map.Entry<String, Util.DataFieldReference> entry : dataFieldTags.entrySet()) {
         if (rootNode.equals(entry.getKey())) continue;
 
-        map.put(entry.getKey(), entry.getValue().getTag());
+        map.put(entry.getKey(), entry.getValue().getTag().getAttribute("data-field").getValueElement());
       }
     }
     return map;

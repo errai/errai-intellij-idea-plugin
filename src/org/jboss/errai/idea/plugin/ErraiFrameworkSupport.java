@@ -1,6 +1,7 @@
 package org.jboss.errai.idea.plugin;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
@@ -10,13 +11,14 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike Brock
  */
-public class ErraiUISupport implements ProjectComponent {
+public class ErraiFrameworkSupport implements ProjectComponent {
   public static final String JAVAX_INJECT = "javax.inject.Inject";
 
   public static final String TEMPLATED_ANNOTATION_NAME = "org.jboss.errai.ui.shared.api.annotations.Templated";
@@ -30,9 +32,9 @@ public class ErraiUISupport implements ProjectComponent {
   public static final String GWT_DOM_EVENT_TYPE = "com.google.gwt.user.client.Event";
   public static final String GWT_EVENT_TYPE = "com.google.gwt.event.shared.GwtEvent";
 
-  public ErraiUISupport(final Project project, ReferenceProvidersRegistry registry) {
-    final PsiReferenceRegistrar registrar = registry.getRegistrar(Language.findInstance(JavaLanguage.class));
-    registrar.registerReferenceProvider(new AnnotationMatchingPattern(TEMPLATED_ANNOTATION_NAME),
+  public ErraiFrameworkSupport(final Project project, ReferenceProvidersRegistry registry) {
+    final PsiReferenceRegistrar javaRegistrar = registry.getRegistrar(Language.findInstance(JavaLanguage.class));
+    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(TEMPLATED_ANNOTATION_NAME),
         new PsiReferenceProvider() {
           @NotNull
           @Override
@@ -42,7 +44,7 @@ public class ErraiUISupport implements ProjectComponent {
         }
     );
 
-    registrar.registerReferenceProvider(new AnnotationMatchingPattern(DATAFIELD_ANNOTATION_NAME),
+    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(DATAFIELD_ANNOTATION_NAME),
         new PsiReferenceProvider() {
           @NotNull
           @Override
@@ -52,12 +54,24 @@ public class ErraiUISupport implements ProjectComponent {
           }
         });
 
-    registrar.registerReferenceProvider(new AnnotationMatchingPattern(EVENTHANDLER_ANNOTATION_NAME),
+    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(EVENTHANDLER_ANNOTATION_NAME),
         new PsiReferenceProvider() {
           @NotNull
           @Override
           public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
             return new BeanDatafieldReference[]{new BeanDatafieldReference(project, (PsiLiteralExpression) element, false)};
+          }
+        });
+
+
+    final PsiReferenceRegistrar xmlRegistrar = registry.getRegistrar(Language.findInstance(HTMLLanguage.class));
+
+    xmlRegistrar.registerReferenceProvider(new XmlAttributeMatchingPattern("data-field"),
+        new PsiReferenceProvider() {
+          @NotNull
+          @Override
+          public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+            return new XmlDatafieldReference[]{new XmlDatafieldReference(project, (XmlAttribute) element, false)};
           }
         });
   }

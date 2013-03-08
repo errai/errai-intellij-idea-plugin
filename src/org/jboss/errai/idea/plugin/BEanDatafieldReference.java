@@ -21,32 +21,6 @@ class BeanDatafieldReference extends PsiReferenceBase<PsiLiteralExpression> {
     super(element, soft);
     this.project = project;
   }
-//
-//  private Map<String, ConsolidateDataFieldElementResult> getDataFields() {
-//
-//    final Util.TemplateMetaData metaData = Util.getTemplateMetaData(getElement(), project);
-//    final String beanClass = PsiUtil.getTopLevelClass(getElement()).getQualifiedName();
-//
-//    final Map<String, ConsolidateDataFieldElementResult> results = new LinkedHashMap<String, ConsolidateDataFieldElementResult>();
-//
-//    final Collection<Util.AnnotationSearchResult> allInjectionPoints
-//        = Util.findAllAnnotatedElements(getElement(), ErraiUISupport.DATAFIELD_ANNOTATION_NAME);
-//
-//    for (Util.AnnotationSearchResult r : allInjectionPoints) {
-//      final String value = Util.getValueStringFromAnnotationWithDefault(r.getAnnotation()).getValue();
-//      results.put(value, new ConsolidateDataFieldElementResult(value, beanClass, r.getOwningElement(), true));
-//    }
-//
-//    final Map<String, Util.DataFieldReference> allDataFieldTags = Util.findAllDataFieldTags(metaData, project, false);
-//    for (Util.DataFieldReference ref : allDataFieldTags.values()) {
-//      if (results.containsKey(ref.getDataFieldName())) continue;
-//
-//      results.put(ref.getDataFieldName(), new ConsolidateDataFieldElementResult(ref.getDataFieldName(),
-//          metaData.getTemplateReference().getFileName(), ref.getTag(), false));
-//    }
-//
-//    return results;
-//  }
 
   @Nullable
   @Override
@@ -55,7 +29,7 @@ class BeanDatafieldReference extends PsiReferenceBase<PsiLiteralExpression> {
         = Util.getConsolidatedDataFields(getElement(), project).get(getValue());
 
     if (consolidateElementResult != null) {
-      return consolidateElementResult.getElement();
+      return consolidateElementResult.getLinkingElement();
     }
     return null;
   }
@@ -63,7 +37,7 @@ class BeanDatafieldReference extends PsiReferenceBase<PsiLiteralExpression> {
   @NotNull
   @Override
   public Object[] getVariants() {
-    final boolean hasSinkEvent = Util.fieldOrMethodIsAnnotated(getElement(), ErraiUISupport.SINKNATIVE_ANNOTATION_NAME);
+    final boolean hasSinkEvent = Util.fieldOrMethodIsAnnotated(getElement(), ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME);
     final Map<String, ConsolidateDataFieldElementResult> dataFields
         = Util.getConsolidatedDataFields(getElement(), project);
 

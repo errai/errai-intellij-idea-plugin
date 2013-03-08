@@ -22,7 +22,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +32,7 @@ import java.util.Map;
 /**
  * @author Mike Brock
  */
+@SuppressWarnings("ALL")
 public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool {
   @Nls
   @NotNull
@@ -81,15 +82,15 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     public void visitAnnotation(PsiAnnotation annotation) {
       final String qualifiedName = annotation.getQualifiedName();
       if (qualifiedName != null) {
-        if (qualifiedName.equals(ErraiUISupport.TEMPLATED_ANNOTATION_NAME)) {
+        if (qualifiedName.equals(ErraiFrameworkSupport.TEMPLATED_ANNOTATION_NAME)) {
           final PsiClass templateClass = ((PsiClass) annotation.getParent().getParent());
           ensureTemplateExists(holder, annotation);
           ensureTemplateClassIsComposite(holder, templateClass);
         }
-        else if (qualifiedName.equals(ErraiUISupport.DATAFIELD_ANNOTATION_NAME)) {
+        else if (qualifiedName.equals(ErraiFrameworkSupport.DATAFIELD_ANNOTATION_NAME)) {
           ensureDataFieldIsValid(holder, annotation);
         }
-        else if (qualifiedName.equals(ErraiUISupport.EVENTHANDLER_ANNOTATION_NAME)) {
+        else if (qualifiedName.equals(ErraiFrameworkSupport.EVENTHANDLER_ANNOTATION_NAME)) {
           ensureEventHandlerIsValid(holder, annotation);
         }
       }
@@ -128,7 +129,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     boolean isComposite = false;
     PsiClass cls = templateClass;
     while ((cls = cls.getSuperClass()) != null) {
-      if (cls.getQualifiedName().equals(ErraiUISupport.GWT_COMPOSITE_REF)) {
+      if (cls.getQualifiedName().equals(ErraiFrameworkSupport.GWT_COMPOSITE_REF)) {
         isComposite = true;
         break;
       }
@@ -139,12 +140,12 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
         return;
       }
 
-      holder.registerProblem(templateClass, "Errai UI @Templated bean must extend " + ErraiUISupport.GWT_COMPOSITE_REF,
+      holder.registerProblem(templateClass, "Errai UI @Templated bean must extend " + ErraiFrameworkSupport.GWT_COMPOSITE_REF,
           new LocalQuickFix() {
             @NotNull
             @Override
             public String getName() {
-              return "Make bean extend " + ErraiUISupport.GWT_COMPOSITE_REF;
+              return "Make bean extend " + ErraiFrameworkSupport.GWT_COMPOSITE_REF;
             }
 
             @NotNull
@@ -159,7 +160,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
               final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
               final PsiElementFactory elementFactory = instance.getElementFactory();
               final PsiJavaCodeReferenceElement classRef
-                  = elementFactory.createReferenceElementByFQClassName(ErraiUISupport.GWT_COMPOSITE_REF, GlobalSearchScope.allScope(project));
+                  = elementFactory.createReferenceElementByFQClassName(ErraiFrameworkSupport.GWT_COMPOSITE_REF, ProjectScope.getAllScope(project));
 
               if (extendsList != null) {
                 if (extendsList.getReferenceElements().length > 0) {
@@ -197,7 +198,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     }
 
     final PsiClass typeOfElement = Util.getTypeOfElement(ownerElement, project);
-    if (!Util.typeIsAssignableFrom(typeOfElement, ErraiUISupport.GWT_ELEMENT_TYPE, ErraiUISupport.GWT_WIDGET_TYPE)) {
+    if (!Util.typeIsAssignableFrom(typeOfElement, ErraiFrameworkSupport.GWT_ELEMENT_TYPE, ErraiFrameworkSupport.GWT_WIDGET_TYPE)) {
       holder.registerProblem(ownerElement, "Type is not a valid template part (must be Element or Widget)");
     }
   }
@@ -209,7 +210,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
 
     final PsiClass bean = PsiUtil.getTopLevelClass(annotation);
     final PsiElement owner = Util.getImmediateOwnerElement(annotation);
-    final boolean hasSinkEvent = Util.fieldOrMethodIsAnnotated(owner, ErraiUISupport.SINKNATIVE_ANNOTATION_NAME);
+    final boolean hasSinkEvent = Util.fieldOrMethodIsAnnotated(owner, ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME);
 
     if (!(owner instanceof PsiMethod)) return;
 
@@ -227,7 +228,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     final PsiParameter psiParameter = psiParameters[0];
     final String parameterTypeFQN = psiParameter.getType().getCanonicalText();
     final PsiClass psiClassParameterType = JavaPsiFacade.getInstance(project)
-        .findClass(parameterTypeFQN, GlobalSearchScope.allScope(project));
+        .findClass(parameterTypeFQN, ProjectScope.getAllScope(project));
 
     final Map<String, Util.DataFieldReference> inScopeDataFields = Util.findAllDataFieldTags(templateMetaData, project, false);
     final Map<String, ConsolidateDataFieldElementResult> dataFields = Util.getConsolidatedDataFields(owner, project);
@@ -263,14 +264,14 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
           final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
           final PsiImportStatement importSinkNative = instance.getElementFactory()
               .createImportStatement(
-                  instance.findClass(ErraiUISupport.SINKNATIVE_ANNOTATION_NAME,
-                      GlobalSearchScope.allScope(project))
+                  instance.findClass(ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME,
+                      ProjectScope.getAllScope(project))
               );
 
           final PsiImportStatement importDomEvent = instance.getElementFactory()
               .createImportStatement(
-                  instance.findClass(ErraiUISupport.GWT_DOM_EVENT_TYPE,
-                      GlobalSearchScope.allScope(project))
+                  instance.findClass(ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE,
+                      ProjectScope.getAllScope(project))
               );
 
 
@@ -282,11 +283,11 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
       });
     }
 
-    final boolean isGWTeventType = Util.typeIsAssignableFrom(psiClassParameterType, ErraiUISupport.GWT_EVENT_TYPE);
+    final boolean isGWTeventType = Util.typeIsAssignableFrom(psiClassParameterType, ErraiFrameworkSupport.GWT_EVENT_TYPE);
 
-    // if (!Util.typeIsAssignableFrom(psiClassParameterType, ErraiUISupport.GWT_DOM_EVENT_TYPE)) {
+    // if (!Util.typeIsAssignableFrom(psiClassParameterType, ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE)) {
     if (isGWTeventType && hasSinkEvent && dataFields.containsKey(annoValue) && dataFields.get(annoValue).isDataFieldInClass()) {
-      final PsiAnnotation sinkNativeAnnotation = Util.getAnnotationFromElement(psiMethod, ErraiUISupport.SINKNATIVE_ANNOTATION_NAME);
+      final PsiAnnotation sinkNativeAnnotation = Util.getAnnotationFromElement(psiMethod, ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME);
 
       holder.registerProblem(sinkNativeAnnotation, "Handler that extends GwtEvent is incompatible with @SinkNative",
           new LocalQuickFix() {
@@ -306,7 +307,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
             public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
               final PsiAnnotation[] annotations = psiMethod.getModifierList().getAnnotations();
               for (PsiAnnotation a : annotations) {
-                if (a.getQualifiedName().equals(ErraiUISupport.SINKNATIVE_ANNOTATION_NAME)) {
+                if (a.getQualifiedName().equals(ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME)) {
                   a.delete();
                   return;
                 }
@@ -315,7 +316,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
           });
     }
 
-    if (isGWTeventType && !Util.typeIsAssignableFrom(psiClassParameterType, ErraiUISupport.GWT_EVENT_TYPE)) {
+    if (isGWTeventType && !Util.typeIsAssignableFrom(psiClassParameterType, ErraiFrameworkSupport.GWT_EVENT_TYPE)) {
       holder.registerProblem(psiParameter, "The specified event type is not a valid event handler type");
     }
 
@@ -325,7 +326,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
             @NotNull
             @Override
             public String getName() {
-              return "Change handled event type to: " + ErraiUISupport.GWT_DOM_EVENT_TYPE;
+              return "Change handled event type to: " + ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE;
             }
 
             @NotNull
@@ -337,8 +338,8 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
             @Override
             public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
               final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
-              final PsiClass psiClass = instance.findClass(ErraiUISupport.GWT_DOM_EVENT_TYPE,
-                  GlobalSearchScope.allScope(project));
+              final PsiClass psiClass = instance.findClass(ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE,
+                  ProjectScope.getAllScope(project));
 
               final PsiParameter[] parameters = psiParameters;
               final PsiElementFactory elementFactory = instance.getElementFactory();
