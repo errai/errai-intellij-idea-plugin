@@ -323,7 +323,17 @@ public class Util {
 
 
   public static PsiAnnotation findTemplatedAnnotation(PsiElement element) {
-    final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
+    final PsiClass topLevelClass;
+
+    if (element.getParent() == null) {
+      if (element instanceof PsiClass) {
+        topLevelClass = (PsiClass) element;
+      }
+      return null;
+    }
+    else {
+      topLevelClass = PsiUtil.getTopLevelClass(element);
+    }
 
     final PsiAnnotation[] annotations = topLevelClass.getModifierList().getAnnotations();
     for (PsiAnnotation psiAnnotation : annotations) {
@@ -657,14 +667,15 @@ public class Util {
     if (userData == null) {
       rootTag.putCopyableUserData(templateClassOwners,
           userData = Collections.newSetFromMap(new ConcurrentHashMap<PsiClass, Boolean>()));
-
     }
     userData.add(psiClass);
+    System.out.println("record owner: " + psiClass.getQualifiedName());
   }
 
   public static Set<PsiClass> getOwners(XmlFile file, Project project) {
     final XmlTag rootTag = file.getRootTag();
     if (rootTag == null) {
+      System.out.println("no root tag");
       return Collections.emptySet();
     }
 
@@ -683,6 +694,7 @@ public class Util {
 
         if (templateFile == null) {
           userDataIterator.remove();
+        //  System.out.println("no file");
           continue;
         }
 
@@ -690,11 +702,15 @@ public class Util {
 
         if (psiFile == null) {
           userDataIterator.remove();
+    //      System.out.println("no psiFile");
+
           continue;
         }
 
         if (!(psiFile instanceof XmlFile)) {
           userDataIterator.remove();
+      //    System.out.println("no xmlFile");
+
           continue;
         }
 
@@ -702,12 +718,15 @@ public class Util {
         final XmlTag rootTag2 = file.getRootTag();
 
         if (rootTag1 == null || rootTag2 == null) {
+      //    System.out.println("rootTag1:" + rootTag1 + ";rootTag2:" + rootTag2);
           userDataIterator.remove();
           continue;
         }
 
         if (rootTag1.getCopyableUserData(templateClassOwners)
             != rootTag2.getCopyableUserData(templateClassOwners)) {
+
+     //     System.out.println("not same datastore.");
           userDataIterator.remove();
         }
       }
