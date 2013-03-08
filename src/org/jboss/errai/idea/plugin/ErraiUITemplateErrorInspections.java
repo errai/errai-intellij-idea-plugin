@@ -15,6 +15,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
@@ -97,7 +98,6 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     }
   }
 
-
   private static void ensureTemplateExists(ProblemsHolder holder,
                                            PsiAnnotation annotation) {
 
@@ -111,7 +111,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
         holder.registerProblem(annotation, "Could not find companion Errai UI template: " + metaData.getTemplateReference().getFileName());
       }
       else if (attribute != null) {
-        holder.registerProblem(attribute, "Errai UI template file cannot be resolved.");
+        holder.registerProblem(attribute, "Errai UI template file cannot be resolved: " + metaData.getTemplateReference().getFileName());
       }
     }
     else if (attribute != null && !metaData.getTemplateReference().getRootNode().equals("")) {
@@ -274,9 +274,10 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
                       ProjectScope.getAllScope(project))
               );
 
+          final PsiImportList importList = ((PsiJavaFile) bean.getParent()).getImportList();
 
-          ((PsiJavaFile) bean.getParent()).getImportList().add(importSinkNative);
-          ((PsiJavaFile) bean.getParent()).getImportList().add(importDomEvent);
+          importList.add(importSinkNative);
+          importList.add(importDomEvent);
 
           psiMethod.getModifierList().addAnnotation("SinkNative(Event.ONCLICK)");
         }
@@ -285,68 +286,72 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
 
     final boolean isGWTeventType = Util.typeIsAssignableFrom(psiClassParameterType, ErraiFrameworkSupport.GWT_EVENT_TYPE);
 
-    // if (!Util.typeIsAssignableFrom(psiClassParameterType, ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE)) {
-    if (isGWTeventType && hasSinkEvent && dataFields.containsKey(annoValue) && dataFields.get(annoValue).isDataFieldInClass()) {
-      final PsiAnnotation sinkNativeAnnotation = Util.getAnnotationFromElement(psiMethod, ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME);
+    if (isGWTeventType) {
+      if (hasSinkEvent && dataFields.containsKey(annoValue) && dataFields.get(annoValue).isDataFieldInClass()) {
+        final PsiAnnotation sinkNativeAnnotation = Util.getAnnotationFromElement(psiMethod, ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME);
 
-      holder.registerProblem(sinkNativeAnnotation, "Handler that extends GwtEvent is incompatible with @SinkNative",
-          new LocalQuickFix() {
-            @NotNull
-            @Override
-            public String getName() {
-              return "Remove @SinkNative";
-            }
+        holder.registerProblem(sinkNativeAnnotation, "Handler that extends GwtEvent is incompatible with @SinkNative",
+            new LocalQuickFix() {
+              @NotNull
+              @Override
+              public String getName() {
+                return "Remove @SinkNative";
+              }
 
-            @NotNull
-            @Override
-            public String getFamilyName() {
-              return GroupNames.BUGS_GROUP_NAME;
-            }
+              @NotNull
+              @Override
+              public String getFamilyName() {
+                return GroupNames.BUGS_GROUP_NAME;
+              }
 
-            @Override
-            public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-              final PsiAnnotation[] annotations = psiMethod.getModifierList().getAnnotations();
-              for (PsiAnnotation a : annotations) {
-                if (a.getQualifiedName().equals(ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME)) {
-                  a.delete();
-                  return;
+              @Override
+              public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+                final PsiAnnotation[] annotations = psiMethod.getModifierList().getAnnotations();
+                for (PsiAnnotation a : annotations) {
+                  if (a.getQualifiedName().equals(ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME)) {
+                    a.delete();
+                    return;
+                  }
                 }
               }
-            }
-          });
+            });
+      }
+
+//      if (!Util.typeIsAssignableFrom(psiClassParameterType, ErraiFrameworkSupport.GWT_EVENT_TYPE)) {
+//        holder.registerProblem(psiParameter, "The specified event type is not a valid event handler type");
+//      }
+
+      if (dataFields.containsKey(annoValue) && !dataFields.get(annoValue).isDataFieldInClass()) {
+        holder.registerProblem(psiParameter, "DOM based event binding cannot use a GwtEvent",
+            new LocalQuickFix() {
+              @NotNull
+              @Override
+              public String getName() {
+                return "Change handled event type to: " + ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE;
+              }
+
+              @NotNull
+              @Override
+              public String getFamilyName() {
+                return GroupNames.BUGS_GROUP_NAME;
+              }
+
+              @Override
+              public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+                final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
+                final PsiClass psiClass = instance.findClass(ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE,
+                    ProjectScope.getAllScope(project));
+
+                final PsiParameter[] parameters = psiParameters;
+                final PsiElementFactory elementFactory = instance.getElementFactory();
+                final PsiParameter parameter = parameters[0];
+                parameter.replace(elementFactory.createParameter(parameter.getName(), elementFactory.createType(psiClass)));
+              }
+            });
+      }
     }
-
-    if (isGWTeventType && !Util.typeIsAssignableFrom(psiClassParameterType, ErraiFrameworkSupport.GWT_EVENT_TYPE)) {
-      holder.registerProblem(psiParameter, "The specified event type is not a valid event handler type");
-    }
-
-    if (isGWTeventType && dataFields.containsKey(annoValue) && !dataFields.get(annoValue).isDataFieldInClass()) {
-      holder.registerProblem(psiParameter, "DOM based event binding cannot use a GwtEvent",
-          new LocalQuickFix() {
-            @NotNull
-            @Override
-            public String getName() {
-              return "Change handled event type to: " + ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE;
-            }
-
-            @NotNull
-            @Override
-            public String getFamilyName() {
-              return GroupNames.BUGS_GROUP_NAME;
-            }
-
-            @Override
-            public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-              final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
-              final PsiClass psiClass = instance.findClass(ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE,
-                  ProjectScope.getAllScope(project));
-
-              final PsiParameter[] parameters = psiParameters;
-              final PsiElementFactory elementFactory = instance.getElementFactory();
-              final PsiParameter parameter = parameters[0];
-              parameter.replace(elementFactory.createParameter(parameter.getName(), elementFactory.createType(psiClass)));
-            }
-          });
+    else if (!Util.typeIsAssignableFrom(psiClassParameterType, ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE)) {
+      holder.registerProblem(psiParameter, "Not a valid event type.");
     }
   }
 }

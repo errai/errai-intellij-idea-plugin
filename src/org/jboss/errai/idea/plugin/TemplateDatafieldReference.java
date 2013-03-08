@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,11 @@ class TemplateDatafieldReference extends PsiReferenceBase<PsiLiteralExpression> 
       for (Map.Entry<String, Util.DataFieldReference> entry : dataFieldTags.entrySet()) {
         if (rootNode.equals(entry.getKey())) continue;
 
-        map.put(entry.getKey(), entry.getValue().getTag().getAttribute("data-field").getValueElement());
+        final XmlAttribute attribute = entry.getValue().getTag().getAttribute("data-field");
+
+        if (attribute != null) {
+          map.put(entry.getKey(), attribute.getValueElement());
+        }
       }
     }
     return map;

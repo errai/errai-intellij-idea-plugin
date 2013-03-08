@@ -65,7 +65,7 @@ public class ErraiFrameworkSupport implements ApplicationComponent {
           @NotNull
           @Override
           public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-            return new BeanDatafieldReference[]{new BeanDatafieldReference((PsiLiteralExpression) element, false)};
+            return new BeanDataFieldReference[]{new BeanDataFieldReference((PsiLiteralExpression) element, false)};
           }
         });
 
@@ -83,17 +83,10 @@ public class ErraiFrameworkSupport implements ApplicationComponent {
   }
 
   public void disposeComponent() {
-
   }
 
   @NotNull
   public String getComponentName() {
     return "ErraiFrameworkTools";
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
   }
 }

@@ -43,6 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Mike Brock
  */
 public class Util {
+  public static final String INTELLIJ_MAGIC_STRING = "IntellijIdeaRulezzz";
+
   private static final Key<Set<PsiClass>> templateClassOwners = Key.create("templateClassOwners");
   private static final Key<DataFieldCacheHolder> dataFieldsCacheKey = Key.create("dataFieldsCache");
 
@@ -366,7 +368,11 @@ public class Util {
     }
     else {
       final PsiLiteralExpression literalExpression = (PsiLiteralExpression) attributes[0].getValue();
-      final String text = literalExpression.getText();
+      if (literalExpression == null) {
+        return null;
+      }
+
+      String text = literalExpression.getText().replace(INTELLIJ_MAGIC_STRING, "");
       templateName = text.substring(1, text.length() - 1);
     }
 
@@ -375,8 +381,16 @@ public class Util {
 
     final Util.TemplateReference reference = Util.parseReference(templateName);
 
+    final String fileName;
+    if ("".equals(reference.getFileName()))  {
+      fileName = templateClass.getName() + ".html";
+    }
+    else {
+      fileName = reference.getFileName();
+    }
+
     final VirtualFile virtualFile = containerDir.getVirtualFile();
-    VirtualFile fileByRelativePath = virtualFile.findFileByRelativePath(reference.getFileName());
+    VirtualFile fileByRelativePath = virtualFile.findFileByRelativePath(fileName);
     if (fileByRelativePath != null && fileByRelativePath.isDirectory()) {
       fileByRelativePath = null;
     }
@@ -660,9 +674,6 @@ public class Util {
   }
 
   public static void declareOwner(XmlFile file, PsiClass psiClass) {
-//    final XmlTag rootTag = file.getRootTag();
-//    if (rootTag == null) return;
-
     Set<PsiClass> userData = file.getOriginalFile().getCopyableUserData(templateClassOwners);
     if (userData == null) {
       file.getOriginalFile().putCopyableUserData(templateClassOwners,
@@ -672,11 +683,6 @@ public class Util {
   }
 
   public static Set<PsiClass> getOwners(XmlFile file, Project project) {
-//    final XmlTag rootTag = file.getRootTag();
-//    if (rootTag == null) {
-//      return Collections.emptySet();
-//    }
-
     Set<PsiClass> userData = file.getOriginalFile().getCopyableUserData(templateClassOwners);
     if (userData != null) {
       Iterator<PsiClass> userDataIterator = userData.iterator();
@@ -692,7 +698,6 @@ public class Util {
 
         if (templateFile == null) {
           userDataIterator.remove();
-        //  System.out.println("no file");
           continue;
         }
 
@@ -700,15 +705,11 @@ public class Util {
 
         if (psiFile == null) {
           userDataIterator.remove();
-    //      System.out.println("no psiFile");
-
           continue;
         }
 
         if (!(psiFile instanceof XmlFile)) {
           userDataIterator.remove();
-      //    System.out.println("no xmlFile");
-
           continue;
         }
 
@@ -716,15 +717,12 @@ public class Util {
         final XmlTag rootTag2 = file.getRootTag();
 
         if (rootTag1 == null || rootTag2 == null) {
-      //    System.out.println("rootTag1:" + rootTag1 + ";rootTag2:" + rootTag2);
           userDataIterator.remove();
           continue;
         }
 
         if (rootTag1.getCopyableUserData(templateClassOwners)
             != rootTag2.getCopyableUserData(templateClassOwners)) {
-
-     //     System.out.println("not same datastore.");
           userDataIterator.remove();
         }
       }

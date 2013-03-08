@@ -12,6 +12,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifierList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -103,9 +104,13 @@ public class ErraiUITemplateCodeSmellInspections extends BaseJavaLocalInspection
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
           final PsiElement psiElement = Util.getImmediateOwnerElement(annotation);
           final PsiField psiField = (PsiField) psiElement;
-          for (PsiAnnotation psiAnnotation : psiField.getModifierList().getAnnotations()) {
-            if (psiAnnotation.getQualifiedName().equals(ErraiFrameworkSupport.JAVAX_INJECT)) {
-              psiAnnotation.delete();
+          final PsiModifierList modifierList = psiField.getModifierList();
+          if (modifierList != null) {
+            for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
+              final String qualifiedName = psiAnnotation.getQualifiedName();
+              if (qualifiedName != null && qualifiedName.equals(ErraiFrameworkSupport.JAVAX_INJECT)) {
+                psiAnnotation.delete();
+              }
             }
           }
         }

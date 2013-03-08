@@ -2,6 +2,7 @@ package org.jboss.errai.idea.plugin;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -10,6 +11,7 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -51,7 +53,8 @@ class TemplateReference extends PsiReferenceBase<PsiLiteralExpression> {
     final PsiDirectory baseDir = getBaseDir();
 
     final Collection<Util.DataFieldReference> allDataFieldTags;
-    if (templateMetaData.getTemplateFile() != null) {
+    final VirtualFile templateFile = templateMetaData.getTemplateFile();
+    if (templateFile != null) {
       allDataFieldTags = Util.findAllDataFieldTags(templateMetaData, project, true).values();
     }
     else {
@@ -65,9 +68,9 @@ class TemplateReference extends PsiReferenceBase<PsiLiteralExpression> {
         }
       }
     }
-    else {
+    else if (templateFile != null) {
       completions.put(templateMetaData.getTemplateReference().getFileName(),
-          PsiManager.getInstance(project).findFile(templateMetaData.getTemplateFile()));
+          PsiManager.getInstance(project).findFile(templateFile));
 
       for (Util.DataFieldReference dataFieldReference : allDataFieldTags) {
         completions.put(templateMetaData.getTemplateReference().getFileName() + "#" + dataFieldReference.getDataFieldName(),
@@ -84,6 +87,7 @@ class TemplateReference extends PsiReferenceBase<PsiLiteralExpression> {
     return getTemplateCompletions().get(getValue());
   }
 
+  @NotNull
   public Object[] getVariants() {
     Map<String, PsiElement> completions = getTemplateCompletions();
 
