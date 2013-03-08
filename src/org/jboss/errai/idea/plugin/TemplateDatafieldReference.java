@@ -16,15 +16,14 @@ import java.util.Map;
  * @author Mike Brock
  */
 class TemplateDatafieldReference extends PsiReferenceBase<PsiLiteralExpression> {
-  private final Project project;
 
-  public TemplateDatafieldReference(Project project, PsiLiteralExpression element, boolean soft) {
+  public TemplateDatafieldReference(PsiLiteralExpression element, boolean soft) {
     super(element, soft);
-    this.project = project;
   }
 
   private Map<String, PsiElement> getAvailableDataFields() {
     Map<String, PsiElement> map = new HashMap<String, PsiElement>();
+    final Project project = getElement().getProject();
     final Util.TemplateMetaData templateFile = Util.getTemplateMetaData(getElement(), project);
     if (templateFile != null) {
       final String rootNode = templateFile.getTemplateReference().getRootNode();

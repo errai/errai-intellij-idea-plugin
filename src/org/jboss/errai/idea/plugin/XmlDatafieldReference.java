@@ -24,11 +24,9 @@ import java.util.Set;
  * @author Mike Brock
  */
 public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
-  private final Project project;
 
-  public XmlDatafieldReference(Project project, XmlAttribute element, boolean soft) {
+  public XmlDatafieldReference(XmlAttribute element, boolean soft) {
     super(element, soft);
-    this.project = project;
   }
 
   public static class DataFieldRef {
@@ -50,6 +48,7 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
   }
 
   private List<DataFieldRef> findLinkedTemplateAndDataFields() {
+    final Project project = getElement().getProject();
     DaemonCodeAnalyzer.getInstance(project).restart();
 
     PsiElement el = getElement();

@@ -3,8 +3,7 @@ package org.jboss.errai.idea.plugin;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReference;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mike Brock
  */
-public class ErraiFrameworkSupport implements ProjectComponent {
+public class ErraiFrameworkSupport implements ApplicationComponent {
   public static final String JAVAX_INJECT = "javax.inject.Inject";
 
   public static final String TEMPLATED_ANNOTATION_NAME = "org.jboss.errai.ui.shared.api.annotations.Templated";
@@ -32,18 +31,21 @@ public class ErraiFrameworkSupport implements ProjectComponent {
   public static final String GWT_DOM_EVENT_TYPE = "com.google.gwt.user.client.Event";
   public static final String GWT_EVENT_TYPE = "com.google.gwt.event.shared.GwtEvent";
 
-  private final Project project;
+  private final ReferenceProvidersRegistry registry;
 
-  public ErraiFrameworkSupport(final Project project, ReferenceProvidersRegistry registry) {
-    this.project = project;
+  public ErraiFrameworkSupport(ReferenceProvidersRegistry registry) {
+    this.registry = registry;
+  }
 
+  public void initComponent() {
     final PsiReferenceRegistrar javaRegistrar = registry.getRegistrar(Language.findInstance(JavaLanguage.class));
+
     javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(TEMPLATED_ANNOTATION_NAME),
         new PsiReferenceProvider() {
           @NotNull
           @Override
           public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext processingContext) {
-            return new TemplateReference[]{new TemplateReference(project, (PsiLiteralExpression) element, false)};
+            return new TemplateReference[]{new TemplateReference((PsiLiteralExpression) element, false)};
           }
         }
     );
@@ -53,7 +55,7 @@ public class ErraiFrameworkSupport implements ProjectComponent {
           @NotNull
           @Override
           public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-            return new TemplateDatafieldReference[]{new TemplateDatafieldReference(project, (PsiLiteralExpression) element, false)};
+            return new TemplateDatafieldReference[]{new TemplateDatafieldReference((PsiLiteralExpression) element, false)};
 
           }
         });
@@ -63,7 +65,7 @@ public class ErraiFrameworkSupport implements ProjectComponent {
           @NotNull
           @Override
           public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-            return new BeanDatafieldReference[]{new BeanDatafieldReference(project, (PsiLiteralExpression) element, false)};
+            return new BeanDatafieldReference[]{new BeanDatafieldReference((PsiLiteralExpression) element, false)};
           }
         });
 
@@ -75,16 +77,13 @@ public class ErraiFrameworkSupport implements ProjectComponent {
           @NotNull
           @Override
           public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-            return new XmlDatafieldReference[]{new XmlDatafieldReference(project, (XmlAttribute) element, false)};
+            return new XmlDatafieldReference[]{new XmlDatafieldReference((XmlAttribute) element, false)};
           }
         });
   }
 
-  public void initComponent() {
-
-  }
-
   public void disposeComponent() {
+
   }
 
   @NotNull

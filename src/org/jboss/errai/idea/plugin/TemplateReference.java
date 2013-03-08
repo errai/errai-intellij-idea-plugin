@@ -23,11 +23,11 @@ import java.util.Map;
 * @author Mike Brock
 */
 class TemplateReference extends PsiReferenceBase<PsiLiteralExpression> {
-  private final Project project;
 
-  public TemplateReference(Project project, PsiLiteralExpression element, boolean soft) {
+  public TemplateReference(PsiLiteralExpression element, boolean soft) {
     super(element, soft);
-    this.project = project;
+
+   //todo: replace with: getElement().getProject()
   }
 
   private PsiDirectory getBaseDir() {
@@ -46,6 +46,7 @@ class TemplateReference extends PsiReferenceBase<PsiLiteralExpression> {
   public Map<String, PsiElement> getTemplateCompletions() {
     Map<String, PsiElement> completions = new LinkedHashMap<String, PsiElement>();
 
+    final Project project = getElement().getProject();
     final Util.TemplateMetaData templateMetaData = Util.getTemplateMetaData(getElement(), project);
     final PsiDirectory baseDir = getBaseDir();
 

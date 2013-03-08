@@ -17,13 +17,14 @@
 
   <application-components>
     <!-- Add your application components here -->
+    <component>
+       <implementation-class>org.jboss.errai.idea.plugin.ErraiFrameworkSupport</implementation-class>
+     </component>
   </application-components>
 
   <project-components>
     <!-- Add your project components here -->
-    <component>
-      <implementation-class>org.jboss.errai.idea.plugin.ErraiFrameworkSupport</implementation-class>
-    </component>
+
   </project-components>
 
   <actions>
