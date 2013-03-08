@@ -140,7 +140,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
         return;
       }
 
-      holder.registerProblem(templateClass, "Errai UI @Templated bean must extend " + ErraiFrameworkSupport.GWT_COMPOSITE_REF,
+      holder.registerProblem(templateClass.getNameIdentifier(), "Errai UI @Templated bean must extend " + ErraiFrameworkSupport.GWT_COMPOSITE_REF,
           new LocalQuickFix() {
             @NotNull
             @Override
