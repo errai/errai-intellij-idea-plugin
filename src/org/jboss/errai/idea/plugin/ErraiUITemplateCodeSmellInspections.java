@@ -68,7 +68,7 @@ public class ErraiUITemplateCodeSmellInspections extends BaseJavaLocalInspection
     public void visitAnnotation(PsiAnnotation annotation) {
       final String qualifiedName = annotation.getQualifiedName();
       if (qualifiedName != null) {
-        if (qualifiedName.equals(ErraiFrameworkSupport.DATAFIELD_ANNOTATION_NAME)) {
+        if (qualifiedName.equals(Types.DATAFIELD_ANNOTATION_NAME)) {
           ensureDataFieldIsValid(holder, annotation);
         }
       }
@@ -81,7 +81,7 @@ public class ErraiUITemplateCodeSmellInspections extends BaseJavaLocalInspection
 
     final PsiElement ownerElement = Util.getImmediateOwnerElement(annotation);
 
-    final boolean fieldIsInject = Util.fieldOrMethodIsAnnotated(ownerElement, ErraiFrameworkSupport.JAVAX_INJECT);
+    final boolean fieldIsInject = Util.fieldOrMethodIsAnnotated(ownerElement, Types.JAVAX_INJECT);
     final boolean fieldInitialized = Util.fieldElementIsInitialized(ownerElement);
     if (!fieldIsInject && !fieldInitialized) {
       holder.registerProblem(ownerElement, "Un-injected @DataField element is not initialized and may fail at runtime.");
@@ -108,7 +108,7 @@ public class ErraiUITemplateCodeSmellInspections extends BaseJavaLocalInspection
           if (modifierList != null) {
             for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
               final String qualifiedName = psiAnnotation.getQualifiedName();
-              if (qualifiedName != null && qualifiedName.equals(ErraiFrameworkSupport.JAVAX_INJECT)) {
+              if (qualifiedName != null && qualifiedName.equals(Types.JAVAX_INJECT)) {
                 psiAnnotation.delete();
               }
             }

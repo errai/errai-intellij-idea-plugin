@@ -63,13 +63,13 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
     final List<DataFieldRef> dataFieldRefs = new ArrayList<DataFieldRef>();
 
     final XmlFile xmlFile = (XmlFile) el;
-    final Map<String, Util.DataFieldReference> allDataFieldTags
+    final Map<String, TemplateDataField> allDataFieldTags
         = Util.findAllDataFieldTags(xmlFile, xmlFile.getRootTag(), true);
 
     final Set<PsiClass> owners = Util.getOwners(xmlFile, project);
     for (PsiClass psiClass : owners) {
-      final Collection<Util.AnnotationSearchResult> allAnnotatedElements
-          = Util.findAllAnnotatedElements(psiClass, ErraiFrameworkSupport.DATAFIELD_ANNOTATION_NAME);
+      final Collection<AnnotationSearchResult> allAnnotatedElements
+          = Util.findAllAnnotatedElements(psiClass, Types.DATAFIELD_ANNOTATION_NAME);
 
       final Collection<String> strings = Util.extractDataFieldList(allAnnotatedElements);
 

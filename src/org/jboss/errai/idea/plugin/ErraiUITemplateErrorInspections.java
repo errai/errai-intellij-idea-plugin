@@ -83,16 +83,19 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     public void visitAnnotation(PsiAnnotation annotation) {
       final String qualifiedName = annotation.getQualifiedName();
       if (qualifiedName != null) {
-        if (qualifiedName.equals(ErraiFrameworkSupport.TEMPLATED_ANNOTATION_NAME)) {
+        if (qualifiedName.equals(Types.TEMPLATED_ANNOTATION_NAME)) {
           final PsiClass templateClass = ((PsiClass) annotation.getParent().getParent());
           ensureTemplateExists(holder, annotation);
           ensureTemplateClassIsComposite(holder, templateClass);
         }
-        else if (qualifiedName.equals(ErraiFrameworkSupport.DATAFIELD_ANNOTATION_NAME)) {
+        else if (qualifiedName.equals(Types.DATAFIELD_ANNOTATION_NAME)) {
           ensureDataFieldIsValid(holder, annotation);
         }
-        else if (qualifiedName.equals(ErraiFrameworkSupport.EVENTHANDLER_ANNOTATION_NAME)) {
+        else if (qualifiedName.equals(Types.EVENTHANDLER_ANNOTATION_NAME)) {
           ensureEventHandlerIsValid(holder, annotation);
+        }
+        else if (qualifiedName.equals(Types.BOUND)) {
+          ensureBoundFieldIsValid(holder, annotation);
         }
       }
     }
@@ -101,26 +104,25 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
   private static void ensureTemplateExists(ProblemsHolder holder,
                                            PsiAnnotation annotation) {
 
-    final Util.TemplateMetaData metaData = Util.getTemplateMetaData(annotation, holder.getProject());
+    final TemplateMetaData metaData = Util.getTemplateMetaData(annotation);
 
     final VirtualFile templateVF = metaData.getTemplateFile();
     final PsiNameValuePair attribute = metaData.getAttribute();
 
     if (templateVF == null) {
       if (annotation != null && metaData.isDefaultReference()) {
-        holder.registerProblem(annotation, "Could not find companion Errai UI template: " + metaData.getTemplateReference().getFileName());
+        holder.registerProblem(annotation, "Could not find companion Errai UI template: " + metaData.getTemplateExpression().getFileName());
       }
       else if (attribute != null) {
-        holder.registerProblem(attribute, "Errai UI template file cannot be resolved: " + metaData.getTemplateReference().getFileName());
+        holder.registerProblem(attribute, "Errai UI template file cannot be resolved: " + metaData.getTemplateExpression().getFileName());
       }
     }
-    else if (attribute != null && !metaData.getTemplateReference().getRootNode().equals("")) {
-      final Map<String, Util.DataFieldReference> allDataFieldTags
-          = Util.findAllDataFieldTags(metaData, holder.getProject(), true);
+    else if (attribute != null && !metaData.getTemplateExpression().getRootNode().equals("")) {
+      final Map<String, TemplateDataField> allDataFieldTags = metaData.getAllDataFieldsInTemplate(true);
 
-      if (!allDataFieldTags.containsKey(metaData.getTemplateReference().getRootNode())) {
+      if (!allDataFieldTags.containsKey(metaData.getTemplateExpression().getRootNode())) {
         holder.registerProblem(attribute, "The data-field element specified for the root " +
-            "note does not exist: " + metaData.getTemplateReference().getRootNode());
+            "note does not exist: " + metaData.getTemplateExpression().getRootNode());
       }
     }
   }
@@ -129,7 +131,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     boolean isComposite = false;
     PsiClass cls = templateClass;
     while ((cls = cls.getSuperClass()) != null) {
-      if (cls.getQualifiedName().equals(ErraiFrameworkSupport.GWT_COMPOSITE_REF)) {
+      if (cls.getQualifiedName().equals(Types.GWT_COMPOSITE_REF)) {
         isComposite = true;
         break;
       }
@@ -140,12 +142,12 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
         return;
       }
 
-      holder.registerProblem(templateClass.getNameIdentifier(), "Errai UI @Templated bean must extend " + ErraiFrameworkSupport.GWT_COMPOSITE_REF,
+      holder.registerProblem(templateClass.getNameIdentifier(), "Errai UI @Templated bean must extend " + Types.GWT_COMPOSITE_REF,
           new LocalQuickFix() {
             @NotNull
             @Override
             public String getName() {
-              return "Make bean extend " + ErraiFrameworkSupport.GWT_COMPOSITE_REF;
+              return "Make bean extend " + Types.GWT_COMPOSITE_REF;
             }
 
             @NotNull
@@ -160,7 +162,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
               final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
               final PsiElementFactory elementFactory = instance.getElementFactory();
               final PsiJavaCodeReferenceElement classRef
-                  = elementFactory.createReferenceElementByFQClassName(ErraiFrameworkSupport.GWT_COMPOSITE_REF, ProjectScope.getAllScope(project));
+                  = elementFactory.createReferenceElementByFQClassName(Types.GWT_COMPOSITE_REF, ProjectScope.getAllScope(project));
 
               if (extendsList != null) {
                 if (extendsList.getReferenceElements().length > 0) {
@@ -178,14 +180,14 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
   public static void ensureDataFieldIsValid(ProblemsHolder holder,
                                             PsiAnnotation annotation) {
 
-    final Util.TemplateMetaData templateMetaData = Util.getTemplateMetaData(annotation, holder.getProject());
+    final TemplateMetaData templateMetaData = Util.getTemplateMetaData(annotation);
     final Project project = holder.getProject();
-    final Map<String, Util.DataFieldReference> allDataFieldTags
-        = Util.findAllDataFieldTags(templateMetaData, project, false);
+    final Map<String, TemplateDataField> allDataFieldTags
+        = templateMetaData.getAllDataFieldsInTemplate(false);
 
     final PsiElement ownerElement = Util.getImmediateOwnerElement(annotation);
 
-    final Util.AnnotationValueElement annotationValue
+    final AnnotationValueElement annotationValue
         = Util.getValueStringFromAnnotationWithDefault(annotation);
 
     if (annotationValue == null) {
@@ -198,19 +200,19 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     }
 
     final PsiClass typeOfElement = Util.getTypeOfElement(ownerElement, project);
-    if (!Util.typeIsAssignableFrom(typeOfElement, ErraiFrameworkSupport.GWT_ELEMENT_TYPE, ErraiFrameworkSupport.GWT_WIDGET_TYPE)) {
+    if (!Util.typeIsAssignableFrom(typeOfElement, Types.GWT_ELEMENT_TYPE, Types.GWT_WIDGET_TYPE)) {
       holder.registerProblem(ownerElement, "Type is not a valid template part (must be Element or Widget)");
     }
   }
 
   public static void ensureEventHandlerIsValid(ProblemsHolder holder,
                                                PsiAnnotation annotation) {
-    final Util.TemplateMetaData templateMetaData = Util.getTemplateMetaData(annotation, holder.getProject());
+    final TemplateMetaData metaData = Util.getTemplateMetaData(annotation);
     final Project project = holder.getProject();
 
     final PsiClass bean = PsiUtil.getTopLevelClass(annotation);
     final PsiElement owner = Util.getImmediateOwnerElement(annotation);
-    final boolean hasSinkEvent = Util.fieldOrMethodIsAnnotated(owner, ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME);
+    final boolean hasSinkEvent = Util.fieldOrMethodIsAnnotated(owner, Types.SINKNATIVE_ANNOTATION_NAME);
 
     if (!(owner instanceof PsiMethod)) return;
 
@@ -230,12 +232,13 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     final PsiClass psiClassParameterType = JavaPsiFacade.getInstance(project)
         .findClass(parameterTypeFQN, ProjectScope.getAllScope(project));
 
-    final Map<String, Util.DataFieldReference> inScopeDataFields = Util.findAllDataFieldTags(templateMetaData, project, false);
-    final Map<String, ConsolidateDataFieldElementResult> dataFields = Util.getConsolidatedDataFields(owner, project);
-    final Util.AnnotationValueElement annoValueEl = Util.getValueStringFromAnnotationWithDefault(annotation);
+    final Map<String, TemplateDataField> inScopeDataFields = metaData.getAllDataFieldsInTemplate(false);
+    final Map<String, ConsolidateDataFieldElementResult> dataFields = metaData.getConsolidatedDataFields();
+
+    final AnnotationValueElement annoValueEl = Util.getValueStringFromAnnotationWithDefault(annotation);
     final String annoValue = annoValueEl.getValue();
 
-    final Util.DataFieldReference result = inScopeDataFields.get(annoValue);
+    final TemplateDataField result = inScopeDataFields.get(annoValue);
     if (result == null) {
       if (dataFields.containsKey(annoValue)) {
         holder.registerProblem(annoValueEl.getLogicalElement(), "Data-field is out of scope (it is not an descendant of the template root node)");
@@ -264,13 +267,13 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
           final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
           final PsiImportStatement importSinkNative = instance.getElementFactory()
               .createImportStatement(
-                  instance.findClass(ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME,
+                  instance.findClass(Types.SINKNATIVE_ANNOTATION_NAME,
                       ProjectScope.getAllScope(project))
               );
 
           final PsiImportStatement importDomEvent = instance.getElementFactory()
               .createImportStatement(
-                  instance.findClass(ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE,
+                  instance.findClass(Types.GWT_DOM_EVENT_TYPE,
                       ProjectScope.getAllScope(project))
               );
 
@@ -284,11 +287,11 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
       });
     }
 
-    final boolean isGWTeventType = Util.typeIsAssignableFrom(psiClassParameterType, ErraiFrameworkSupport.GWT_EVENT_TYPE);
+    final boolean isGWTeventType = Util.typeIsAssignableFrom(psiClassParameterType, Types.GWT_EVENT_TYPE);
 
     if (isGWTeventType) {
       if (hasSinkEvent && dataFields.containsKey(annoValue) && dataFields.get(annoValue).isDataFieldInClass()) {
-        final PsiAnnotation sinkNativeAnnotation = Util.getAnnotationFromElement(psiMethod, ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME);
+        final PsiAnnotation sinkNativeAnnotation = Util.getAnnotationFromElement(psiMethod, Types.SINKNATIVE_ANNOTATION_NAME);
 
         holder.registerProblem(sinkNativeAnnotation, "Handler that extends GwtEvent is incompatible with @SinkNative",
             new LocalQuickFix() {
@@ -308,7 +311,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
               public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
                 final PsiAnnotation[] annotations = psiMethod.getModifierList().getAnnotations();
                 for (PsiAnnotation a : annotations) {
-                  if (a.getQualifiedName().equals(ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME)) {
+                  if (a.getQualifiedName().equals(Types.SINKNATIVE_ANNOTATION_NAME)) {
                     a.delete();
                     return;
                   }
@@ -317,17 +320,13 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
             });
       }
 
-//      if (!Util.typeIsAssignableFrom(psiClassParameterType, ErraiFrameworkSupport.GWT_EVENT_TYPE)) {
-//        holder.registerProblem(psiParameter, "The specified event type is not a valid event handler type");
-//      }
-
       if (dataFields.containsKey(annoValue) && !dataFields.get(annoValue).isDataFieldInClass()) {
         holder.registerProblem(psiParameter, "DOM based event binding cannot use a GwtEvent",
             new LocalQuickFix() {
               @NotNull
               @Override
               public String getName() {
-                return "Change handled event type to: " + ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE;
+                return "Change handled event type to: " + Types.GWT_DOM_EVENT_TYPE;
               }
 
               @NotNull
@@ -339,7 +338,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
               @Override
               public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
                 final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
-                final PsiClass psiClass = instance.findClass(ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE,
+                final PsiClass psiClass = instance.findClass(Types.GWT_DOM_EVENT_TYPE,
                     ProjectScope.getAllScope(project));
 
                 final PsiParameter[] parameters = psiParameters;
@@ -350,8 +349,41 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
             });
       }
     }
-    else if (!Util.typeIsAssignableFrom(psiClassParameterType, ErraiFrameworkSupport.GWT_DOM_EVENT_TYPE)) {
+    else if (!Util.typeIsAssignableFrom(psiClassParameterType, Types.GWT_DOM_EVENT_TYPE)) {
       holder.registerProblem(psiParameter, "Not a valid event type.");
+    }
+  }
+
+  public static final void ensureBoundFieldIsValid(ProblemsHolder holder,
+                                                   PsiAnnotation psiAnnotation) {
+
+
+    final DataBindUtil.BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(psiAnnotation);
+    if (boundMetaData.getBindingMetaData().getBoundClass() == null) {
+      holder.registerProblem(psiAnnotation, "@Bound property is not associated with any model.");
+      return;
+    }
+
+    final DataBindUtil.PropertyValidation validation = boundMetaData.validateProperty();
+    if (!validation.isValid()) {
+      if (!validation.isParentBindable()) {
+        holder.registerProblem(Util.getAnnotationMemberValue(psiAnnotation, "property"),
+            "The property '" + validation.getUnresolvedPropertyElement() + "' is invalid because its parent bean "
+                + "(" + validation.getUnresolvedParent().getQualifiedName() + ") is not bindable.");
+      }
+      else if (validation.hasBindabilityProblem()) {
+        final DataBindUtil.BindabilityValidation bindabilityValidation = validation.getBindabilityValidation();
+        holder.registerProblem(psiAnnotation, "The widget type cannot be bound to: " + validation.getBoundType().getQualifiedName()
+            + "; widget accepts type: " + bindabilityValidation.getExpectedWidgetType());
+
+         //TODO: use this for more fine-grained errors.
+         //holder.getManager().createProblemDescriptor()
+      }
+      else {
+        holder.registerProblem(psiAnnotation,
+            "The property '" + validation.getUnresolvedPropertyElement() + "' was not found in parent bean: "
+                + validation.getParentName() + "");
+      }
     }
   }
 }

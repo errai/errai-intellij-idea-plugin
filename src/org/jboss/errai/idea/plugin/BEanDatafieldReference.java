@@ -15,7 +15,6 @@ import java.util.Map;
  * @author Mike Brock
  */
 class BeanDataFieldReference extends PsiReferenceBase<PsiLiteralExpression> {
-
   public BeanDataFieldReference(PsiLiteralExpression element, boolean soft) {
     super(element, soft);
   }
@@ -37,7 +36,7 @@ class BeanDataFieldReference extends PsiReferenceBase<PsiLiteralExpression> {
   @Override
   public Object[] getVariants() {
     final boolean hasSinkEvent
-        = Util.fieldOrMethodIsAnnotated(getElement(), ErraiFrameworkSupport.SINKNATIVE_ANNOTATION_NAME);
+        = Util.fieldOrMethodIsAnnotated(getElement(), Types.SINKNATIVE_ANNOTATION_NAME);
 
     final Project project = getElement().getProject();
     final Map<String, ConsolidateDataFieldElementResult> dataFields

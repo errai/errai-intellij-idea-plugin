@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,9 +23,9 @@ import java.util.Map;
 /**
 * @author Mike Brock
 */
-class TemplateReference extends PsiReferenceBase<PsiLiteralExpression> {
+class TemplatedReference extends PsiReferenceBase<PsiLiteralExpression> {
 
-  public TemplateReference(PsiLiteralExpression element, boolean soft) {
+  public TemplatedReference(PsiLiteralExpression element, boolean soft) {
     super(element, soft);
 
    //todo: replace with: getElement().getProject()
@@ -49,17 +48,11 @@ class TemplateReference extends PsiReferenceBase<PsiLiteralExpression> {
     Map<String, PsiElement> completions = new LinkedHashMap<String, PsiElement>();
 
     final Project project = getElement().getProject();
-    final Util.TemplateMetaData templateMetaData = Util.getTemplateMetaData(getElement(), project);
+    final TemplateMetaData templateMetaData = Util.getTemplateMetaData(getElement());
     final PsiDirectory baseDir = getBaseDir();
 
-    final Collection<Util.DataFieldReference> allDataFieldTags;
+    final Collection<TemplateDataField> allDataFieldTags = templateMetaData.getAllDataFieldsInTemplate(true).values();
     final VirtualFile templateFile = templateMetaData.getTemplateFile();
-    if (templateFile != null) {
-      allDataFieldTags = Util.findAllDataFieldTags(templateMetaData, project, true).values();
-    }
-    else {
-      allDataFieldTags = Collections.emptyList();
-    }
 
     if (allDataFieldTags.isEmpty()) {
       for (final PsiElement element : baseDir.getChildren()) {
@@ -69,11 +62,11 @@ class TemplateReference extends PsiReferenceBase<PsiLiteralExpression> {
       }
     }
     else if (templateFile != null) {
-      completions.put(templateMetaData.getTemplateReference().getFileName(),
+      completions.put(templateMetaData.getTemplateExpression().getFileName(),
           PsiManager.getInstance(project).findFile(templateFile));
 
-      for (Util.DataFieldReference dataFieldReference : allDataFieldTags) {
-        completions.put(templateMetaData.getTemplateReference().getFileName() + "#" + dataFieldReference.getDataFieldName(),
+      for (TemplateDataField dataFieldReference : allDataFieldTags) {
+        completions.put(templateMetaData.getTemplateExpression().getFileName() + "#" + dataFieldReference.getDataFieldName(),
             dataFieldReference.getTag());
       }
     }

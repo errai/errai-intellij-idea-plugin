@@ -18,18 +18,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Mike Brock
  */
 public class ErraiFrameworkSupport implements ApplicationComponent {
-  public static final String JAVAX_INJECT = "javax.inject.Inject";
-
-  public static final String TEMPLATED_ANNOTATION_NAME = "org.jboss.errai.ui.shared.api.annotations.Templated";
-  public static final String DATAFIELD_ANNOTATION_NAME = "org.jboss.errai.ui.shared.api.annotations.DataField";
-  public static final String EVENTHANDLER_ANNOTATION_NAME = "org.jboss.errai.ui.shared.api.annotations.EventHandler";
-  public static final String SINKNATIVE_ANNOTATION_NAME = "org.jboss.errai.ui.shared.api.annotations.SinkNative";
-
-  public static final String GWT_COMPOSITE_REF = "com.google.gwt.user.client.ui.Composite";
-  public static final String GWT_WIDGET_TYPE = "com.google.gwt.user.client.ui.Widget";
-  public static final String GWT_ELEMENT_TYPE = "com.google.gwt.dom.client.Element";
-  public static final String GWT_DOM_EVENT_TYPE = "com.google.gwt.user.client.Event";
-  public static final String GWT_EVENT_TYPE = "com.google.gwt.event.shared.GwtEvent";
 
   private final ReferenceProvidersRegistry registry;
 
@@ -40,17 +28,17 @@ public class ErraiFrameworkSupport implements ApplicationComponent {
   public void initComponent() {
     final PsiReferenceRegistrar javaRegistrar = registry.getRegistrar(Language.findInstance(JavaLanguage.class));
 
-    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(TEMPLATED_ANNOTATION_NAME),
+    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.TEMPLATED_ANNOTATION_NAME),
         new PsiReferenceProvider() {
           @NotNull
           @Override
           public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext processingContext) {
-            return new TemplateReference[]{new TemplateReference((PsiLiteralExpression) element, false)};
+            return new TemplatedReference[]{new TemplatedReference((PsiLiteralExpression) element, false)};
           }
         }
     );
 
-    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(DATAFIELD_ANNOTATION_NAME),
+    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.DATAFIELD_ANNOTATION_NAME),
         new PsiReferenceProvider() {
           @NotNull
           @Override
@@ -60,7 +48,7 @@ public class ErraiFrameworkSupport implements ApplicationComponent {
           }
         });
 
-    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(EVENTHANDLER_ANNOTATION_NAME),
+    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.EVENTHANDLER_ANNOTATION_NAME),
         new PsiReferenceProvider() {
           @NotNull
           @Override

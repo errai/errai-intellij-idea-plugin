@@ -25,12 +25,12 @@ class TemplateDatafieldReference extends PsiReferenceBase<PsiLiteralExpression> 
   private Map<String, PsiElement> getAvailableDataFields() {
     Map<String, PsiElement> map = new HashMap<String, PsiElement>();
     final Project project = getElement().getProject();
-    final Util.TemplateMetaData templateFile = Util.getTemplateMetaData(getElement(), project);
-    if (templateFile != null) {
-      final String rootNode = templateFile.getTemplateReference().getRootNode();
-      final Map<String, Util.DataFieldReference> dataFieldTags = Util.findAllDataFieldTags(templateFile, project, false);
+    final TemplateMetaData metaData = Util.getTemplateMetaData(getElement());
+    if (metaData != null) {
+      final String rootNode = metaData.getTemplateExpression().getRootNode();
+      final Map<String, TemplateDataField> dataFieldTags = metaData.getAllDataFieldsInTemplate(false);
 
-      for (Map.Entry<String, Util.DataFieldReference> entry : dataFieldTags.entrySet()) {
+      for (Map.Entry<String, TemplateDataField> entry : dataFieldTags.entrySet()) {
         if (rootNode.equals(entry.getKey())) continue;
 
         final XmlAttribute attribute = entry.getValue().getTag().getAttribute("data-field");
