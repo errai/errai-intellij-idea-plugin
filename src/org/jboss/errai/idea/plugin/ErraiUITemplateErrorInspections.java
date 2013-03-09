@@ -359,6 +359,7 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
 
 
     final DataBindUtil.BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(psiAnnotation);
+
     if (boundMetaData.getBindingMetaData().getBoundClass() == null) {
       holder.registerProblem(psiAnnotation, "@Bound property is not associated with any model.");
       return;

@@ -24,11 +24,8 @@ import java.util.Map;
 * @author Mike Brock
 */
 class TemplatedReference extends PsiReferenceBase<PsiLiteralExpression> {
-
   public TemplatedReference(PsiLiteralExpression element, boolean soft) {
     super(element, soft);
-
-   //todo: replace with: getElement().getProject()
   }
 
   private PsiDirectory getBaseDir() {

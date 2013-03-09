@@ -57,6 +57,14 @@ public class ErraiFrameworkSupport implements ApplicationComponent {
           }
         });
 
+    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.BOUND),
+         new PsiReferenceProvider() {
+           @NotNull
+           @Override
+           public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+             return new BoundReference[]{new BoundReference((PsiLiteralExpression) element, false)};
+           }
+         });
 
     final PsiReferenceRegistrar xmlRegistrar = registry.getRegistrar(Language.findInstance(HTMLLanguage.class));
 

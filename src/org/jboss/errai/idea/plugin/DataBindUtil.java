@@ -99,15 +99,24 @@ public class DataBindUtil {
   public static class PropertyInfo {
     private String propertyName;
     private PsiClass propertyType;
-    private boolean hasGetter;
-    private boolean hasSetter;
+    private PsiElement getterElement;
+    private PsiElement setterElement;
+
+    public PsiElement getAccessorElement() {
+      if (getterElement != null) {
+        return getterElement;
+      }
+      else {
+        return setterElement;
+      }
+    }
 
     public boolean isHasGetter() {
-      return hasGetter;
+      return getterElement != null;
     }
 
     public boolean isHasSetter() {
-      return hasSetter;
+      return setterElement != null;
     }
 
     public String getPropertyName() {
@@ -255,6 +264,42 @@ public class DataBindUtil {
     }
   }
 
+  public static Map<String, PropertyInfo> getAllProperties(PsiClass boundClass, String propertySearchRoot) {
+    int idx = propertySearchRoot.lastIndexOf('.');
+    if (idx == -1) {
+      propertySearchRoot = null;
+    }
+    else {
+      propertySearchRoot = propertySearchRoot.substring(0, idx);
+    }
+
+
+    PsiClass cls = boundClass;
+    if (propertySearchRoot != null) {
+      for (String token : propertySearchRoot.split("\\.")) {
+        if (!Util.elementIsAnnotated(cls, Types.BINDABLE)) {
+          cls = null;
+          break;
+        }
+        PsiClass result = getBeanPropertyType(boundClass.getProject(), cls, token.trim());
+        if (result == null) {
+          cls = null;
+          break;
+        }
+        cls = result;
+      }
+    }
+
+    Map<String, PropertyInfo> properties = new LinkedHashMap<String, PropertyInfo>();
+    final Map<String, PropertyInfo> allBeanProperties = getAllBeanProperties(boundClass.getProject(), cls);
+    final String prefix = propertySearchRoot != null ? propertySearchRoot + "." : "";
+    for (Map.Entry<String, PropertyInfo> entry : allBeanProperties.entrySet()) {
+      properties.put(prefix + entry.getKey(), entry.getValue());
+    }
+    return properties;
+  }
+
+
   public static BoundMetaData getBoundMetaData(PsiElement element) {
     return new BoundMetaData(Util.getImmediateOwnerElement(element));
   }
@@ -319,23 +364,32 @@ public class DataBindUtil {
     for (final PsiMethod method : psiClass.getAllMethods()) {
       if (method.getModifierList().hasModifierProperty("public")) {
 
+        if (PsiUtil.getTopLevelClass(method).getQualifiedName().equals("java.lang.Object")) {
+          continue;
+        }
+
         final String property = getPropertyFromAccessor(method.getName());
 
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         if (parameters.length == 0
             && (method.getName().startsWith("get") || method.getName().startsWith("is"))) {
 
+
+          PsiClass type = getPsiClassFromType(project, method.getReturnType());
+
           final PropertyInfo info = getOrCreatePropertyInfo(propertyInfoMap, property);
-          info.hasGetter = true;
+          info.getterElement = method;
           if (info.propertyType == null) {
-            info.propertyType = getBeanPropertyType(project, getPsiClassFromType(project, method.getReturnType()), property);
+            info.propertyType = type;
           }
         }
         else if (parameters.length == 1 && method.getName().startsWith("set")) {
+
+          PsiClass type = getPsiClassFromType(project, parameters[0].getType());
           final PropertyInfo info = getOrCreatePropertyInfo(propertyInfoMap, property);
-          info.hasGetter = true;
+          info.setterElement = method;
           if (info.propertyType == null) {
-            info.propertyType = getBeanPropertyType(project, getPsiClassFromType(project, parameters[0].getType()), property);
+            info.propertyType = type;
           }
         }
       }
@@ -408,25 +462,6 @@ public class DataBindUtil {
           break;
         }
       }
-
-//
-//      for (PsiClassType type : superTypes) {
-//        if (type.getClassName().equals(Types.GWT_TAKES_VALUE)) {
-//          PsiClass typeParm = getErasedTypeParam(bindingType.getProject(), type.getCanonicalText());
-//          if (typeParm != null) {
-//            if (!Util.typeIsAssignableFrom(typeParm, bindingType.getQualifiedName())) {
-//              validation.valid = false;
-//              validation.expectedWidgetType = typeParm.getQualifiedName();
-//            }
-//          }
-//          else {
-//            validation.valid = false;
-//            validation.expectedWidgetType = "<invalid class>";
-//          }
-//          break;
-//        }
-//      }
-
       return validation;
     }
   }
