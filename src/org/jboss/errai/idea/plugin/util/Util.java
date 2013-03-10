@@ -75,6 +75,9 @@ public class Util {
   }
 
   public static List<String> getErasedTypeParamsCanonicalText(final String signature) {
+    if (signature == null) {
+      return Collections.emptyList();
+    }
     int typeParamBegin = signature.indexOf('<');
     if (typeParamBegin == -1) {
       return Collections.emptyList();
