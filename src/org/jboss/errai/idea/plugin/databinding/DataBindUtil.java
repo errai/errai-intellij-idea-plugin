@@ -1,5 +1,7 @@
 package org.jboss.errai.idea.plugin.databinding;
 
+import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaPsiFacade;
@@ -7,6 +9,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
@@ -26,9 +29,11 @@ import org.jboss.errai.idea.plugin.util.Util;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 /**
@@ -40,6 +45,8 @@ public class DataBindUtil {
       = Key.create("TEMPLATE_BINDING_META_DATA_KEY");
 
   public static Map<String, PropertyInfo> getAllProperties(PsiClass boundClass, String propertySearchRoot) {
+    final Set<String> bindableTypes = getConfiguredBindableTypes(boundClass.getProject());
+
     int idx = propertySearchRoot.lastIndexOf('.');
     if (idx == -1) {
       propertySearchRoot = null;
@@ -51,7 +58,7 @@ public class DataBindUtil {
     PsiClass cls = boundClass;
     if (propertySearchRoot != null) {
       for (String token : propertySearchRoot.split("\\.")) {
-        if (!Util.elementIsAnnotated(cls, Types.BINDABLE)) {
+        if (!bindableTypes.contains(cls.getQualifiedName()) && !Util.elementIsAnnotated(cls, Types.BINDABLE)) {
           cls = null;
           break;
         }
@@ -257,7 +264,8 @@ public class DataBindUtil {
         }
         else {
           validation.setValid(false);
-          validation.setExpectedWidgetType("<invalid>");        }
+          validation.setExpectedWidgetType("<invalid>");
+        }
         break;
       }
     }
@@ -316,8 +324,6 @@ public class DataBindUtil {
 
 
   public static ConvertibilityMetaData getConvertibilityMetaData(PsiAnnotation boundAnnotation) {
-//    final PsiElement immediateOwnerElement = Util.getImmediateOwnerElement(boundAnnotation);
-//    final PsiAnnotation boundAnnotation = Util.getAnnotationFromElement(immediateOwnerElement, Types.BOUND);
     final ConvertibilityMetaData cm = new ConvertibilityMetaData();
 
     final List<String> parms = Util.getErasedTypeParamsCanonicalText(Util.getAttributeValue(boundAnnotation, "converter", DefaultPolicy.NULL));
@@ -330,19 +336,44 @@ public class DataBindUtil {
           = instance.findClass(converter, GlobalSearchScope.allScope(project));
 
       final SuperTypeInfo superTypeInfo = Util.getTypeInformation(psiClass, Types.CONVERTER);
+      final ConvertibilityMetaData metaData = new ConvertibilityMetaData();
       if (superTypeInfo != null) {
-        return new ConvertibilityMetaData(
+        metaData.addConversionRule(
             instance.findClass(superTypeInfo.getTypeParms().get(0), GlobalSearchScope.allScope(project)),
             instance.findClass(superTypeInfo.getTypeParms().get(1), GlobalSearchScope.allScope(project))
         );
       }
 
-      System.out.println();
+      return metaData;
     }
     return cm;
   }
 
-  public static void main(String[] args) {
-    System.out.println(Util.getErasedTypeParamsCanonicalText("Map<java.util.List<String>,java.util.HashMap<String, Integer>, String,Char>"));
+  public static Set<String> getConfiguredBindableTypes(Project project) {
+    final PsiFile[] properties = Util.getAllErraiAppProperties(project);
+    final Set<String> bindableTypes = new HashSet<String>();
+
+
+    for (PsiFile file : properties) {
+      final List<IProperty> allProperties = PropertiesUtil.findAllProperties(project, PropertiesUtil.getResourceBundle(file), "errai.ui.bindableTypes");
+//      final Map<String, String> namesMap = PropertiesUtil.getPropertiesFile(file).getNamesMap();
+//      if (namesMap.containsKey("errai.ui.bindableTypes")) {
+//        String value = namesMap.get("errai.ui.bindableTypes");
+//
+//        for (String bindableType : value.split("\\s+")) {
+//          bindableTypes.add(bindableType.trim());
+//        }
+//      }
+      for (IProperty property : allProperties) {
+        final String value = property.getValue();
+        if (value != null) {
+          for (String s : value.split("\\s+")) {
+            bindableTypes.add(s.trim());
+          }
+        }
+      }
+    }
+
+    return bindableTypes;
   }
 }

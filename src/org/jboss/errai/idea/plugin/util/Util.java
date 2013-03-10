@@ -22,6 +22,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -796,5 +797,9 @@ public class Util {
     }
 
     return copyableUserData;
+  }
+
+  public static PsiFile[] getAllErraiAppProperties(Project project) {
+    return FilenameIndex.getFilesByName(project, "ErraiApp.properties", GlobalSearchScope.allScope(project));
   }
 }

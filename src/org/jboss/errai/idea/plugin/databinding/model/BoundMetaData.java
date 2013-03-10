@@ -9,6 +9,8 @@ import org.jboss.errai.idea.plugin.util.DefaultPolicy;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 
+import java.util.Set;
+
 /**
 * @author Mike Brock
 */
@@ -58,9 +60,11 @@ public class BoundMetaData {
     final PsiClass boundClass = getBindingMetaData().getBoundClass();
 
     if (property != null && boundClass != null) {
+      final Set<String> bindableTypes = DataBindUtil.getConfiguredBindableTypes(boundClass.getProject());
+
       PsiClass cls = boundClass;
       for (String token : property.split("\\.")) {
-        if (!Util.elementIsAnnotated(cls, Types.BINDABLE)) {
+        if (!bindableTypes.contains(cls.getQualifiedName()) && !Util.elementIsAnnotated(cls, Types.BINDABLE)) {
           PropertyValidation validation = new PropertyValidation();
           validation.setParentBindable(false);
           validation.setUnresolvedParent(cls);
