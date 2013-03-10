@@ -225,19 +225,6 @@ public class DataBindUtil {
     if (bindingType == null) return new BindabilityValidation(false);
     //todo: this needs to be aware of converters.
 
-//    if (bindingType.getQualifiedName().equals(String.class.getName())) {
-//      BindabilityValidation validation = new BindabilityValidation();
-//
-//      if (!Util.typeIsAssignableFrom(widgetType, Types.GWT_HAS_TEXT)) {
-//        validation.valid = false;
-//        validation.expectedWidgetType = Types.GWT_ELEMENT_TYPE;
-//      }
-//      else {
-//        validation.valid = true;
-//      }
-//      return validation;
-//    }
-//    else {
     BindabilityValidation validation = new BindabilityValidation();
     final PsiClassType[] superTypes = widgetType.getSuperTypes();
     validation.setValid(true);
@@ -270,14 +257,16 @@ public class DataBindUtil {
         }
         else {
           validation.setValid(false);
-          validation.setExpectedWidgetType("<invalid>");
-
-        }
+          validation.setExpectedWidgetType("<invalid>");        }
         break;
       }
     }
+
+    if (!validation.isValid() && Util.typeIsAssignableFrom(widgetType, Types.GWT_HAS_TEXT)) {
+      validation.setValid(true);
+    }
+
     return validation;
-//    }
   }
 
 
