@@ -571,8 +571,7 @@ public class Util {
     getOrCreateCache(OWNERSHIP_CACHE, file, new CacheProvider<Ownership>() {
       @Override
       public Ownership provide() {
-        System.out.println("declareOwner: " + file.getName() + "; " + psiClass.getQualifiedName());
-
+   //     System.out.println("declareOwner: " + file.getName() + "; " + psiClass.getQualifiedName());
         return new Ownership(file);
       }
 

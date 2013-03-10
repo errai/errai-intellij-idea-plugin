@@ -5,12 +5,14 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
@@ -22,6 +24,7 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiUtil;
@@ -382,13 +385,23 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
         holder.registerProblem(psiAnnotation, "The widget type cannot be bound to: " + validation.getBoundType().getQualifiedName()
             + "; widget accepts type: " + bindabilityValidation.getExpectedWidgetType());
 
-         //TODO: use this for more fine-grained errors.
-         //holder.getManager().createProblemDescriptor()
+        //TODO: use this for more fine-grained errors.
+        //holder.getManager().createProblemDescriptor()
       }
       else {
-        holder.registerProblem(psiAnnotation,
-            "The property '" + validation.getUnresolvedPropertyElement() + "' was not found in parent bean: "
-                + validation.getParentName() + "");
+        final String errorText = "The property '" + validation.getUnresolvedPropertyElement() + "' was not found in parent bean: "
+            + validation.getParentName();
+
+        final PsiAnnotationMemberValue value = psiAnnotation.getParameterList().getAttributes()[0].getValue();
+        for (PsiReference ref : value.getReferences()) {
+          if (ref instanceof ExpressionErrorReference) {
+            holder.registerProblemForReference(ref, ProblemHighlightType.ERROR, errorText);
+            holder.registerProblem(psiAnnotation, "The binding is invalid.");
+            return;
+          }
+        }
+
+        holder.registerProblem(psiAnnotation, errorText);
       }
     }
   }

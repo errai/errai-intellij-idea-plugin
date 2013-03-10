@@ -42,9 +42,7 @@ public class BeanPropertyReferenceContributor extends PsiReferenceContributor {
             final List<PsiReference> references = new ArrayList<PsiReference>();
             int cursor = 1;
             for (final String propertyName : text.split("\\.")) {
-              if (cls == null) {
-                break;
-              }
+
 
               final int rangeStart = cursor;
               final int rangeEnd = cursor + propertyName.length();
@@ -53,12 +51,21 @@ public class BeanPropertyReferenceContributor extends PsiReferenceContributor {
 
               cursor = rangeEnd + 1;
 
+              if (cls == null) {
+                references.add(new ExpressionErrorReference(literalExpression, propertyName, range));
+                break;
+              }
+
               final PsiClass parentType = cls;
               final PsiClass propPsiClass
                   = DataBindUtil.getBeanPropertyType(cls, propertyName.trim());
 
-              if (propPsiClass != null && metaData != null) {
+              if (propPsiClass != null) {
                 Util.declareOwner(propPsiClass.getContainingFile(), metaData.getTemplateClass());
+              }
+              else {
+                references.add(new ExpressionErrorReference(literalExpression, propertyName, range));
+                break;
               }
 
               references.add(new PsiReferenceBase<PsiLiteralExpression>(literalExpression, false) {
