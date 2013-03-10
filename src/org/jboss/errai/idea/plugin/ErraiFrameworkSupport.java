@@ -12,6 +12,13 @@ import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ProcessingContext;
+import org.jboss.errai.idea.plugin.ui.completion.TemplateDatafieldReference;
+import org.jboss.errai.idea.plugin.ui.model.TemplatedReference;
+import org.jboss.errai.idea.plugin.util.XmlAttributeMatchingPattern;
+import org.jboss.errai.idea.plugin.ui.completion.XmlDatafieldReference;
+import org.jboss.errai.idea.plugin.ui.completion.BeanDataFieldReference;
+import org.jboss.errai.idea.plugin.util.AnnotationMatchingPattern;
+import org.jboss.errai.idea.plugin.util.Types;
 import org.jetbrains.annotations.NotNull;
 
 /**
