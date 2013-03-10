@@ -4,11 +4,13 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
+import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
 * @author Mike Brock
@@ -66,7 +68,19 @@ public class TemplateBindingMetaData {
     }
   }
 
-  public boolean isValid() {
+  public boolean isValidBindableModel() {
+    if (boundClass == null) {
+      return false;
+    }
+    if (Util.elementIsAnnotated(boundClass, Types.BINDABLE)) {
+      return true;
+    }
+
+    final Set<String> configuredBindableTypes = DataBindUtil.getConfiguredBindableTypes(boundClass.getProject());
+    return configuredBindableTypes.contains(boundClass.getQualifiedName());
+  }
+
+  public boolean isCacheValid() {
     if (boundClass == null) {
       return false;
     }

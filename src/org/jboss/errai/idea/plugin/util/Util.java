@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -256,7 +257,10 @@ public class Util {
   public static Map<String, TemplateDataField> findAllDataFieldTags(final PsiFile templateFile,
                                                                     final XmlTag rootTag,
                                                                     final boolean includeRoot) {
-    return getOrCreateCache(dataFieldsCacheKey, templateFile, new CacheProvider<DataFieldCacheHolder>() {
+
+
+    final Map<String, TemplateDataField> value
+        = getOrCreateCache(dataFieldsCacheKey, templateFile, new CacheProvider<DataFieldCacheHolder>() {
       @Override
       public DataFieldCacheHolder provide() {
         final Map<String, TemplateDataField> allDataFieldTags = findAllDataFieldTags(rootTag, includeRoot);
@@ -268,7 +272,31 @@ public class Util {
         return dataFieldCacheHolder.getTime() == templateFile.getModificationStamp();
       }
     }).getValue();
+
+    final Map<String, TemplateDataField> templateDataFields = new HashMap<String, TemplateDataField>(value);
+    Iterator<TemplateDataField> iterator = templateDataFields.values().iterator();
+    final PsiElement rootElement = rootTag.getOriginalElement();
+
+    while (iterator.hasNext()) {
+      TemplateDataField field = iterator.next();
+      final PsiElement originalElement = field.getTag().getOriginalElement();
+      if (rootElement.equals(originalElement) && includeRoot) {
+      }
+      else if (!isChild(originalElement, rootElement)) {
+        iterator.remove();
+      }
+    }
+    return templateDataFields;
   }
+
+  private static boolean isChild(PsiElement child, PsiElement parent) {
+    PsiElement el = child;
+    while ((el = el.getParent()) != null) {
+      if (el.equals(parent)) return true;
+    }
+    return false;
+  }
+
 
   private static Map<String, TemplateDataField> findAllDataFieldTags(XmlTag rootTag, boolean includeRoot) {
     Map<String, TemplateDataField> references = new HashMap<String, TemplateDataField>();
@@ -338,6 +366,10 @@ public class Util {
       templateName = templateClass.getName() + ".html";
     }
     else {
+      if (!(attributes[0].getValue() instanceof PsiLiteralExpression)) {
+        return null;
+      }
+
       final PsiLiteralExpression literalExpression = (PsiLiteralExpression) attributes[0].getValue();
       if (literalExpression == null) {
         return null;
@@ -366,7 +398,6 @@ public class Util {
       fileByRelativePath = null;
     }
 
-    final Map<String, TemplateDataField> allDataFieldTags = findAllDataFieldTags(fileByRelativePath, null, project, true);
 
     final XmlTag rootTag;
     if (fileByRelativePath == null) {
@@ -382,6 +413,7 @@ public class Util {
       }
     }
     else {
+      final Map<String, TemplateDataField> allDataFieldTags = findAllDataFieldTags(fileByRelativePath, null, project, true);
       final TemplateDataField dataFieldReference = allDataFieldTags.get(reference.getRootNode());
       if (dataFieldReference != null) {
         rootTag = dataFieldReference.getTag();

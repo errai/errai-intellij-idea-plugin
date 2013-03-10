@@ -12,13 +12,13 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiUtil;
 import org.jboss.errai.idea.plugin.ui.TemplateDataField;
-import org.jboss.errai.idea.plugin.ui.model.TemplateMetaData;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +49,10 @@ public class TemplatedReference extends PsiReferenceBase<PsiLiteralExpression> {
 
     final Project project = getElement().getProject();
     final TemplateMetaData templateMetaData = Util.getTemplateMetaData(getElement());
+    if (templateMetaData == null) {
+      return Collections.emptyMap();
+    }
+
     final PsiDirectory baseDir = getBaseDir();
 
     final Collection<TemplateDataField> allDataFieldTags = templateMetaData.getAllDataFieldsInTemplate(true).values();

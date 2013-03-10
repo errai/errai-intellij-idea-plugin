@@ -142,7 +142,7 @@ public class DataBindUtil {
 
       @Override
       public boolean isCacheValid(TemplateBindingMetaData templateBindingMetaData) {
-        return templateBindingMetaData.isValid();
+        return templateBindingMetaData.isCacheValid();
       }
     });
   }

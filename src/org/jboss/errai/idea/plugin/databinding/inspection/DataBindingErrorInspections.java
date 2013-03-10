@@ -10,9 +10,11 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiReference;
-import org.jboss.errai.idea.plugin.databinding.model.BindabilityValidation;
+import com.intellij.psi.PsiVariable;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
+import org.jboss.errai.idea.plugin.databinding.model.BindabilityValidation;
 import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyValidation;
 import org.jboss.errai.idea.plugin.util.ExpressionErrorReference;
@@ -77,56 +79,78 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
         if (qualifiedName.equals(Types.BOUND)) {
           ensureBoundFieldIsValid(holder, annotation);
         }
+        else if (qualifiedName.equals(Types.AUTO_BOUND)) {
+          ensureBoundModelIsValid(holder, annotation);
+        }
       }
     }
   }
 
   public static void ensureBoundFieldIsValid(ProblemsHolder holder,
-                                                     PsiAnnotation psiAnnotation) {
+                                             PsiAnnotation psiAnnotation) {
 
 
-      final BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(psiAnnotation);
+    final BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(psiAnnotation);
 
-      if (boundMetaData.getBindingMetaData().getBoundClass() == null) {
-        holder.registerProblem(psiAnnotation, "@Bound property is not associated with any model.");
-        return;
+    if (boundMetaData.getBindingMetaData().getBoundClass() == null) {
+      holder.registerProblem(psiAnnotation, "@Bound property is not associated with any model.");
+      return;
+    }
+
+    final PropertyValidation validation = boundMetaData.validateProperty();
+    if (!validation.isValid()) {
+      if (!validation.isParentBindable()) {
+        final PsiClass unresolvedParent = validation.getUnresolvedParent();
+        if (unresolvedParent == null) {
+          return;
+        }
+
+        holder.registerProblem(Util.getAnnotationMemberValue(psiAnnotation, "property"),
+            "The property '" + validation.getUnresolvedPropertyElement() + "' is invalid because its parent bean "
+                + "(" + unresolvedParent.getQualifiedName() + ") is not bindable.");
       }
+      else if (validation.hasBindabilityProblem()) {
+        final BindabilityValidation bindabilityValidation = validation.getBindabilityValidation();
+        holder.registerProblem(psiAnnotation, "The widget type cannot be bound to: " + validation.getBoundType().getQualifiedName()
+            + "; widget accepts type: " + bindabilityValidation.getExpectedWidgetType());
 
-      final PropertyValidation validation = boundMetaData.validateProperty();
-      if (!validation.isValid()) {
-        if (!validation.isParentBindable()) {
-          final PsiClass unresolvedParent = validation.getUnresolvedParent();
-          if (unresolvedParent == null) {
+        //TODO: use this for more fine-grained errors.
+        //holder.getManager().createProblemDescriptor()
+      }
+      else {
+        final String errorText = "The property '" + validation.getUnresolvedPropertyElement() + "' was not found in parent bean: "
+            + validation.getParentName();
+
+        final PsiNameValuePair[] attributes = psiAnnotation.getParameterList().getAttributes();
+        if (attributes.length == 0) {
+          return;
+        }
+
+        final PsiAnnotationMemberValue value = attributes[0].getValue();
+        if (value == null) {
+          return;
+        }
+        for (PsiReference ref : value.getReferences()) {
+          if (ref instanceof ExpressionErrorReference) {
+            holder.registerProblemForReference(ref, ProblemHighlightType.ERROR, errorText);
+            holder.registerProblem(psiAnnotation, "The binding is invalid.");
             return;
           }
-
-          holder.registerProblem(Util.getAnnotationMemberValue(psiAnnotation, "property"),
-              "The property '" + validation.getUnresolvedPropertyElement() + "' is invalid because its parent bean "
-                  + "(" + unresolvedParent.getQualifiedName() + ") is not bindable.");
         }
-        else if (validation.hasBindabilityProblem()) {
-          final BindabilityValidation bindabilityValidation = validation.getBindabilityValidation();
-          holder.registerProblem(psiAnnotation, "The widget type cannot be bound to: " + validation.getBoundType().getQualifiedName()
-              + "; widget accepts type: " + bindabilityValidation.getExpectedWidgetType());
 
-          //TODO: use this for more fine-grained errors.
-          //holder.getManager().createProblemDescriptor()
-        }
-        else {
-          final String errorText = "The property '" + validation.getUnresolvedPropertyElement() + "' was not found in parent bean: "
-              + validation.getParentName();
-
-          final PsiAnnotationMemberValue value = psiAnnotation.getParameterList().getAttributes()[0].getValue();
-          for (PsiReference ref : value.getReferences()) {
-            if (ref instanceof ExpressionErrorReference) {
-              holder.registerProblemForReference(ref, ProblemHighlightType.ERROR, errorText);
-              holder.registerProblem(psiAnnotation, "The binding is invalid.");
-              return;
-            }
-          }
-
-          holder.registerProblem(psiAnnotation, errorText);
-        }
+        holder.registerProblem(psiAnnotation, errorText);
       }
     }
+  }
+
+  public static void ensureBoundModelIsValid(ProblemsHolder holder, PsiAnnotation annotation) {
+    final BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(annotation);
+    if (!boundMetaData.getBindingMetaData().isValidBindableModel()) {
+      final PsiClass boundClass = boundMetaData.getBindingMetaData().getBoundClass();
+      if (boundClass != null) {
+        final PsiVariable var = (PsiVariable) Util.getImmediateOwnerElement(annotation);
+        holder.registerProblem(var.getTypeElement(), "The model type (" + boundClass.getQualifiedName() + ") is not bindable.");
+      }
+    }
+  }
 }

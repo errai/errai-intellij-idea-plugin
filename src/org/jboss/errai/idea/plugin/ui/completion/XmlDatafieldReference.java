@@ -78,7 +78,7 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
       final Collection<String> strings = Util.extractDataFieldList(allAnnotatedElements);
 
       for (String dataField : strings) {
-        if (allDataFieldTags.containsKey(dataField)) continue;
+        if (allDataFieldTags.containsKey(dataField) || dataField.contains(Util.INTELLIJ_MAGIC_STRING)) continue;
 
         dataFieldRefs.add(new DataFieldRef(dataField, psiClass.getQualifiedName()));
       }

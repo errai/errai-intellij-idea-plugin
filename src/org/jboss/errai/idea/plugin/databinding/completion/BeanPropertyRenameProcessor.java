@@ -34,7 +34,18 @@ public class BeanPropertyRenameProcessor extends RenamePsiElementProcessor {
     if (element instanceof PsiField) {
       final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
 
-      return topLevelClass != null && Util.elementIsAnnotated(topLevelClass, Types.BINDABLE);
+
+
+      if (topLevelClass != null) {
+        if (Util.elementIsAnnotated(topLevelClass, Types.BINDABLE)) {
+          return true;
+        }
+        final Set<String> configuredBindableTypes
+            = DataBindUtil.getConfiguredBindableTypes(topLevelClass.getProject());
+        if (configuredBindableTypes.contains(topLevelClass.getQualifiedName())) {
+          return true;
+        }
+      }
     }
     return false;
   }

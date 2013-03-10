@@ -109,6 +109,10 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
 
     final TemplateMetaData metaData = Util.getTemplateMetaData(annotation);
 
+    if (metaData == null) {
+      return;
+    }
+
     final VirtualFile templateVF = metaData.getTemplateFile();
     final PsiNameValuePair attribute = metaData.getAttribute();
 
@@ -184,6 +188,10 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
                                             PsiAnnotation annotation) {
 
     final TemplateMetaData templateMetaData = Util.getTemplateMetaData(annotation);
+    if (templateMetaData == null) {
+      return;
+    }
+
     final Project project = holder.getProject();
     final Map<String, TemplateDataField> allDataFieldTags
         = templateMetaData.getAllDataFieldsInTemplate(false);
@@ -196,6 +204,19 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
     if (annotationValue == null) {
       return;
     }
+
+    final DataFieldExistence dataFieldExistence = dataFieldExistenceCheck(annotation, templateMetaData);
+    final AnnotationValueElement annoValueEl = Util.getValueStringFromAnnotationWithDefault(annotation);
+    final String annoValue = annoValueEl.getValue();
+    if (dataFieldExistence != DataFieldExistence.EXISTS) {
+       if (dataFieldExistence == DataFieldExistence.OUT_OF_SCOPE) {
+         holder.registerProblem(annoValueEl.getLogicalElement(), "Data-field is out of scope (it is not an descendant of the template root node)");
+       }
+       else {
+         holder.registerProblem(annoValueEl.getLogicalElement(), "Cannot resolve data-field: " + annoValueEl.getValue());
+       }
+      return;
+     }
 
     if (!allDataFieldTags.containsKey(annotationValue.getValue())) {
       holder.registerProblem(annotationValue.getLogicalElement(),
@@ -235,15 +256,14 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
     final PsiClass psiClassParameterType = JavaPsiFacade.getInstance(project)
         .findClass(parameterTypeFQN, ProjectScope.getAllScope(project));
 
-    final Map<String, TemplateDataField> inScopeDataFields = metaData.getAllDataFieldsInTemplate(false);
-    final Map<String, ConsolidateDataFieldElementResult> dataFields = metaData.getConsolidatedDataFields();
-
     final AnnotationValueElement annoValueEl = Util.getValueStringFromAnnotationWithDefault(annotation);
     final String annoValue = annoValueEl.getValue();
 
-    final TemplateDataField result = inScopeDataFields.get(annoValue);
-    if (result == null) {
-      if (dataFields.containsKey(annoValue)) {
+    final DataFieldExistence dataFieldExistence = dataFieldExistenceCheck(annotation, metaData);
+    final Map<String, ConsolidateDataFieldElementResult> dataFields = metaData.getConsolidatedDataFields();
+
+    if (dataFieldExistence != DataFieldExistence.EXISTS) {
+      if (dataFieldExistence == DataFieldExistence.OUT_OF_SCOPE) {
         holder.registerProblem(annoValueEl.getLogicalElement(), "Data-field is out of scope (it is not an descendant of the template root node)");
       }
       else {
@@ -354,6 +374,32 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
     }
     else if (!Util.typeIsAssignableFrom(psiClassParameterType, Types.GWT_DOM_EVENT_TYPE)) {
       holder.registerProblem(psiParameter, "Not a valid event type.");
+    }
+  }
+
+  enum DataFieldExistence {
+    EXISTS, DOES_NOT_EXIST, OUT_OF_SCOPE;
+
+  }
+
+  public static DataFieldExistence dataFieldExistenceCheck(PsiAnnotation annotation, TemplateMetaData metaData) {
+    final Map<String, TemplateDataField> inScopeDataFields = metaData.getAllDataFieldsInTemplate(false);
+    final Map<String, ConsolidateDataFieldElementResult> dataFields = metaData.getConsolidatedDataFields();
+
+    final AnnotationValueElement annoValueEl = Util.getValueStringFromAnnotationWithDefault(annotation);
+    final String annoValue = annoValueEl.getValue();
+
+    final TemplateDataField result = inScopeDataFields.get(annoValue);
+    if (result == null) {
+      if (dataFields.containsKey(annoValue)) {
+        return DataFieldExistence.OUT_OF_SCOPE;
+      }
+      else {
+        return DataFieldExistence.DOES_NOT_EXIST;
+      }
+    }
+    else {
+      return DataFieldExistence.EXISTS;
     }
   }
 
