@@ -119,13 +119,7 @@ public class BeanPropertyReferenceContributor extends PsiReferenceContributor {
 
                 @Override
                 public boolean isReferenceTo(PsiElement element) {
-                  boolean ref = element.equals(resolve());
-                  if (ref) {
-                    return true;
-                  }
-                  else {
-                    return false;
-                  }
+                  return element.equals(resolve());
                 }
 
                 @NotNull

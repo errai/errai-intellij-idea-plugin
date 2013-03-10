@@ -2,19 +2,13 @@ package org.jboss.errai.idea.plugin.ui.model;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.xml.XmlTag;
 import org.jboss.errai.idea.plugin.ui.TemplateDataField;
-import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
-import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -69,29 +63,25 @@ public class TemplateMetaData {
     return rootTag;
   }
 
-  public Project getProject() {
-    return project;
-  }
-
   public Map<String, TemplateDataField> getAllDataFieldsInTemplate(boolean includeRootTag) {
     return Util.findAllDataFieldTags(this, project, includeRootTag);
   }
 
-  public Map<String, ClassDataField> getAllDataFieldsInClass() {
-    final Collection<AnnotationSearchResult> allInjectionPoints
-        = Util.findAllAnnotatedElements(templateClass, Types.DATAFIELD_ANNOTATION_NAME);
-
-    final Map<String, ClassDataField> map = new LinkedHashMap<String, ClassDataField>();
-    for (AnnotationSearchResult injectionPoint : allInjectionPoints) {
-      PsiElement owningElement = injectionPoint.getOwningElement();
-      PsiAnnotation psiAnnotation = injectionPoint.getAnnotation();
-
-      final String value = Util.getValueStringFromAnnotationWithDefault(psiAnnotation).getValue();
-
-      map.put(value, new ClassDataField(value, owningElement));
-    }
-    return map;
-  }
+//  public Map<String, PsiAnnotation> getAllDataFieldsInClass() {
+//    final Collection<AnnotationSearchResult> allInjectionPoints
+//        = Util.findAllAnnotatedElements(templateClass, Types.DATAFIELD_ANNOTATION_NAME);
+//
+//    final Map<String, PsiAnnotation> map = new LinkedHashMap<String, PsiAnnotation>();
+//    for (AnnotationSearchResult injectionPoint : allInjectionPoints) {
+//   //   PsiElement owningElement = injectionPoint.getOwningElement();
+//      PsiAnnotation psiAnnotation = injectionPoint.getAnnotation();
+//
+//      final String value = Util.getValueStringFromAnnotationWithDefault(psiAnnotation).getValue();
+//
+//      map.put(value, psiAnnotation);
+//    }
+//    return map;
+//  }
 
 
   public Map<String, ConsolidateDataFieldElementResult> getConsolidatedDataFields() {

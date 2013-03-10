@@ -1,7 +1,6 @@
 package org.jboss.errai.idea.plugin.ui.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReferenceBase;
@@ -27,7 +26,6 @@ public class TemplateDatafieldReference extends PsiReferenceBase<PsiLiteralExpre
 
   private Map<String, PsiElement> getAvailableDataFields() {
     Map<String, PsiElement> map = new HashMap<String, PsiElement>();
-    final Project project = getElement().getProject();
     final TemplateMetaData metaData = Util.getTemplateMetaData(getElement());
     if (metaData != null) {
       final String rootNode = metaData.getTemplateExpression().getRootNode();

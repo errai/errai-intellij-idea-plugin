@@ -12,6 +12,7 @@ import com.intellij.psi.PsiClassObjectAccessExpression;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
@@ -53,8 +54,6 @@ import java.util.Stack;
  */
 public class Util {
   public static final String INTELLIJ_MAGIC_STRING = "IntellijIdeaRulezzz";
-  // private static final Key<Set<PsiClass>> templateClassOwners = Key.create("templateClassOwners");
-
   public static final Key<Ownership> OWNERSHIP_CACHE = Key.create("OWNERSHIP_CACHE");
   private static final Key<DataFieldCacheHolder> dataFieldsCacheKey = Key.create("dataFieldsCache");
 
@@ -152,20 +151,14 @@ public class Util {
 
   public static class Ownership {
     private final Set<PsiClass> templateClasses = new HashSet<PsiClass>();
-    private final PsiFile associatedFile;
     private final long lastModified;
 
     public Ownership(PsiFile associatedFile) {
-      this.associatedFile = associatedFile;
       this.lastModified = associatedFile.getModificationStamp();
     }
 
     public Set<PsiClass> getTemplateClasses() {
       return templateClasses;
-    }
-
-    public long getLastModified() {
-      return lastModified;
     }
 
     public boolean isValid() {
@@ -257,14 +250,12 @@ public class Util {
   public static Map<String, TemplateDataField> findAllDataFieldTags(final PsiFile templateFile,
                                                                     final XmlTag rootTag,
                                                                     final boolean includeRoot) {
-
-
     final Map<String, TemplateDataField> value
         = getOrCreateCache(dataFieldsCacheKey, templateFile, new CacheProvider<DataFieldCacheHolder>() {
       @Override
       public DataFieldCacheHolder provide() {
         final Map<String, TemplateDataField> allDataFieldTags = findAllDataFieldTags(rootTag, includeRoot);
-        return new DataFieldCacheHolder(templateFile.getModificationStamp(), rootTag, allDataFieldTags);
+        return new DataFieldCacheHolder(templateFile.getModificationStamp(), allDataFieldTags);
       }
 
       @Override
@@ -297,7 +288,6 @@ public class Util {
     return false;
   }
 
-
   private static Map<String, TemplateDataField> findAllDataFieldTags(XmlTag rootTag, boolean includeRoot) {
     Map<String, TemplateDataField> references = new HashMap<String, TemplateDataField>();
     if (rootTag == null) {
@@ -322,7 +312,6 @@ public class Util {
     }
   }
 
-
   public static PsiAnnotation findTemplatedAnnotation(PsiElement element) {
     final PsiClass topLevelClass;
 
@@ -330,7 +319,9 @@ public class Util {
       if (element instanceof PsiClass) {
         topLevelClass = (PsiClass) element;
       }
-      return null;
+      else {
+        return null;
+      }
     }
     else {
       topLevelClass = PsiUtil.getTopLevelClass(element);
@@ -352,13 +343,21 @@ public class Util {
   private static TemplateMetaData getTemplateMetaData(PsiAnnotation annotation, Project project) {
     if (annotation == null) return null;
 
-    if (!annotation.getQualifiedName().equals(Types.TEMPLATED_ANNOTATION_NAME)) {
+    final String qualifiedName = annotation.getQualifiedName();
+
+    if (qualifiedName == null) return null;
+
+    if (!qualifiedName.equals(Types.TEMPLATED_ANNOTATION_NAME)) {
       annotation = findTemplatedAnnotation(annotation);
       if (annotation == null) return null;
     }
 
-
     final PsiClass templateClass = PsiUtil.getTopLevelClass(annotation);
+
+    if (templateClass == null) {
+      return null;
+    }
+
     final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
 
     final String templateName;
@@ -381,6 +380,10 @@ public class Util {
 
     final PsiFile containingFile = templateClass.getContainingFile().getOriginalFile();
     PsiDirectory containerDir = containingFile.getParent();
+
+    if (containerDir == null) {
+      return null;
+    }
 
     final TemplateExpression reference = Util.parseReference(templateName);
 
@@ -545,11 +548,14 @@ public class Util {
       errorElement = attributes[0];
     }
 
-    return new AnnotationValueElement(attributes.length == 0, value, errorElement);
+    return new AnnotationValueElement(value, errorElement);
   }
 
   public static Collection<AnnotationSearchResult> findAllAnnotatedElements(PsiElement element, String annotation) {
     final PsiClass bean = PsiUtil.getTopLevelClass(element);
+    if (bean == null) {
+      return Collections.emptyList();
+    }
 
     final List<AnnotationSearchResult> elementList = new ArrayList<AnnotationSearchResult>();
     PsiAnnotation a;
@@ -595,9 +601,17 @@ public class Util {
   }
 
   public static Map<String, ConsolidateDataFieldElementResult> getConsolidatedDataFields(PsiElement element, Project project) {
-
     final TemplateMetaData metaData = Util.getTemplateMetaData(element);
-    final String beanClass = PsiUtil.getTopLevelClass(element).getQualifiedName();
+    if (metaData == null) {
+      return Collections.emptyMap();
+    }
+
+    final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
+    if (topLevelClass == null) {
+      return Collections.emptyMap();
+    }
+
+    final String beanClass = topLevelClass.getQualifiedName();
 
     final Map<String, ConsolidateDataFieldElementResult> results = new LinkedHashMap<String, ConsolidateDataFieldElementResult>();
 
@@ -611,7 +625,12 @@ public class Util {
 
     final Map<String, TemplateDataField> allDataFieldTags = Util.findAllDataFieldTags(metaData, project, false);
     for (TemplateDataField ref : allDataFieldTags.values()) {
-      final XmlAttributeValue valueElement = ref.getTag().getAttribute("data-field").getValueElement();
+      final XmlAttribute attribute = ref.getTag().getAttribute("data-field");
+      if (attribute == null) {
+        continue;
+      }
+
+      final XmlAttributeValue valueElement = attribute.getValueElement();
       if (results.containsKey(ref.getDataFieldName())) {
         results.get(ref.getDataFieldName()).setLinkingElement(valueElement);
         continue;
@@ -624,12 +643,12 @@ public class Util {
     return results;
   }
 
-
   public static boolean fieldElementIsInitialized(PsiElement element) {
     if (element instanceof PsiField) {
       final PsiField psiField = (PsiField) element;
-      if (psiField.getInitializer() != null) {
-        return !"null".equals(psiField.getInitializer().getText());
+      final PsiExpression initializer = psiField.getInitializer();
+      if (initializer != null) {
+        return !"null".equals(initializer.getText());
       }
     }
     return false;
@@ -659,25 +678,25 @@ public class Util {
     return JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
   }
 
-
-  public static PsiClass getTypeInformation(PsiClass from, String... toFQN) {
-    if (from == null) return null;
-
-    Set<String> matching = new HashSet<String>(Arrays.asList(toFQN));
-    PsiClass cls = from;
-    do {
-      if (matching.contains(cls.getQualifiedName())) return cls;
-
-      for (PsiClass interfaceClass : cls.getInterfaces()) {
-        if (typeIsAssignableFrom(interfaceClass, toFQN)) {
-          return interfaceClass;
-        }
-      }
-    }
-    while ((cls = cls.getSuperClass()) != null);
-
-    return null;
-  }
+//
+//  public static PsiClass getTypeInformation(PsiClass from, String... toFQN) {
+//    if (from == null) return null;
+//
+//    Set<String> matching = new HashSet<String>(Arrays.asList(toFQN));
+//    PsiClass cls = from;
+//    do {
+//      if (matching.contains(cls.getQualifiedName())) return cls;
+//
+//      for (PsiClass interfaceClass : cls.getInterfaces()) {
+//        if (typeIsAssignableFrom(interfaceClass, toFQN)) {
+//          return interfaceClass;
+//        }
+//      }
+//    }
+//    while ((cls = cls.getSuperClass()) != null);
+//
+//    return null;
+//  }
 
   public static SuperTypeInfo getTypeInformation(PsiClass from, String toFQN) {
     final PsiClassType[] superTypes = from.getSuperTypes();
@@ -733,7 +752,6 @@ public class Util {
     getOrCreateCache(OWNERSHIP_CACHE, file, new CacheProvider<Ownership>() {
       @Override
       public Ownership provide() {
-        //     System.out.println("declareOwner: " + file.getName() + "; " + psiClass.getQualifiedName());
         return new Ownership(file);
       }
 
@@ -753,7 +771,6 @@ public class Util {
       return ownership.getTemplateClasses();
     }
   }
-
 
   public static PsiAnnotationMemberValue getAnnotationMemberValue(PsiAnnotation annotation, String attributeName) {
     final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
@@ -817,15 +834,11 @@ public class Util {
     if (copyableUserData != null) {
       if (!provider.isCacheValid(copyableUserData)) {
         copyableUserData = null;
-        //  System.out.println("key '" + cacheKey.toString() + "' has been invalidated");
       }
     }
 
     if (copyableUserData == null) {
       originalFile.putCopyableUserData(cacheKey, copyableUserData = provider.provide());
-    }
-    else {
-      //  System.out.println("servicing key '" + cacheKey.toString() + "' from cache");
     }
 
     return copyableUserData;

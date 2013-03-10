@@ -12,6 +12,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.databinding.model.BindabilityValidation;
@@ -113,9 +114,6 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
         final BindabilityValidation bindabilityValidation = validation.getBindabilityValidation();
         holder.registerProblem(psiAnnotation, "The widget type cannot be bound to: " + validation.getBoundType().getQualifiedName()
             + "; widget accepts type: " + bindabilityValidation.getExpectedWidgetType());
-
-        //TODO: use this for more fine-grained errors.
-        //holder.getManager().createProblemDescriptor()
       }
       else {
         final String errorText = "The property '" + validation.getUnresolvedPropertyElement() + "' was not found in parent bean: "
@@ -149,7 +147,14 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
       final PsiClass boundClass = boundMetaData.getBindingMetaData().getBoundClass();
       if (boundClass != null) {
         final PsiVariable var = (PsiVariable) Util.getImmediateOwnerElement(annotation);
-        holder.registerProblem(var.getTypeElement(), "The model type (" + boundClass.getQualifiedName() + ") is not bindable.");
+        if (var == null) {
+          return;
+        }
+        final PsiTypeElement typeElement = var.getTypeElement();
+        if (typeElement == null) {
+          return;
+        }
+        holder.registerProblem(typeElement, "The model type (" + boundClass.getQualifiedName() + ") is not bindable.");
       }
     }
   }

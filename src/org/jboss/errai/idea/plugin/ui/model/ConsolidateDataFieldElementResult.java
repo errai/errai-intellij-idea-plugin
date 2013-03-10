@@ -27,10 +27,6 @@ public class ConsolidateDataFieldElementResult {
     return sourceName;
   }
 
-  public PsiElement getElement() {
-    return element;
-  }
-
   public void setLinkingElement(PsiElement linkingElement) {
     this.linkingElement = linkingElement;
   }

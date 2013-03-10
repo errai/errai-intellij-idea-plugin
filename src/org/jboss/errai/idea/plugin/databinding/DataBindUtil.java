@@ -76,8 +76,8 @@ public class DataBindUtil {
     final Map<String, PropertyInfo> propertyInfoMap = new LinkedHashMap<String, PropertyInfo>();
     for (final PsiMethod method : cls.getAllMethods()) {
       if (method.getModifierList().hasModifierProperty("public")) {
-
-        if (PsiUtil.getTopLevelClass(method).getQualifiedName().equals("java.lang.Object")) {
+        final PsiClass topLevelClass = PsiUtil.getTopLevelClass(method);
+        if (topLevelClass == null || topLevelClass.getQualifiedName().equals("java.lang.Object")) {
           continue;
         }
 

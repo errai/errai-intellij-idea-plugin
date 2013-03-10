@@ -52,7 +52,12 @@ public class BeanPropertyRenameProcessor extends RenamePsiElementProcessor {
 
   @Override
   public void prepareRenaming(final PsiElement element, String replacementStr, Map<PsiElement, String> psiElementStringMap) {
-    final PsiFile containingFile = PsiUtil.getTopLevelClass(element).getContainingFile();
+    final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
+    if (topLevelClass == null) {
+      return;
+    }
+
+    final PsiFile containingFile = topLevelClass.getContainingFile();
     final Set<PsiClass> owners = Util.getOwners(containingFile);
     for (PsiClass psiClass : owners) {
       final TemplateBindingMetaData metaData = DataBindUtil.getTemplateBindingMetaData(psiClass);
