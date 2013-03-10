@@ -1,7 +1,6 @@
 package org.jboss.errai.idea.plugin.databinding.model;
 
 import com.intellij.psi.PsiClass;
-import org.jboss.errai.idea.plugin.databinding.BindabilityValidation;
 
 /**
 * @author Mike Brock

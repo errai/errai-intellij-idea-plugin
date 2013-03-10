@@ -1,4 +1,4 @@
-package org.jboss.errai.idea.plugin.databinding;
+package org.jboss.errai.idea.plugin.databinding.model;
 
 /**
 * @author Mike Brock
@@ -20,5 +20,13 @@ public class BindabilityValidation {
 
   public String getExpectedWidgetType() {
     return expectedWidgetType;
+  }
+
+  public void setValid(boolean valid) {
+    this.valid = valid;
+  }
+
+  public void setExpectedWidgetType(String expectedWidgetType) {
+    this.expectedWidgetType = expectedWidgetType;
   }
 }

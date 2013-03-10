@@ -11,7 +11,7 @@ import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
-import org.jboss.errai.idea.plugin.databinding.BindabilityValidation;
+import org.jboss.errai.idea.plugin.databinding.model.BindabilityValidation;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyValidation;

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import org.jboss.errai.idea.plugin.databinding.model.BindabilityValidation;
 import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.ConvertibilityMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyInfo;
@@ -224,58 +225,59 @@ public class DataBindUtil {
     if (bindingType == null) return new BindabilityValidation(false);
     //todo: this needs to be aware of converters.
 
-    if (bindingType.getQualifiedName().equals(String.class.getName())) {
-      BindabilityValidation validation = new BindabilityValidation();
+//    if (bindingType.getQualifiedName().equals(String.class.getName())) {
+//      BindabilityValidation validation = new BindabilityValidation();
+//
+//      if (!Util.typeIsAssignableFrom(widgetType, Types.GWT_HAS_TEXT)) {
+//        validation.valid = false;
+//        validation.expectedWidgetType = Types.GWT_ELEMENT_TYPE;
+//      }
+//      else {
+//        validation.valid = true;
+//      }
+//      return validation;
+//    }
+//    else {
+    BindabilityValidation validation = new BindabilityValidation();
+    final PsiClassType[] superTypes = widgetType.getSuperTypes();
+    validation.setValid(true);
 
-      if (!Util.typeIsAssignableFrom(widgetType, Types.GWT_HAS_TEXT)) {
-        validation.valid = false;
-        validation.expectedWidgetType = Types.GWT_ELEMENT_TYPE;
-      }
-      else {
-        validation.valid = true;
-      }
-      return validation;
+    Stack<PsiClassType> toSearch = new Stack<PsiClassType>();
+    for (PsiClassType type : superTypes) {
+      toSearch.push(type);
     }
-    else {
-      BindabilityValidation validation = new BindabilityValidation();
-      final PsiClassType[] superTypes = widgetType.getSuperTypes();
-      validation.valid = true;
 
-      Stack<PsiClassType> toSearch = new Stack<PsiClassType>();
-      for (PsiClassType type : superTypes) {
-        toSearch.push(type);
-      }
-
-      while (!toSearch.isEmpty()) {
-        PsiClassType type = toSearch.pop();
-        for (PsiType psiType : type.getSuperTypes()) {
-          if (psiType instanceof PsiClassType) {
-            PsiClassType t = (PsiClassType) psiType;
-            if (!t.getCanonicalText().equals("java.lang.Object")) {
-              toSearch.push(t);
-            }
+    while (!toSearch.isEmpty()) {
+      PsiClassType type = toSearch.pop();
+      for (PsiType psiType : type.getSuperTypes()) {
+        if (psiType instanceof PsiClassType) {
+          PsiClassType t = (PsiClassType) psiType;
+          if (!t.getCanonicalText().equals("java.lang.Object")) {
+            toSearch.push(t);
           }
         }
-
-        if (type.getCanonicalText().startsWith(Types.GWT_TAKES_VALUE)) {
-          PsiClass typeParm = Util.getErasedTypeParam(bindingType.getProject(), type.getCanonicalText());
-
-          if (typeParm != null) {
-            if (!Util.typeIsAssignableFrom(typeParm, bindingType.getQualifiedName())
-                && !convertibilityMetaData.canConvert(typeParm, bindingType)) {
-              validation.valid = false;
-              validation.expectedWidgetType = typeParm.getQualifiedName();
-            }
-          }
-          else {
-            validation.valid = false;
-            validation.expectedWidgetType = "<invalid class>";
-          }
-          break;
-        }
       }
-      return validation;
+
+      if (type.getCanonicalText().startsWith(Types.GWT_TAKES_VALUE)) {
+        PsiClass typeParm = Util.getErasedTypeParam(bindingType.getProject(), type.getCanonicalText());
+
+        if (typeParm != null) {
+          if (!Util.typeIsAssignableFrom(typeParm, bindingType.getQualifiedName())
+              && !convertibilityMetaData.canConvert(typeParm, bindingType)) {
+            validation.setValid(false);
+            validation.setExpectedWidgetType(typeParm.getQualifiedName());
+          }
+        }
+        else {
+          validation.setValid(false);
+          validation.setExpectedWidgetType("<invalid>");
+
+        }
+        break;
+      }
     }
+    return validation;
+//    }
   }
 
 
