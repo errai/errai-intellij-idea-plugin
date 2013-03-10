@@ -32,7 +32,9 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <psi.referenceContributor implementation="org.jboss.errai.idea.plugin.BeanPropertyReferenceContributor"/>
     <inspectionToolProvider implementation="org.jboss.errai.idea.plugin.ErraiUIInspectionToolProvider"/>
+    <renamePsiElementProcessor implementation="org.jboss.errai.idea.plugin.BeanPropertyRenameProcessor"/>
 
     <!-- Add your extensions here -->
   </extensions>

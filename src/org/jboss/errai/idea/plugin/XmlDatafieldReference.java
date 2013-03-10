@@ -66,7 +66,7 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
     final Map<String, TemplateDataField> allDataFieldTags
         = Util.findAllDataFieldTags(xmlFile, xmlFile.getRootTag(), true);
 
-    final Set<PsiClass> owners = Util.getOwners(xmlFile, project);
+    final Set<PsiClass> owners = Util.getOwners(xmlFile);
     for (PsiClass psiClass : owners) {
       final Collection<AnnotationSearchResult> allAnnotatedElements
           = Util.findAllAnnotatedElements(psiClass, Types.DATAFIELD_ANNOTATION_NAME);

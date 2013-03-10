@@ -368,9 +368,14 @@ public class ErraiUITemplateErrorInspections extends BaseJavaLocalInspectionTool
     final DataBindUtil.PropertyValidation validation = boundMetaData.validateProperty();
     if (!validation.isValid()) {
       if (!validation.isParentBindable()) {
+        final PsiClass unresolvedParent = validation.getUnresolvedParent();
+        if (unresolvedParent == null) {
+          return;
+        }
+
         holder.registerProblem(Util.getAnnotationMemberValue(psiAnnotation, "property"),
             "The property '" + validation.getUnresolvedPropertyElement() + "' is invalid because its parent bean "
-                + "(" + validation.getUnresolvedParent().getQualifiedName() + ") is not bindable.");
+                + "(" + unresolvedParent.getQualifiedName() + ") is not bindable.");
       }
       else if (validation.hasBindabilityProblem()) {
         final DataBindUtil.BindabilityValidation bindabilityValidation = validation.getBindabilityValidation();

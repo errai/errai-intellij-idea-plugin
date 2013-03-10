@@ -1,11 +1,13 @@
 package org.jboss.errai.idea.plugin;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
@@ -13,8 +15,10 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -23,6 +27,8 @@ import java.util.Stack;
  */
 public class DataBindUtil {
   private static final int CASE_OFFSET = ('z' - 'Z');
+  private static final Key<TemplateBindingMetaData> TEMPLATE_BINDING_META_DATA_KEY
+      = Key.create("TEMPLATE_BINDING_META_DATA_KEY");
 
   public static class BindabilityValidation {
     private boolean valid;
@@ -111,6 +117,18 @@ public class DataBindUtil {
       }
     }
 
+    public PsiField getAssociatedField() {
+      PsiClass type = PsiUtil.getTopLevelClass(getAccessorElement());
+
+      for (PsiField psiField : type.getAllFields()) {
+        if (psiField.getName().equals(propertyName)
+            && getErasedCanonicalText(psiField.getType().getCanonicalText()).equals(propertyType.getQualifiedName())) {
+          return psiField;
+        }
+      }
+      return null;
+    }
+
     public boolean isHasGetter() {
       return getterElement != null;
     }
@@ -132,6 +150,10 @@ public class DataBindUtil {
     private final PsiClass templateClass;
     private final PsiClass boundClass;
 
+    private final long templateClassModifyTime;
+    //private final long boundClassModifyTime;
+
+
     /**
      * This is so, if the user has specified more than one, we can detect and reference all of them for
      * error highlighting;
@@ -140,18 +162,20 @@ public class DataBindUtil {
 
     public TemplateBindingMetaData(PsiClass templateClass) {
       this.templateClass = templateClass;
+      templateClassModifyTime = templateClass.getContainingFile().getOriginalFile().getModificationStamp();
 
       autoBoundAnnotations = Util.findAllAnnotatedElements(templateClass, Types.AUTO_BOUND);
 
       if (autoBoundAnnotations.size() == 1) {
         AnnotationSearchResult result = autoBoundAnnotations.iterator().next();
         boundClass = getErasedTypeParam(templateClass.getProject(), ((PsiVariable) result.getOwningElement()).getType().getCanonicalText());
+
+        Util.declareOwner(boundClass.getContainingFile(), templateClass);
       }
       else {
         boundClass = null;
       }
     }
-
 
     public PsiClass getTemplateClass() {
       return templateClass;
@@ -175,6 +199,14 @@ public class DataBindUtil {
       }
     }
 
+    public boolean isValid() {
+      if (boundClass == null) {
+        return false;
+      }
+
+      return templateClassModifyTime == templateClass.getContainingFile().getOriginalFile().getModificationStamp();
+    }
+
     public PsiClass getBoundClass() {
       return boundClass;
     }
@@ -187,7 +219,7 @@ public class DataBindUtil {
     private final String property;
     private final String bindableConverter;
 
-    public BoundMetaData(PsiElement owner) {
+    BoundMetaData(PsiElement owner) {
       this.templateBindingMetaData = getTemplateBindingMetaData(owner);
       this.owner = owner;
       this.psiAnnotation = Util.getAnnotationFromElement(owner, Types.BOUND);
@@ -235,7 +267,7 @@ public class DataBindUtil {
             validation.unresolvedPropertyElement = token;
             return validation;
           }
-          PsiClass result = getBeanPropertyType(boundClass.getProject(), cls, token.trim());
+          PsiClass result = getBeanPropertyType(cls, token.trim());
           if (result == null) {
             PropertyValidation validation = new PropertyValidation();
             validation.parentBindable = true;
@@ -264,6 +296,7 @@ public class DataBindUtil {
     }
   }
 
+
   public static Map<String, PropertyInfo> getAllProperties(PsiClass boundClass, String propertySearchRoot) {
     int idx = propertySearchRoot.lastIndexOf('.');
     if (idx == -1) {
@@ -281,7 +314,7 @@ public class DataBindUtil {
           cls = null;
           break;
         }
-        PsiClass result = getBeanPropertyType(boundClass.getProject(), cls, token.trim());
+        PsiClass result = getBeanPropertyType(cls, token.trim());
         if (result == null) {
           cls = null;
           break;
@@ -291,45 +324,119 @@ public class DataBindUtil {
     }
 
     Map<String, PropertyInfo> properties = new LinkedHashMap<String, PropertyInfo>();
-    final Map<String, PropertyInfo> allBeanProperties = getAllBeanProperties(boundClass.getProject(), cls);
+    Project project = boundClass.getProject();
+    final Map<String, PropertyInfo> propertyInfoMap = new LinkedHashMap<String, PropertyInfo>();
+    for (final PsiMethod method : cls.getAllMethods()) {
+      if (method.getModifierList().hasModifierProperty("public")) {
+
+        if (PsiUtil.getTopLevelClass(method).getQualifiedName().equals("java.lang.Object")) {
+          continue;
+        }
+
+        final String property = getPropertyFromAccessor(method.getName());
+
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (parameters.length == 0
+            && (method.getName().equalsIgnoreCase("get" + property)) || method.getName().equalsIgnoreCase("is" + property)) {
+
+          PsiClass type = getPsiClassFromType(project, method.getReturnType());
+
+          final PropertyInfo info = getOrCreatePropertyInfo(propertyInfoMap, property);
+          info.getterElement = method;
+          if (info.propertyType == null) {
+            info.propertyType = type;
+          }
+        }
+        else if (parameters.length == 1 && method.getName().equalsIgnoreCase("set" + property)) {
+
+          PsiClass type = getPsiClassFromType(project, parameters[0].getType());
+          final PropertyInfo info = getOrCreatePropertyInfo(propertyInfoMap, property);
+          info.setterElement = method;
+          if (info.propertyType == null) {
+            info.propertyType = type;
+          }
+        }
+      }
+    }
     final String prefix = propertySearchRoot != null ? propertySearchRoot + "." : "";
-    for (Map.Entry<String, PropertyInfo> entry : allBeanProperties.entrySet()) {
+    for (Map.Entry<String, PropertyInfo> entry : propertyInfoMap.entrySet()) {
       properties.put(prefix + entry.getKey(), entry.getValue());
     }
     return properties;
   }
 
+  public static Collection<BoundMetaData> getAllBoundMetaDataFromClass(PsiElement element) {
+    final PsiClass psiClass;
+    if (element instanceof PsiClass) {
+      psiClass = (PsiClass) element;
+    }
+    else {
+      psiClass = PsiUtil.getTopLevelClass(element);
+    }
+
+    List<BoundMetaData> boundMetaDatas = new ArrayList<BoundMetaData>();
+    for (AnnotationSearchResult result : Util.findAllAnnotatedElements(psiClass, Types.BOUND)) {
+      boundMetaDatas.add(getBoundMetaData(result.getOwningElement()));
+    }
+    return boundMetaDatas;
+  }
 
   public static BoundMetaData getBoundMetaData(PsiElement element) {
     return new BoundMetaData(Util.getImmediateOwnerElement(element));
   }
 
-  public static TemplateBindingMetaData getTemplateBindingMetaData(PsiElement element) {
-    return new TemplateBindingMetaData(PsiUtil.getTopLevelClass(element));
+  public static TemplateBindingMetaData getTemplateBindingMetaData(final PsiElement element) {
+    return Util.getOrCreateCache(TEMPLATE_BINDING_META_DATA_KEY, element, new CacheProvider<TemplateBindingMetaData>() {
+      @Override
+      public TemplateBindingMetaData provide() {
+        final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
+        return new TemplateBindingMetaData(topLevelClass);
+      }
+
+      @Override
+      public boolean isCacheValid(TemplateBindingMetaData templateBindingMetaData) {
+        return templateBindingMetaData.isValid();
+      }
+    });
   }
 
-  public static PsiClass getBeanPropertyType(Project project, PsiClass type, String property) {
+  public static PsiClass getBeanPropertyType(PsiClass type, String property) {
+    if (type == null) {
+      return null;
+    }
+    final PropertyInfo beanPropertyInfo = getBeanPropertyInfo(type, property);
+    if (beanPropertyInfo == null) {
+      return null;
+    }
+    return beanPropertyInfo.getPropertyType();
+  }
+
+  public static PropertyInfo getBeanPropertyInfo(PsiClass type, String property) {
     if (type == null) return null;
 
     final String getMethod = "get" + property;
+    final String isMethod = "is" + property;
 
     for (PsiMethod method : type.getAllMethods()) {
       if (method.getModifierList().hasModifierProperty("public")) {
-        if (method.getName().equalsIgnoreCase(getMethod) && method.getParameterList().getParameters().length == 0) {
-          return getPsiClassFromType(project, method.getReturnType());
+        if ((getMethod.equalsIgnoreCase(method.getName()) || isMethod.equalsIgnoreCase(method.getName()))
+            && method.getParameterList().getParameters().length == 0) {
+
+          PropertyInfo propertyInfo = new PropertyInfo();
+          propertyInfo.getterElement = method;
+          propertyInfo.propertyName = property;
+          propertyInfo.propertyType = getPsiClassFromType(type.getProject(), method.getReturnType());
+
+          return propertyInfo;
         }
       }
     }
     return null;
   }
 
-  private static PsiClass getPsiClassFromType(Project project, PsiType type) {
-    String typeName = type.getCanonicalText();
-    int paramStart = typeName.indexOf('<');
-    if (paramStart != -1) {
-      typeName = typeName.substring(0, paramStart);
-    }
 
+  private static PsiClass getPsiClassFromType(Project project, PsiType type) {
+    String typeName = getErasedCanonicalText(type.getCanonicalText());
 
     if ("int".equals(typeName)) {
       typeName = Integer.class.getName();
@@ -357,44 +464,6 @@ public class DataBindUtil {
     }
 
     return JavaPsiFacade.getInstance(project).findClass(typeName, GlobalSearchScope.allScope(project));
-  }
-
-  public static Map<String, PropertyInfo> getAllBeanProperties(Project project, PsiClass psiClass) {
-    final Map<String, PropertyInfo> propertyInfoMap = new LinkedHashMap<String, PropertyInfo>();
-    for (final PsiMethod method : psiClass.getAllMethods()) {
-      if (method.getModifierList().hasModifierProperty("public")) {
-
-        if (PsiUtil.getTopLevelClass(method).getQualifiedName().equals("java.lang.Object")) {
-          continue;
-        }
-
-        final String property = getPropertyFromAccessor(method.getName());
-
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (parameters.length == 0
-            && (method.getName().startsWith("get") || method.getName().startsWith("is"))) {
-
-
-          PsiClass type = getPsiClassFromType(project, method.getReturnType());
-
-          final PropertyInfo info = getOrCreatePropertyInfo(propertyInfoMap, property);
-          info.getterElement = method;
-          if (info.propertyType == null) {
-            info.propertyType = type;
-          }
-        }
-        else if (parameters.length == 1 && method.getName().startsWith("set")) {
-
-          PsiClass type = getPsiClassFromType(project, parameters[0].getType());
-          final PropertyInfo info = getOrCreatePropertyInfo(propertyInfoMap, property);
-          info.setterElement = method;
-          if (info.propertyType == null) {
-            info.propertyType = type;
-          }
-        }
-      }
-    }
-    return propertyInfoMap;
   }
 
   private static PropertyInfo getOrCreatePropertyInfo(Map<String, PropertyInfo> map, String property) {
@@ -511,6 +580,15 @@ public class DataBindUtil {
     return s;
   }
 
+  public static String getErasedCanonicalText(String typeName) {
+    int paramStart = typeName.indexOf('<');
+    if (paramStart != -1) {
+      typeName = typeName.substring(0, paramStart);
+    }
+    return typeName;
+  }
+
+
   public static PsiClass getErasedTypeParam(Project project, String signature) {
     final String typeParam;
     int typeParamBegin = signature.indexOf('<');
@@ -519,11 +597,7 @@ public class DataBindUtil {
     }
     else {
       String s = signature.substring(typeParamBegin + 1, signature.indexOf('>'));
-      int trim = s.indexOf('<');
-      if (trim != -1) {
-        s = s.substring(0, trim);
-      }
-      typeParam = s;
+      typeParam = getErasedCanonicalText(s);
     }
 
     if (typeParam != null) {

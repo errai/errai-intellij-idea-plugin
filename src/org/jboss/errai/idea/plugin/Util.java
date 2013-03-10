@@ -19,7 +19,6 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -33,20 +32,43 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Mike Brock
  */
 public class Util {
   public static final String INTELLIJ_MAGIC_STRING = "IntellijIdeaRulezzz";
-  private static final Key<Set<PsiClass>> templateClassOwners = Key.create("templateClassOwners");
+ // private static final Key<Set<PsiClass>> templateClassOwners = Key.create("templateClassOwners");
+
+  public static final Key<Ownership> OWNERSHIP_CACHE = Key.create("OWNERSHIP_CACHE");
   private static final Key<DataFieldCacheHolder> dataFieldsCacheKey = Key.create("dataFieldsCache");
+
+  public static class Ownership {
+    private final Set<PsiClass> templateClasses = new HashSet<PsiClass>();
+    private final PsiFile associatedFile;
+    private final long lastModified;
+
+    public Ownership(PsiFile associatedFile) {
+      this.associatedFile = associatedFile;
+      this.lastModified = associatedFile.getModificationStamp();
+    }
+
+    public Set<PsiClass> getTemplateClasses() {
+      return templateClasses;
+    }
+
+    public long getLastModified() {
+      return lastModified;
+    }
+
+    public boolean isValid() {
+      return true;
+    }
+  }
 
   public static TemplateExpression parseReference(String referenceString) {
     int nodeSpecifier = referenceString.indexOf('#');
@@ -129,17 +151,21 @@ public class Util {
     return findAllDataFieldTags(file, rootTag, includeRoot);
   }
 
-  public static Map<String, TemplateDataField> findAllDataFieldTags(PsiFile file, XmlTag rootTag, boolean includeRoot) {
-    final DataFieldCacheHolder copyableUserData = file.getCopyableUserData(dataFieldsCacheKey);
-    if (copyableUserData != null
-        && copyableUserData.getTime() == file.getModificationStamp()
-        && copyableUserData.getTag() == rootTag) {
-      return copyableUserData.getValue();
-    }
+  public static Map<String, TemplateDataField> findAllDataFieldTags(final PsiFile templateFile,
+                                                                    final XmlTag rootTag,
+                                                                    final boolean includeRoot) {
+    return getOrCreateCache(dataFieldsCacheKey, templateFile, new CacheProvider<DataFieldCacheHolder>() {
+      @Override
+      public DataFieldCacheHolder provide() {
+        final Map<String, TemplateDataField> allDataFieldTags = findAllDataFieldTags(rootTag, includeRoot);
+        return new DataFieldCacheHolder(templateFile.getModificationStamp(), rootTag, allDataFieldTags);
+      }
 
-    final Map<String, TemplateDataField> allDataFieldTags = findAllDataFieldTags(rootTag, includeRoot);
-    file.putCopyableUserData(dataFieldsCacheKey, new DataFieldCacheHolder(file.getModificationStamp(), rootTag, allDataFieldTags));
-    return allDataFieldTags;
+      @Override
+      public boolean isCacheValid(DataFieldCacheHolder dataFieldCacheHolder) {
+        return dataFieldCacheHolder.getTime() == templateFile.getModificationStamp();
+      }
+    }).getValue();
   }
 
   private static Map<String, TemplateDataField> findAllDataFieldTags(XmlTag rootTag, boolean includeRoot) {
@@ -538,64 +564,32 @@ public class Util {
     return false;
   }
 
-  public static void declareOwner(XmlFile file, PsiClass psiClass) {
-    Set<PsiClass> userData = file.getOriginalFile().getCopyableUserData(templateClassOwners);
-    if (userData == null) {
-      file.getOriginalFile().putCopyableUserData(templateClassOwners,
-          userData = Collections.newSetFromMap(new ConcurrentHashMap<PsiClass, Boolean>()));
+  public static void declareOwner(final PsiFile file, final PsiClass psiClass) {
+    if (psiClass == null) {
+      return;
     }
-    userData.add(psiClass);
-  }
+    getOrCreateCache(OWNERSHIP_CACHE, file, new CacheProvider<Ownership>() {
+      @Override
+      public Ownership provide() {
+        System.out.println("declareOwner: " + file.getName() + "; " + psiClass.getQualifiedName());
 
-  public static Set<PsiClass> getOwners(XmlFile file, Project project) {
-    Set<PsiClass> userData = file.getOriginalFile().getCopyableUserData(templateClassOwners);
-    if (userData != null) {
-      Iterator<PsiClass> userDataIterator = userData.iterator();
-
-      /**
-       * Here we look for reasons to purge entries from the ownership claim set (ie. template classes no
-       * longer point to this file)
-       */
-      while (userDataIterator.hasNext()) {
-        final TemplateMetaData templateMetaData = getTemplateMetaData(userDataIterator.next());
-        final PsiManager manager = PsiManager.getInstance(project);
-        final VirtualFile templateFile = templateMetaData.getTemplateFile();
-
-        if (templateFile == null) {
-          userDataIterator.remove();
-          continue;
-        }
-
-        final PsiFile psiFile = manager.findFile(templateFile);
-
-        if (psiFile == null) {
-          userDataIterator.remove();
-          continue;
-        }
-
-        if (!(psiFile instanceof XmlFile)) {
-          userDataIterator.remove();
-          continue;
-        }
-
-        final XmlTag rootTag1 = ((HtmlFileImpl) psiFile).getRootTag();
-        final XmlTag rootTag2 = file.getRootTag();
-
-        if (rootTag1 == null || rootTag2 == null) {
-          userDataIterator.remove();
-          continue;
-        }
-
-        if (rootTag1.getCopyableUserData(templateClassOwners)
-            != rootTag2.getCopyableUserData(templateClassOwners)) {
-          userDataIterator.remove();
-        }
+        return new Ownership(file);
       }
 
-      return userData;
+      @Override
+      public boolean isCacheValid(Ownership ownership) {
+        return ownership.isValid();
+      }
+    }).getTemplateClasses().add(psiClass);
+  }
+
+  public static Set<PsiClass> getOwners(PsiFile file) {
+   final Ownership ownership = file.getOriginalFile().getCopyableUserData(OWNERSHIP_CACHE);
+    if (ownership == null || !ownership.isValid()) {
+      return Collections.emptySet();
     }
     else {
-      return Collections.emptySet();
+      return ownership.getTemplateClasses();
     }
   }
 
@@ -627,5 +621,43 @@ public class Util {
     else {
       return null;
     }
+  }
+
+  public static <T> T getOrCreateCache(Key<T> cacheKey, PsiElement element, CacheProvider<T> provider) {
+    final PsiFile containingFile;
+    if (element instanceof PsiFile) {
+      containingFile = (PsiFile) element;
+    }
+    else {
+      final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
+
+      if (topLevelClass == null) {
+        return provider.provide();
+      }
+      containingFile = topLevelClass.getContainingFile();
+    }
+
+    if (containingFile == null) {
+      return provider.provide();
+    }
+
+    final PsiFile originalFile = containingFile.getOriginalFile();
+    T copyableUserData = originalFile.getCopyableUserData(cacheKey);
+
+    if (copyableUserData != null) {
+      if (!provider.isCacheValid(copyableUserData)) {
+        copyableUserData = null;
+        //  System.out.println("key '" + cacheKey.toString() + "' has been invalidated");
+      }
+    }
+
+    if (copyableUserData == null) {
+      originalFile.putCopyableUserData(cacheKey, copyableUserData = provider.provide());
+    }
+    else {
+      //  System.out.println("servicing key '" + cacheKey.toString() + "' from cache");
+    }
+
+    return copyableUserData;
   }
 }
