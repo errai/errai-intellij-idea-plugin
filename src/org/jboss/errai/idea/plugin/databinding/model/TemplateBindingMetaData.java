@@ -13,8 +13,8 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
-* @author Mike Brock
-*/
+ * @author Mike Brock
+ */
 public class TemplateBindingMetaData {
   private final PsiClass templateClass;
   private final PsiClass boundClass;
@@ -39,7 +39,9 @@ public class TemplateBindingMetaData {
       AnnotationSearchResult result = autoBoundAnnotations.iterator().next();
       boundClass = Util.getErasedTypeParam(templateClass.getProject(), ((PsiVariable) result.getOwningElement()).getType().getCanonicalText());
 
-      Util.declareOwner(boundClass.getContainingFile(), templateClass);
+      if (boundClass != null) {
+        Util.declareOwner(boundClass.getContainingFile(), templateClass);
+      }
     }
     else {
       boundClass = null;
