@@ -22,6 +22,11 @@ public class BindabilityValidation {
     return expectedWidgetType;
   }
 
+  public String getSimpleExpectedWidgetName() {
+    if (expectedWidgetType == null) return null;
+    return expectedWidgetType.substring(expectedWidgetType.lastIndexOf('.') + 1);
+  }
+
   public void setValid(boolean valid) {
     this.valid = valid;
   }

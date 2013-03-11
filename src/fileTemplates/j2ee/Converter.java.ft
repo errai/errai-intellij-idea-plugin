@@ -1,0 +1,13 @@
+import ${CONVERTER_INTERFACE_TYPE};
+
+public class ${NAME} implements Converter<${MODEL_TYPE}, ${WIDGET_TYPE}> {
+    @Override
+    public ${MODEL_TYPE} toModelValue(${WIDGET_TYPE} widgetValue) {
+         throw new UnsupportedOperationException("not yet implemented");
+    }
+
+    @Override
+    public ${WIDGET_TYPE} toWidgetValue(${MODEL_TYPE} modelValue) {
+         throw new UnsupportedOperationException("not yet implemented");
+    }
+}

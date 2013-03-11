@@ -319,10 +319,10 @@ public class Util {
   public static PsiClass getTypeOfElement(PsiElement element, Project project) {
     final String name;
     if (element instanceof PsiField) {
-      name = ((PsiField) element).getType().getCanonicalText();
+      name = Util.getErasedCanonicalText(((PsiField) element).getType().getCanonicalText());
     }
     else if (element instanceof PsiParameter) {
-      name = ((PsiParameter) element).getType().getCanonicalText();
+      name = Util.getErasedCanonicalText(((PsiParameter) element).getType().getCanonicalText());
     }
     else {
       return null;
@@ -364,7 +364,6 @@ public class Util {
     PsiClass cls = from;
     do {
       if (matching.contains(cls.getQualifiedName())) return true;
-
       for (PsiClass interfaceClass : cls.getInterfaces()) {
         if (typeIsAssignableFrom(interfaceClass, toFQN)) {
           return true;

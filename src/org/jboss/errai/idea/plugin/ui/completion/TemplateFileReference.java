@@ -46,8 +46,13 @@ public class TemplateFileReference extends PsiReferenceBase<PsiLiteralExpression
     final Map<String, PsiFile> templateList = new LinkedHashMap<String, PsiFile>();
 
     for (final PsiElement element : getBaseDir().getChildren()) {
-      if (element.getContainingFile().getName().endsWith(".html")) {
-        templateList.put(element.getContainingFile().getName(), element.getContainingFile().getOriginalFile());
+      final PsiFile containingFile = element.getContainingFile();
+      if (containingFile == null) {
+        continue;
+      }
+
+      if (containingFile.getName().endsWith(".html")) {
+        templateList.put(containingFile.getName(), containingFile.getOriginalFile());
       }
     }
 

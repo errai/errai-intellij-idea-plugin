@@ -230,7 +230,6 @@ public class DataBindUtil {
                                                              PsiClass widgetType,
                                                              ConvertibilityMetaData convertibilityMetaData) {
     if (bindingType == null) return new BindabilityValidation(false);
-    //todo: this needs to be aware of converters.
 
     BindabilityValidation validation = new BindabilityValidation();
     final PsiClassType[] superTypes = widgetType.getSuperTypes();
@@ -257,9 +256,12 @@ public class DataBindUtil {
 
         if (typeParm != null) {
           if (!Util.typeIsAssignableFrom(typeParm, bindingType.getQualifiedName())
-              && !convertibilityMetaData.canConvert(typeParm, bindingType)) {
+              && !convertibilityMetaData.canConvert(bindingType, typeParm)) {
             validation.setValid(false);
             validation.setExpectedWidgetType(typeParm.getQualifiedName());
+          }
+          else {
+            System.out.println();
           }
         }
         else {
@@ -268,11 +270,12 @@ public class DataBindUtil {
         }
         break;
       }
+      else if (!validation.isValid() && Util.typeIsAssignableFrom(widgetType, Types.GWT_HAS_TEXT)) {
+        validation.setValid(true);
+        break;
+      }
     }
 
-    if (!validation.isValid() && Util.typeIsAssignableFrom(widgetType, Types.GWT_HAS_TEXT)) {
-      validation.setValid(true);
-    }
 
     return validation;
   }
@@ -333,6 +336,10 @@ public class DataBindUtil {
       final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
       final PsiClass psiClass
           = instance.findClass(converter, GlobalSearchScope.allScope(project));
+
+      if (psiClass == null) {
+        return cm;
+      }
 
       final SuperTypeInfo superTypeInfo = Util.getTypeInformation(psiClass, Types.CONVERTER);
       final ConvertibilityMetaData metaData = new ConvertibilityMetaData();

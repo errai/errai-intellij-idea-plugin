@@ -6,7 +6,7 @@
 
   <description><![CDATA[
       Errai Framework Support<br>
-      <small>Add inspections and intentions for the Errai Framework.</small>
+      <small>Add code inspections and other tools for the Errai Framework to IntelliJ IDEA.</small>
       ]]></description>
 
   <change-notes>

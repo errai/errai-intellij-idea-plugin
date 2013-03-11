@@ -3,26 +3,35 @@ package org.jboss.errai.idea.plugin.databinding.inspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.util.PsiUtil;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.databinding.model.BindabilityValidation;
 import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyValidation;
 import org.jboss.errai.idea.plugin.util.ExpressionErrorReference;
+import org.jboss.errai.idea.plugin.util.TemplateUtil;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
 
 /**
  * @author Mike Brock
@@ -87,7 +96,7 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
   }
 
   public static void ensureBoundFieldIsValid(ProblemsHolder holder,
-                                             PsiAnnotation psiAnnotation) {
+                                             final PsiAnnotation psiAnnotation) {
     final BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(psiAnnotation);
 
     if (boundMetaData.getBindingMetaData().getBoundClass() == null) {
@@ -110,7 +119,40 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
       else if (validation.hasBindabilityProblem()) {
         final BindabilityValidation bindabilityValidation = validation.getBindabilityValidation();
         holder.registerProblem(psiAnnotation, "The widget type cannot be bound to: " + validation.getBoundType().getQualifiedName()
-            + "; widget accepts type: " + bindabilityValidation.getExpectedWidgetType());
+            + "; widget accepts type: " + bindabilityValidation.getExpectedWidgetType(),
+            new LocalQuickFix() {
+              @NotNull
+              @Override
+              public String getName() {
+                return "Create a data binding Converter";
+              }
+
+              @NotNull
+              @Override
+              public String getFamilyName() {
+                return GroupNames.BUGS_GROUP_NAME;
+              }
+
+              @Override
+              public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+                final String name = validation.getBoundType().getName()
+                    + "To" + bindabilityValidation.getSimpleExpectedWidgetName() + "Converter";
+                final PsiClass topLevelClass = PsiUtil.getTopLevelClass(psiAnnotation);
+                final PsiDirectory directory = topLevelClass.getOriginalElement().getContainingFile().getParent();
+
+               TemplateUtil.createFileFromTemplate("Converter.java", name, directory
+                    , new HashMap<String, String>() {
+                  {
+                    put("CONVERTER_INTERFACE_TYPE", Types.CONVERTER);
+                    put("MODEL_TYPE", validation.getBoundType().getQualifiedName());
+                    put("WIDGET_TYPE", bindabilityValidation.getExpectedWidgetType());
+                  }
+                });
+
+                psiAnnotation.setDeclaredAttributeValue("converter", JavaPsiFacade.getInstance(psiAnnotation.getProject()).getElementFactory()
+                                    .createAnnotationFromText("@A(converter = " + name + ".class)", null).findDeclaredAttributeValue("converter"));
+              }
+            });
       }
       else {
         final String errorText = "The property '" + validation.getUnresolvedPropertyElement() + "' was not found in parent bean: "

@@ -15,6 +15,7 @@ import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jboss.errai.idea.plugin.ui.model.ConsolidateDataFieldElementResult;
@@ -132,8 +133,11 @@ public class TemplateUtil {
       return Collections.emptyMap();
     }
 
+    final XmlDocument document;
     if (rootTag == null) {
       rootTag = ((XmlFile) file).getRootTag();
+    }
+    else {
     }
 
     return findAllDataFieldTags(file, rootTag, includeRoot);
@@ -163,9 +167,8 @@ public class TemplateUtil {
     while (iterator.hasNext()) {
       TemplateDataField field = iterator.next();
       final PsiElement originalElement = field.getTag().getOriginalElement();
-      if (rootElement.equals(originalElement) && includeRoot) {
-      }
-      else if (!Util.isChild(originalElement, rootElement)) {
+
+      if (!includeRoot && !Util.isChild(originalElement, rootElement)) {
         iterator.remove();
       }
     }
@@ -193,12 +196,27 @@ public class TemplateUtil {
   }
 
   private static void _findDataFieldTags(Map<String, TemplateDataField> foundTags, XmlTag root) {
-    for (XmlTag xmlTag : root.getSubTags()) {
-      XmlAttribute xmlAttribute = xmlTag.getAttribute("data-field");
-      if (xmlAttribute != null) {
-        foundTags.put(xmlAttribute.getValue(), new TemplateDataField(xmlTag, xmlAttribute.getValue()));
+    PsiElement n = root;
+    do {
+      if (!(n instanceof XmlTag)) {
+        continue;
       }
-      _findDataFieldTags(foundTags, xmlTag);
+      _scanSubTags(foundTags, (XmlTag) n);
+    }
+    while ((n = n.getNextSibling()) != null);
+  }
+
+  private static void _scanSubTags(Map<String, TemplateDataField> foundTags, XmlTag root) {
+    _scanTag(foundTags, root);
+    for (XmlTag xmlTag : root.getSubTags()) {
+      _scanSubTags(foundTags, xmlTag);
+    }
+  }
+
+  private static void _scanTag(Map<String, TemplateDataField> foundTags, XmlTag xmlTag) {
+    XmlAttribute xmlAttribute = xmlTag.getAttribute("data-field");
+    if (xmlAttribute != null) {
+      foundTags.put(xmlAttribute.getValue(), new TemplateDataField(xmlTag, xmlAttribute.getValue()));
     }
   }
 

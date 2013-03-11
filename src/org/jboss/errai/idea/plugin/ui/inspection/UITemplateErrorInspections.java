@@ -258,17 +258,14 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
     final AnnotationValueElement annoValueEl = Util.getValueStringFromAnnotationWithDefault(annotation);
     String annoValue = annoValueEl.getValue();
 
-
     if (annoValue == null) {
       /** default 'this' case **/
       return;
     }
 
-
     final PsiClass psiClassParameterType = JavaPsiFacade.getInstance(project)
         .findClass(parameterTypeFQN, ProjectScope.getAllScope(project));
     final boolean isGWTeventType = Util.typeIsAssignableFrom(psiClassParameterType, Types.GWT_EVENT_TYPE);
-
 
     final DataFieldExistence dataFieldExistence = dataFieldExistenceCheck(annotation, metaData);
     final Map<String, ConsolidateDataFieldElementResult> dataFields = metaData.getConsolidatedDataFields();
