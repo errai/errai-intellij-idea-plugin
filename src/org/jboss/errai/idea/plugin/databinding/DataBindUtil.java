@@ -260,9 +260,6 @@ public class DataBindUtil {
             validation.setValid(false);
             validation.setExpectedWidgetType(typeParm.getQualifiedName());
           }
-          else {
-            System.out.println();
-          }
         }
         else {
           validation.setValid(false);

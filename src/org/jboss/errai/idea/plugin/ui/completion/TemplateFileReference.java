@@ -86,8 +86,6 @@ public class TemplateFileReference extends PsiReferenceBase<PsiLiteralExpression
       list.add(LookupElementBuilder.create(entry.getKey()).withTypeText("File"));
     }
 
-    System.out.println("returned completions: " + list);
-
     return list.toArray();
   }
 

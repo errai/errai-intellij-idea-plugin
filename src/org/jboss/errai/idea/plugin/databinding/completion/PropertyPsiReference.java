@@ -86,8 +86,6 @@ class PropertyPsiReference extends PsiReferenceBase<PsiLiteralExpression> {
           .withTypeText(propertyType.getQualifiedName(), true));
     }
 
-    System.out.println("property completions: " + variants);
-
     return variants.toArray();
   }
 }
