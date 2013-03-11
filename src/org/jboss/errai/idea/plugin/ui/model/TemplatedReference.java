@@ -12,7 +12,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiUtil;
 import org.jboss.errai.idea.plugin.ui.TemplateDataField;
-import org.jboss.errai.idea.plugin.util.Util;
+import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +48,7 @@ public class TemplatedReference extends PsiReferenceBase<PsiLiteralExpression> {
     Map<String, PsiElement> completions = new LinkedHashMap<String, PsiElement>();
 
     final Project project = getElement().getProject();
-    final TemplateMetaData templateMetaData = Util.getTemplateMetaData(getElement());
+    final TemplateMetaData templateMetaData = TemplateUtil.getTemplateMetaData(getElement());
     if (templateMetaData == null) {
       return Collections.emptyMap();
     }

@@ -6,7 +6,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.xml.XmlTag;
 import org.jboss.errai.idea.plugin.ui.TemplateDataField;
-import org.jboss.errai.idea.plugin.util.Util;
+import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 
 import java.util.Collections;
 import java.util.Map;
@@ -64,13 +64,13 @@ public class TemplateMetaData {
   }
 
   public Map<String, TemplateDataField> getAllDataFieldsInTemplate(boolean includeRootTag) {
-    return Util.findAllDataFieldTags(this, project, includeRootTag);
+    return TemplateUtil.findAllDataFieldTags(this, project, includeRootTag);
   }
 
   public Map<String, ConsolidateDataFieldElementResult> getConsolidatedDataFields() {
     if (templateClass == null) {
       return Collections.emptyMap();
     }
-    return Util.getConsolidatedDataFields(templateClass, project);
+    return TemplateUtil.getConsolidatedDataFields(templateClass, project);
   }
 }

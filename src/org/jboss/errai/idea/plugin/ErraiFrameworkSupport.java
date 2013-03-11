@@ -12,13 +12,11 @@ import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ProcessingContext;
-import org.jboss.errai.idea.plugin.ui.completion.TemplateDatafieldReference;
-import org.jboss.errai.idea.plugin.ui.model.TemplatedReference;
-import org.jboss.errai.idea.plugin.util.XmlAttributeMatchingPattern;
+import org.jboss.errai.idea.plugin.ui.completion.TemplateEventHandlerReference;
 import org.jboss.errai.idea.plugin.ui.completion.XmlDatafieldReference;
-import org.jboss.errai.idea.plugin.ui.completion.BeanDataFieldReference;
 import org.jboss.errai.idea.plugin.util.AnnotationMatchingPattern;
 import org.jboss.errai.idea.plugin.util.Types;
+import org.jboss.errai.idea.plugin.util.XmlAttributeMatchingPattern;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,44 +33,14 @@ public class ErraiFrameworkSupport implements ApplicationComponent {
   public void initComponent() {
     final PsiReferenceRegistrar javaRegistrar = registry.getRegistrar(Language.findInstance(JavaLanguage.class));
 
-    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.TEMPLATED_ANNOTATION_NAME),
-        new PsiReferenceProvider() {
-          @NotNull
-          @Override
-          public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext processingContext) {
-            return new TemplatedReference[]{new TemplatedReference((PsiLiteralExpression) element, false)};
-          }
-        }
-    );
-
-    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.DATAFIELD_ANNOTATION_NAME),
-        new PsiReferenceProvider() {
-          @NotNull
-          @Override
-          public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-            return new TemplateDatafieldReference[]{new TemplateDatafieldReference((PsiLiteralExpression) element, false)};
-
-          }
-        });
-
     javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.EVENTHANDLER_ANNOTATION_NAME),
         new PsiReferenceProvider() {
           @NotNull
           @Override
           public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-            return new BeanDataFieldReference[]{new BeanDataFieldReference((PsiLiteralExpression) element, false)};
+            return new TemplateEventHandlerReference[]{new TemplateEventHandlerReference((PsiLiteralExpression) element, false)};
           }
         });
-
-//    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.BOUND),
-//         new PsiReferenceProvider() {
-//           @NotNull
-//           @Override
-//           public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-//             return new BoundReference[]{new BoundReference((PsiLiteralExpression) element, false)};
-//           }
-//         });
-
 
     final PsiReferenceRegistrar xmlRegistrar = registry.getRegistrar(Language.findInstance(HTMLLanguage.class));
 

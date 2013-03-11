@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReferenceBase;
 import org.jboss.errai.idea.plugin.ui.model.ConsolidateDataFieldElementResult;
+import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +18,8 @@ import java.util.Map;
 /**
  * @author Mike Brock
  */
-public class BeanDataFieldReference extends PsiReferenceBase<PsiLiteralExpression> {
-  public BeanDataFieldReference(PsiLiteralExpression element, boolean soft) {
+public class TemplateEventHandlerReference extends PsiReferenceBase<PsiLiteralExpression> {
+  public TemplateEventHandlerReference(PsiLiteralExpression element, boolean soft) {
     super(element, soft);
   }
 
@@ -27,7 +28,7 @@ public class BeanDataFieldReference extends PsiReferenceBase<PsiLiteralExpressio
   public PsiElement resolve() {
     final Project project = getElement().getProject();
     final ConsolidateDataFieldElementResult consolidateElementResult
-        = Util.getConsolidatedDataFields(getElement(), project).get(getValue());
+        = TemplateUtil.getConsolidatedDataFields(getElement(), project).get(getValue());
 
     if (consolidateElementResult != null) {
       return consolidateElementResult.getLinkingElement();
@@ -43,7 +44,7 @@ public class BeanDataFieldReference extends PsiReferenceBase<PsiLiteralExpressio
 
     final Project project = getElement().getProject();
     final Map<String, ConsolidateDataFieldElementResult> dataFields
-        = Util.getConsolidatedDataFields(getElement(), project);
+        = TemplateUtil.getConsolidatedDataFields(getElement(), project);
 
     final ArrayList<Object> list = new ArrayList<Object>();
     for (Map.Entry<String, ConsolidateDataFieldElementResult> entry : dataFields.entrySet()) {

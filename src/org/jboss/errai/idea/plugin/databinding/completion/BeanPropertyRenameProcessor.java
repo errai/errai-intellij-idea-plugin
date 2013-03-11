@@ -17,6 +17,7 @@ import org.jboss.errai.idea.plugin.databinding.model.TemplateBindingMetaData;
 import org.jboss.errai.idea.plugin.util.FakeNamedPsi;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.util.DefaultPolicy;
+import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,7 @@ public class BeanPropertyRenameProcessor extends RenamePsiElementProcessor {
     }
 
     final PsiFile containingFile = topLevelClass.getContainingFile();
-    final Set<PsiClass> owners = Util.getOwners(containingFile);
+    final Set<PsiClass> owners = TemplateUtil.getOwners(containingFile);
     for (PsiClass psiClass : owners) {
       final TemplateBindingMetaData metaData = DataBindUtil.getTemplateBindingMetaData(psiClass);
       final Collection<BoundMetaData> allBoundMetaDataFromClass = DataBindUtil.getAllBoundMetaDataFromClass(psiClass);

@@ -12,6 +12,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jboss.errai.idea.plugin.ui.TemplateDataField;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
+import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.NotNull;
@@ -66,14 +67,14 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
     final List<DataFieldRef> dataFieldRefs = new ArrayList<DataFieldRef>();
     final XmlFile xmlFile = (XmlFile) el;
     final Map<String, TemplateDataField> allDataFieldTags
-        = Util.findAllDataFieldTags(xmlFile, xmlFile.getRootTag(), true);
+        = TemplateUtil.findAllDataFieldTags(xmlFile, xmlFile.getRootTag(), true);
 
-    final Set<PsiClass> owners = Util.getOwners(xmlFile);
+    final Set<PsiClass> owners = TemplateUtil.getOwners(xmlFile);
     for (PsiClass psiClass : owners) {
       final Collection<AnnotationSearchResult> allAnnotatedElements
           = Util.findAllAnnotatedElements(psiClass, Types.DATAFIELD_ANNOTATION_NAME);
 
-      final Collection<String> strings = Util.extractDataFieldList(allAnnotatedElements);
+      final Collection<String> strings = TemplateUtil.extractDataFieldList(allAnnotatedElements);
 
       for (String dataField : strings) {
         if (allDataFieldTags.containsKey(dataField) || dataField.contains(Util.INTELLIJ_MAGIC_STRING)) continue;

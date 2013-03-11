@@ -6,6 +6,8 @@ package org.jboss.errai.idea.plugin.util;
 public class Types {
   public static final String JAVAX_INJECT = "javax.inject.Inject";
 
+  public static final String ENTRY_POINT = "org.jboss.errai.ioc.client.api.EntryPoint";
+
   public static final String TEMPLATED_ANNOTATION_NAME = "org.jboss.errai.ui.shared.api.annotations.Templated";
   public static final String DATAFIELD_ANNOTATION_NAME = "org.jboss.errai.ui.shared.api.annotations.DataField";
   public static final String EVENTHANDLER_ANNOTATION_NAME = "org.jboss.errai.ui.shared.api.annotations.EventHandler";

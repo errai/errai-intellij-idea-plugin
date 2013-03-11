@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
+import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 
@@ -40,7 +41,7 @@ public class TemplateBindingMetaData {
       boundClass = Util.getErasedTypeParam(templateClass.getProject(), ((PsiVariable) result.getOwningElement()).getType().getCanonicalText());
 
       if (boundClass != null) {
-        Util.declareOwner(boundClass.getContainingFile(), templateClass);
+        TemplateUtil.declareOwner(boundClass.getContainingFile(), templateClass);
       }
     }
     else {

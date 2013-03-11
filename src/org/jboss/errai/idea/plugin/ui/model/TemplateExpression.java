@@ -19,4 +19,8 @@ public class TemplateExpression {
   public String getRootNode() {
     return rootNode;
   }
+
+  public boolean hasRootNode() {
+    return !"".equals(rootNode);
+  }
 }

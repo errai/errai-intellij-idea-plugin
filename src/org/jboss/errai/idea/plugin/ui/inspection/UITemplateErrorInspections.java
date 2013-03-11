@@ -29,6 +29,7 @@ import org.jboss.errai.idea.plugin.ui.TemplateDataField;
 import org.jboss.errai.idea.plugin.ui.model.ConsolidateDataFieldElementResult;
 import org.jboss.errai.idea.plugin.ui.model.TemplateMetaData;
 import org.jboss.errai.idea.plugin.util.AnnotationValueElement;
+import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.Nls;
@@ -107,7 +108,7 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
   private static void ensureTemplateExists(ProblemsHolder holder,
                                            PsiAnnotation annotation) {
 
-    final TemplateMetaData metaData = Util.getTemplateMetaData(annotation);
+    final TemplateMetaData metaData = TemplateUtil.getTemplateMetaData(annotation);
 
     if (metaData == null) {
       return;
@@ -187,7 +188,7 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
   public static void ensureDataFieldIsValid(ProblemsHolder holder,
                                             PsiAnnotation annotation) {
 
-    final TemplateMetaData templateMetaData = Util.getTemplateMetaData(annotation);
+    final TemplateMetaData templateMetaData = TemplateUtil.getTemplateMetaData(annotation);
     if (templateMetaData == null) {
       return;
     }
@@ -209,14 +210,14 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
     final AnnotationValueElement annoValueEl = Util.getValueStringFromAnnotationWithDefault(annotation);
     final String annoValue = annoValueEl.getValue();
     if (dataFieldExistence != DataFieldExistence.EXISTS) {
-       if (dataFieldExistence == DataFieldExistence.OUT_OF_SCOPE) {
-         holder.registerProblem(annoValueEl.getLogicalElement(), "Data-field is out of scope (it is not an descendant of the template root node)");
-       }
-       else {
-         holder.registerProblem(annoValueEl.getLogicalElement(), "Cannot resolve data-field: " + annoValueEl.getValue());
-       }
+      if (dataFieldExistence == DataFieldExistence.OUT_OF_SCOPE) {
+        holder.registerProblem(annoValueEl.getLogicalElement(), "Data-field is out of scope (it is not an descendant of the template root node)");
+      }
+      else {
+        holder.registerProblem(annoValueEl.getLogicalElement(), "Cannot resolve data-field: " + annoValueEl.getValue());
+      }
       return;
-     }
+    }
 
     if (!allDataFieldTags.containsKey(annotationValue.getValue())) {
       holder.registerProblem(annotationValue.getLogicalElement(),
@@ -231,7 +232,7 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
 
   public static void ensureEventHandlerIsValid(ProblemsHolder holder,
                                                PsiAnnotation annotation) {
-    final TemplateMetaData metaData = Util.getTemplateMetaData(annotation);
+    final TemplateMetaData metaData = TemplateUtil.getTemplateMetaData(annotation);
     final Project project = holder.getProject();
 
     final PsiClass bean = PsiUtil.getTopLevelClass(annotation);
@@ -253,11 +254,21 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
 
     final PsiParameter psiParameter = psiParameters[0];
     final String parameterTypeFQN = psiParameter.getType().getCanonicalText();
-    final PsiClass psiClassParameterType = JavaPsiFacade.getInstance(project)
-        .findClass(parameterTypeFQN, ProjectScope.getAllScope(project));
 
     final AnnotationValueElement annoValueEl = Util.getValueStringFromAnnotationWithDefault(annotation);
-    final String annoValue = annoValueEl.getValue();
+    String annoValue = annoValueEl.getValue();
+
+
+    if (annoValue == null) {
+      /** default 'this' case **/
+      return;
+    }
+
+
+    final PsiClass psiClassParameterType = JavaPsiFacade.getInstance(project)
+        .findClass(parameterTypeFQN, ProjectScope.getAllScope(project));
+    final boolean isGWTeventType = Util.typeIsAssignableFrom(psiClassParameterType, Types.GWT_EVENT_TYPE);
+
 
     final DataFieldExistence dataFieldExistence = dataFieldExistenceCheck(annotation, metaData);
     final Map<String, ConsolidateDataFieldElementResult> dataFields = metaData.getConsolidatedDataFields();
@@ -310,7 +321,6 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
       });
     }
 
-    final boolean isGWTeventType = Util.typeIsAssignableFrom(psiClassParameterType, Types.GWT_EVENT_TYPE);
 
     if (isGWTeventType) {
       if (hasSinkEvent && dataFields.containsKey(annoValue) && dataFields.get(annoValue).isDataFieldInClass()) {

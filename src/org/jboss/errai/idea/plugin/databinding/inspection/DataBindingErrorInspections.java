@@ -117,19 +117,18 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
             + validation.getParentName();
 
         final PsiNameValuePair[] attributes = psiAnnotation.getParameterList().getAttributes();
-        if (attributes.length == 0) {
-          return;
-        }
 
-        final PsiAnnotationMemberValue value = attributes[0].getValue();
-        if (value == null) {
-          return;
-        }
-        for (PsiReference ref : value.getReferences()) {
-          if (ref instanceof ExpressionErrorReference) {
-            holder.registerProblemForReference(ref, ProblemHighlightType.ERROR, errorText);
-            holder.registerProblem(psiAnnotation, "The binding is invalid.");
-            return;
+        if (attributes.length > 0) {
+          final PsiAnnotationMemberValue value = attributes[0].getValue();
+          if (value != null) {
+
+            for (PsiReference ref : value.getReferences()) {
+              if (ref instanceof ExpressionErrorReference) {
+                holder.registerProblemForReference(ref, ProblemHighlightType.ERROR, errorText);
+                holder.registerProblem(psiAnnotation, "The binding is invalid.");
+                return;
+              }
+            }
           }
         }
 
