@@ -402,6 +402,4 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
       return DataFieldExistence.EXISTS;
     }
   }
-
-
 }

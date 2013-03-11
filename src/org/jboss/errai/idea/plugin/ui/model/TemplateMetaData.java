@@ -67,29 +67,10 @@ public class TemplateMetaData {
     return Util.findAllDataFieldTags(this, project, includeRootTag);
   }
 
-//  public Map<String, PsiAnnotation> getAllDataFieldsInClass() {
-//    final Collection<AnnotationSearchResult> allInjectionPoints
-//        = Util.findAllAnnotatedElements(templateClass, Types.DATAFIELD_ANNOTATION_NAME);
-//
-//    final Map<String, PsiAnnotation> map = new LinkedHashMap<String, PsiAnnotation>();
-//    for (AnnotationSearchResult injectionPoint : allInjectionPoints) {
-//   //   PsiElement owningElement = injectionPoint.getOwningElement();
-//      PsiAnnotation psiAnnotation = injectionPoint.getAnnotation();
-//
-//      final String value = Util.getValueStringFromAnnotationWithDefault(psiAnnotation).getValue();
-//
-//      map.put(value, psiAnnotation);
-//    }
-//    return map;
-//  }
-
-
   public Map<String, ConsolidateDataFieldElementResult> getConsolidatedDataFields() {
     if (templateClass == null) {
       return Collections.emptyMap();
     }
     return Util.getConsolidatedDataFields(templateClass, project);
   }
-
-
 }

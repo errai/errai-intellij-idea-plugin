@@ -33,9 +33,6 @@ public class BeanPropertyRenameProcessor extends RenamePsiElementProcessor {
   public boolean canProcessElement(@NotNull PsiElement element) {
     if (element instanceof PsiField) {
       final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
-
-
-
       if (topLevelClass != null) {
         if (Util.elementIsAnnotated(topLevelClass, Types.BINDABLE)) {
           return true;
@@ -95,7 +92,6 @@ public class BeanPropertyRenameProcessor extends RenamePsiElementProcessor {
         final PsiAnnotationMemberValue property1 = Util.getAnnotationMemberValue(boundAnnotation, "property");
 
         FakeNamedPsi dummy = new FakeNamedPsi(property1) {
-
           @Override
           public PsiElement setName(@NotNull final String name) throws IncorrectOperationException {
             final PsiExpression expressionFromText = JavaPsiFacade.getInstance(element.getProject()).getElementFactory()

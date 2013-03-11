@@ -277,7 +277,6 @@ public class DataBindUtil {
     return validation;
   }
 
-
   public static String getPropertyFromAccessor(String s) {
     char[] c = s.toCharArray();
     char[] chars;
@@ -353,17 +352,8 @@ public class DataBindUtil {
     final PsiFile[] properties = Util.getAllErraiAppProperties(project);
     final Set<String> bindableTypes = new HashSet<String>();
 
-
     for (PsiFile file : properties) {
       final List<IProperty> allProperties = PropertiesUtil.findAllProperties(project, PropertiesUtil.getResourceBundle(file), "errai.ui.bindableTypes");
-//      final Map<String, String> namesMap = PropertiesUtil.getPropertiesFile(file).getNamesMap();
-//      if (namesMap.containsKey("errai.ui.bindableTypes")) {
-//        String value = namesMap.get("errai.ui.bindableTypes");
-//
-//        for (String bindableType : value.split("\\s+")) {
-//          bindableTypes.add(bindableType.trim());
-//        }
-//      }
       for (IProperty property : allProperties) {
         final String value = property.getValue();
         if (value != null) {

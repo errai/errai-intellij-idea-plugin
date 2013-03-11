@@ -6,16 +6,10 @@ import java.util.List;
  * @author Mike Brock
  */
 public class SuperTypeInfo {
-  private final String className;
   private final List<String> typeParms;
 
-  public SuperTypeInfo(String className, List<String> typeParms) {
-    this.className = className;
+  public SuperTypeInfo(List<String> typeParms) {
     this.typeParms = typeParms;
-  }
-
-  public String getClassName() {
-    return className;
   }
 
   public List<String> getTypeParms() {

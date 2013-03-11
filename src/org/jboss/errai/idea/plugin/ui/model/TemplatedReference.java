@@ -78,7 +78,6 @@ public class TemplatedReference extends PsiReferenceBase<PsiLiteralExpression> {
     return completions;
   }
 
-
   @Nullable
   public PsiElement resolve() {
     return getTemplateCompletions().get(getValue());

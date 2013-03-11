@@ -19,7 +19,6 @@ import java.util.Map;
  * @author Mike Brock
  */
 public class TemplateDatafieldReference extends PsiReferenceBase<PsiLiteralExpression> {
-
   public TemplateDatafieldReference(PsiLiteralExpression element, boolean soft) {
     super(element, soft);
   }
@@ -43,7 +42,6 @@ public class TemplateDatafieldReference extends PsiReferenceBase<PsiLiteralExpre
     }
     return map;
   }
-
 
   @Nullable
   @Override

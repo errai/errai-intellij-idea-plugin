@@ -28,7 +28,6 @@ import java.util.Set;
  * @author Mike Brock
  */
 public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
-
   public XmlDatafieldReference(XmlAttribute element, boolean soft) {
     super(element, soft);
   }
@@ -65,7 +64,6 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
     }
 
     final List<DataFieldRef> dataFieldRefs = new ArrayList<DataFieldRef>();
-
     final XmlFile xmlFile = (XmlFile) el;
     final Map<String, TemplateDataField> allDataFieldTags
         = Util.findAllDataFieldTags(xmlFile, xmlFile.getRootTag(), true);

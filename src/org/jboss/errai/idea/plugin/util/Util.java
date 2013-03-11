@@ -151,10 +151,8 @@ public class Util {
 
   public static class Ownership {
     private final Set<PsiClass> templateClasses = new HashSet<PsiClass>();
-    private final long lastModified;
 
-    public Ownership(PsiFile associatedFile) {
-      this.lastModified = associatedFile.getModificationStamp();
+    public Ownership() {
     }
 
     public Set<PsiClass> getTemplateClasses() {
@@ -183,7 +181,6 @@ public class Util {
     return new TemplateExpression(fileName.trim(), rootNode.trim());
   }
 
-
   /**
    * Finds all "data-field" tags for the specified {@link org.jboss.errai.idea.plugin.ui.model.TemplateMetaData}.
    *
@@ -196,7 +193,7 @@ public class Util {
    *     only children of the node are considered. If Set to <tt>true</tt>, the root node itself is checked
    *     to see if it is a data-field.
    *
-   * @return
+   * @return Map of all datafields in the template class.
    */
   public static Map<String, TemplateDataField> findAllDataFieldTags(TemplateMetaData templateMetaData,
                                                                     Project project,
@@ -295,7 +292,13 @@ public class Util {
     }
 
     if (includeRoot && rootTag.getAttribute("data-field") != null) {
-      final String value = rootTag.getAttribute("data-field").getValue();
+      final XmlAttribute attribute = rootTag.getAttribute("data-field");
+
+      if (attribute == null) {
+        return references;
+      }
+
+      final String value = attribute.getValue();
       references.put(value, new TemplateDataField(rootTag, value));
     }
     _findDataFieldTags(references, rootTag);
@@ -327,9 +330,23 @@ public class Util {
       topLevelClass = PsiUtil.getTopLevelClass(element);
     }
 
-    final PsiAnnotation[] annotations = topLevelClass.getModifierList().getAnnotations();
+    if (topLevelClass == null) {
+      return null;
+    }
+
+    final PsiModifierList modifierList = topLevelClass.getModifierList();
+
+    if (modifierList == null) {
+      return null;
+    }
+
+    final PsiAnnotation[] annotations = modifierList.getAnnotations();
     for (PsiAnnotation psiAnnotation : annotations) {
-      if (psiAnnotation.getQualifiedName().equals(Types.TEMPLATED_ANNOTATION_NAME)) {
+      final String qualifiedName = psiAnnotation.getQualifiedName();
+      if (qualifiedName == null) {
+        continue;
+      }
+      if (qualifiedName.equals(Types.TEMPLATED_ANNOTATION_NAME)) {
         return psiAnnotation;
       }
     }
@@ -678,26 +695,6 @@ public class Util {
     return JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
   }
 
-//
-//  public static PsiClass getTypeInformation(PsiClass from, String... toFQN) {
-//    if (from == null) return null;
-//
-//    Set<String> matching = new HashSet<String>(Arrays.asList(toFQN));
-//    PsiClass cls = from;
-//    do {
-//      if (matching.contains(cls.getQualifiedName())) return cls;
-//
-//      for (PsiClass interfaceClass : cls.getInterfaces()) {
-//        if (typeIsAssignableFrom(interfaceClass, toFQN)) {
-//          return interfaceClass;
-//        }
-//      }
-//    }
-//    while ((cls = cls.getSuperClass()) != null);
-//
-//    return null;
-//  }
-
   public static SuperTypeInfo getTypeInformation(PsiClass from, String toFQN) {
     final PsiClassType[] superTypes = from.getSuperTypes();
 
@@ -718,9 +715,8 @@ public class Util {
       }
 
       if (type.getCanonicalText().startsWith(toFQN)) {
-        final String className = getErasedCanonicalText(type.getCanonicalText());
         final List<String> parms = getErasedTypeParamsCanonicalText(type.getCanonicalText());
-        return new SuperTypeInfo(className, parms);
+        return new SuperTypeInfo(parms);
       }
     }
     return null;
@@ -752,7 +748,7 @@ public class Util {
     getOrCreateCache(OWNERSHIP_CACHE, file, new CacheProvider<Ownership>() {
       @Override
       public Ownership provide() {
-        return new Ownership(file);
+        return new Ownership();
       }
 
       @Override

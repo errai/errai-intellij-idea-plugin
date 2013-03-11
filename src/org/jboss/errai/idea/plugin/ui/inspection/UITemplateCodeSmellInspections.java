@@ -77,10 +77,8 @@ public class UITemplateCodeSmellInspections extends BaseJavaLocalInspectionTool 
     }
   }
 
-
   public static void ensureDataFieldIsValid(final ProblemsHolder holder,
                                             final PsiAnnotation annotation) {
-
     final PsiElement ownerElement = Util.getImmediateOwnerElement(annotation);
 
     final boolean fieldIsInject = Util.fieldOrMethodIsAnnotated(ownerElement, Types.JAVAX_INJECT);

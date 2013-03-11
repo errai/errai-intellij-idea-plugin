@@ -59,7 +59,6 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
     return HighlightDisplayLevel.ERROR;
   }
 
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
@@ -89,8 +88,6 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
 
   public static void ensureBoundFieldIsValid(ProblemsHolder holder,
                                              PsiAnnotation psiAnnotation) {
-
-
     final BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(psiAnnotation);
 
     if (boundMetaData.getBindingMetaData().getBoundClass() == null) {
