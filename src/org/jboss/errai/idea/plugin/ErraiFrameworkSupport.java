@@ -28,6 +28,7 @@ import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ProcessingContext;
+import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 import org.jboss.errai.idea.plugin.ui.completion.TemplateEventHandlerReference;
 import org.jboss.errai.idea.plugin.ui.completion.XmlDatafieldReference;
 import org.jboss.errai.idea.plugin.util.AnnotationMatchingPattern;
@@ -48,7 +49,6 @@ public class ErraiFrameworkSupport implements ApplicationComponent {
 
   public void initComponent() {
     final PsiReferenceRegistrar javaRegistrar = registry.getRegistrar(Language.findInstance(JavaLanguage.class));
-
     javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.EVENTHANDLER_ANNOTATION_NAME),
         new PsiReferenceProvider() {
           @NotNull
@@ -60,7 +60,7 @@ public class ErraiFrameworkSupport implements ApplicationComponent {
 
     final PsiReferenceRegistrar xmlRegistrar = registry.getRegistrar(Language.findInstance(HTMLLanguage.class));
 
-    xmlRegistrar.registerReferenceProvider(new XmlAttributeMatchingPattern("data-field"),
+    xmlRegistrar.registerReferenceProvider(new XmlAttributeMatchingPattern(TemplateUtil.DATA_FIELD_TAG_ATTRIBUTE),
         new PsiReferenceProvider() {
           @NotNull
           @Override

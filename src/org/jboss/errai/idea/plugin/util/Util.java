@@ -206,6 +206,20 @@ public class Util {
     return null;
   }
 
+  public static boolean typeIsAnnotated(PsiClass psiClass, String annotationType) {
+    final PsiModifierList modifierList = psiClass.getModifierList();
+
+    if (modifierList != null) {
+      for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
+        final String qualifiedName = psiAnnotation.getQualifiedName();
+        if (qualifiedName != null && qualifiedName.equals(annotationType)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public static boolean elementIsAnnotated(PsiElement element, String annotationType) {
     return getAnnotationFromElement(element, annotationType) != null;
   }
@@ -347,10 +361,8 @@ public class Util {
   }
 
   public static SuperTypeInfo getTypeInformation(PsiClass from, String toFQN) {
-    final PsiClassType[] superTypes = from.getSuperTypes();
-
     Stack<PsiClassType> toSearch = new Stack<PsiClassType>();
-    for (PsiClassType type : superTypes) {
+    for (PsiClassType type : from.getSuperTypes()) {
       toSearch.push(type);
     }
 
@@ -427,6 +439,10 @@ public class Util {
     else {
       return null;
     }
+  }
+
+  public static<T> void invalidateCache(Key<T> cacheKey, PsiElement element) {
+    element.getOriginalElement().putCopyableUserData(cacheKey, null);
   }
 
   public static <T> T getOrCreateCache(Key<T> cacheKey, PsiElement element, CacheProvider<T> provider) {

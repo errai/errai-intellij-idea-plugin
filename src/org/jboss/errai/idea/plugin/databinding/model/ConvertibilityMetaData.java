@@ -30,10 +30,6 @@ public class ConvertibilityMetaData {
   public ConvertibilityMetaData() {
   }
 
-  public ConvertibilityMetaData(PsiClass from, PsiClass to) {
-    addConversionRule(from, to);
-  }
-
   public void addConversionRule(PsiClass from, PsiClass to) {
     conversionRules.put(from, to);
   }

@@ -35,7 +35,6 @@ public class BoundMetaData {
   private final PsiElement owner;
   private final PsiAnnotation psiAnnotation;
   private final String property;
-  private final String bindableConverter;
 
   public BoundMetaData(PsiElement owner) {
     this.templateBindingMetaData = DataBindUtil.getTemplateBindingMetaData(owner);
@@ -44,11 +43,11 @@ public class BoundMetaData {
 
     if (psiAnnotation != null) {
       property = Util.getAttributeValue(psiAnnotation, "property", DefaultPolicy.OWNER_IDENTIFIER_NAME);
-      bindableConverter = Util.getAttributeValue(psiAnnotation, "converter", DefaultPolicy.NULL);
+   //   bindableConverter = Util.getAttributeValue(psiAnnotation, "converter", DefaultPolicy.NULL);
     }
     else {
       property = null;
-      bindableConverter = null;
+     // bindableConverter = null;
     }
   }
 
@@ -58,18 +57,6 @@ public class BoundMetaData {
 
   public PsiAnnotation getPsiAnnotation() {
     return psiAnnotation;
-  }
-
-  public String getProperty() {
-    return property;
-  }
-
-  public PsiElement getOwner() {
-    return owner;
-  }
-
-  public String getBindableConverter() {
-    return bindableConverter;
   }
 
   public PropertyValidation validateProperty() {

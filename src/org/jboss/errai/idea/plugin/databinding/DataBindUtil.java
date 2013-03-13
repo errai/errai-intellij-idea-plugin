@@ -369,12 +369,11 @@ public class DataBindUtil {
   }
 
   public static Set<String> getConfiguredBindableTypes(Project project) {
-    final PsiFile[] properties = Util.getAllErraiAppProperties(project);
     final Set<String> bindableTypes = new HashSet<String>();
 
-    for (PsiFile file : properties) {
-      final List<IProperty> allProperties = PropertiesUtil.findAllProperties(project, PropertiesUtil.getResourceBundle(file), "errai.ui.bindableTypes");
-      for (IProperty property : allProperties) {
+    for (PsiFile file : Util.getAllErraiAppProperties(project)) {
+      for (IProperty property
+          : PropertiesUtil.findAllProperties(project, PropertiesUtil.getResourceBundle(file), "errai.ui.bindableTypes")) {
         final String value = property.getValue();
         if (value != null) {
           for (String s : value.split("\\s+")) {

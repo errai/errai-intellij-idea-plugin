@@ -42,6 +42,9 @@ public class PropertyInfo {
 
   public PsiField getAssociatedField() {
     PsiClass type = PsiUtil.getTopLevelClass(getAccessorElement());
+    if (type == null) {
+      return null;
+    }
 
     for (PsiField psiField : type.getAllFields()) {
       if (psiField.getName().equals(propertyName)

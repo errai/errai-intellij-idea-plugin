@@ -59,11 +59,11 @@ public class TemplateEventHandlerReference extends PsiReferenceBase<PsiLiteralEx
         = Util.fieldOrMethodIsAnnotated(getElement(), Types.SINKNATIVE_ANNOTATION_NAME);
 
     final Project project = getElement().getProject();
-    final Map<String, ConsolidateDataFieldElementResult> dataFields
-        = TemplateUtil.getConsolidatedDataFields(getElement(), project);
 
     final ArrayList<Object> list = new ArrayList<Object>();
-    for (Map.Entry<String, ConsolidateDataFieldElementResult> entry : dataFields.entrySet()) {
+    for (Map.Entry<String, ConsolidateDataFieldElementResult> entry
+        : TemplateUtil.getConsolidatedDataFields(getElement(), project).entrySet()) {
+
       LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(entry.getKey());
 
       if (entry.getValue().isDataFieldInClass()) {

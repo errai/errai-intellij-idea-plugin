@@ -107,7 +107,7 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
       final String qualifiedName = annotation.getQualifiedName();
       if (qualifiedName != null) {
         if (qualifiedName.equals(Types.TEMPLATED_ANNOTATION_NAME)) {
-          final PsiClass templateClass = ((PsiClass) annotation.getParent().getParent());
+          final PsiClass templateClass = (PsiClass) PsiUtil.getTopLevelClass(annotation);
           ensureTemplateExists(holder, annotation);
           ensureTemplateClassIsComposite(holder, templateClass);
         }

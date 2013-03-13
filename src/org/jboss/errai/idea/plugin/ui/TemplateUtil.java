@@ -24,14 +24,16 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jboss.errai.idea.plugin.ui.model.ConsolidateDataFieldElementResult;
@@ -58,13 +60,16 @@ import java.util.Set;
  * @author Mike Brock
  */
 public class TemplateUtil {
+  public static final String DATA_FIELD_TAG_ATTRIBUTE = "data-field";
+
   public static final Key<Ownership> OWNERSHIP_CACHE = Key.create("OWNERSHIP_CACHE");
   private static final Key<DataFieldCacheHolder> dataFieldsCacheKey = Key.create("dataFieldsCache");
 
   public static class Ownership {
-    private final Set<PsiClass> templateClasses = new HashSet<PsiClass>();
+    private final Set<PsiClass> templateClasses;
 
-    public Ownership() {
+    public Ownership(Set<PsiClass> templateClasses) {
+      this.templateClasses = templateClasses;
     }
 
     public Set<PsiClass> getTemplateClasses() {
@@ -129,7 +134,7 @@ public class TemplateUtil {
       rootTag = xmlFile.getRootTag();
     }
 
-    declareOwner(xmlFile, templateMetaData.getTemplateClass());
+    invalidateCache(xmlFile, templateMetaData.getTemplateClass());
 
     return findAllDataFieldTags(file, rootTag, includeRoot);
   }
@@ -149,7 +154,6 @@ public class TemplateUtil {
       return Collections.emptyMap();
     }
 
-    final XmlDocument document;
     if (rootTag == null) {
       rootTag = ((XmlFile) file).getRootTag();
     }
@@ -197,8 +201,8 @@ public class TemplateUtil {
       return references;
     }
 
-    if (includeRoot && rootTag.getAttribute("data-field") != null) {
-      final XmlAttribute attribute = rootTag.getAttribute("data-field");
+    if (includeRoot && rootTag.getAttribute(DATA_FIELD_TAG_ATTRIBUTE) != null) {
+      final XmlAttribute attribute = rootTag.getAttribute(DATA_FIELD_TAG_ATTRIBUTE);
 
       if (attribute == null) {
         return references;
@@ -230,7 +234,7 @@ public class TemplateUtil {
   }
 
   private static void _scanTag(Map<String, TemplateDataField> foundTags, XmlTag xmlTag) {
-    XmlAttribute xmlAttribute = xmlTag.getAttribute("data-field");
+    XmlAttribute xmlAttribute = xmlTag.getAttribute(DATA_FIELD_TAG_ATTRIBUTE);
     if (xmlAttribute != null) {
       foundTags.put(xmlAttribute.getValue(), new TemplateDataField(xmlTag, xmlAttribute.getValue()));
     }
@@ -424,31 +428,51 @@ public class TemplateUtil {
     return results;
   }
 
-  public static void declareOwner(final PsiFile file, final PsiClass psiClass) {
+  public static void invalidateCache(final PsiFile file, final PsiClass psiClass) {
     if (psiClass == null) {
       return;
     }
-    Util.getOrCreateCache(OWNERSHIP_CACHE, file, new CacheProvider<Ownership>() {
+
+    Util.invalidateCache(OWNERSHIP_CACHE, file.getOriginalElement());
+  }
+
+  public static Set<PsiClass> getTemplateOwners(final PsiFile file) {
+    return Util.getOrCreateCache(OWNERSHIP_CACHE, file.getOriginalElement(), new CacheProvider<Ownership>() {
       @Override
       public Ownership provide() {
-        return new Ownership();
+        final Collection<VirtualFile> javaFiles
+            = FilenameIndex.getAllFilesByExt(file.getProject(), "java", GlobalSearchScope.projectScope(file.getProject()));
+
+        final PsiManager psiManager = PsiManager.getInstance(file.getProject());
+        final PsiFile originalFile = file.getOriginalFile();
+        final Set<PsiClass> templateOwners = new HashSet<PsiClass>();
+
+        PsiFile f;
+        for (VirtualFile vf : javaFiles) {
+          f = psiManager.findFile(vf);
+          if (f instanceof PsiJavaFile) {
+            for (PsiClass psiClass : ((PsiJavaFile) f).getClasses()) {
+              if (Util.typeIsAnnotated(psiClass, Types.TEMPLATED_ANNOTATION_NAME)) {
+                final PsiFile templateFile
+                    = TemplateUtil.getTemplateMetaData(psiClass).getRootTag().getContainingFile().getOriginalFile();
+
+                if (originalFile.equals(templateFile)) {
+                  templateOwners.add(psiClass);
+                }
+              }
+            }
+          }
+        }
+
+        return new Ownership(templateOwners);
       }
 
       @Override
       public boolean isCacheValid(Ownership ownership) {
-        return ownership.isValid();
+        return true;
       }
-    }).getTemplateClasses().add(psiClass);
-  }
+    }).getTemplateClasses();
 
-  public static Set<PsiClass> getOwners(PsiFile file) {
-    final Ownership ownership = file.getOriginalFile().getCopyableUserData(OWNERSHIP_CACHE);
-    if (ownership == null || !ownership.isValid()) {
-      return Collections.emptySet();
-    }
-    else {
-      return ownership.getTemplateClasses();
-    }
-  }
 
+  }
 }

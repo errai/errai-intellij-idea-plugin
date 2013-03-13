@@ -23,24 +23,21 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.util.IncorrectOperationException;
+import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyInfo;
 import org.jboss.errai.idea.plugin.databinding.model.TemplateBindingMetaData;
-import org.jboss.errai.idea.plugin.util.FakeNamedPsi;
-import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
-import org.jboss.errai.idea.plugin.util.DefaultPolicy;
 import org.jboss.errai.idea.plugin.ui.TemplateUtil;
+import org.jboss.errai.idea.plugin.util.DefaultPolicy;
+import org.jboss.errai.idea.plugin.util.FakeNamedPsi;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Mike Brock
@@ -54,9 +51,8 @@ public class BeanPropertyRenameProcessor extends RenamePsiElementProcessor {
         if (Util.elementIsAnnotated(topLevelClass, Types.BINDABLE)) {
           return true;
         }
-        final Set<String> configuredBindableTypes
-            = DataBindUtil.getConfiguredBindableTypes(topLevelClass.getProject());
-        if (configuredBindableTypes.contains(topLevelClass.getQualifiedName())) {
+        if (DataBindUtil.getConfiguredBindableTypes(topLevelClass.getProject())
+            .contains(topLevelClass.getQualifiedName())) {
           return true;
         }
       }
@@ -71,13 +67,10 @@ public class BeanPropertyRenameProcessor extends RenamePsiElementProcessor {
       return;
     }
 
-    final PsiFile containingFile = topLevelClass.getContainingFile();
-    final Set<PsiClass> owners = TemplateUtil.getOwners(containingFile);
-    for (PsiClass psiClass : owners) {
+    for (PsiClass psiClass : TemplateUtil.getTemplateOwners(topLevelClass.getContainingFile())) {
       final TemplateBindingMetaData metaData = DataBindUtil.getTemplateBindingMetaData(psiClass);
-      final Collection<BoundMetaData> allBoundMetaDataFromClass = DataBindUtil.getAllBoundMetaDataFromClass(psiClass);
 
-      for (BoundMetaData md : allBoundMetaDataFromClass) {
+      for (BoundMetaData md : DataBindUtil.getAllBoundMetaDataFromClass(psiClass)) {
         final PsiAnnotation boundAnnotation = md.getPsiAnnotation();
         final String property = Util.getAttributeValue(boundAnnotation, "property", DefaultPolicy.NULL);
 

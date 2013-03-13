@@ -74,7 +74,7 @@ class BeanPropertyReferenceProvider extends PsiReferenceProvider {
           = DataBindUtil.getBeanPropertyType(cls, propertyName.trim());
 
       if (propPsiClass != null) {
-        TemplateUtil.declareOwner(propPsiClass.getContainingFile(), metaData.getTemplateClass());
+        TemplateUtil.invalidateCache(propPsiClass.getContainingFile(), metaData.getTemplateClass());
       }
       else {
         references.add(new ExpressionErrorReference(literalExpression, propertyName, range));

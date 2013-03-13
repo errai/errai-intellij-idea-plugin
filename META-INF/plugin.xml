@@ -30,6 +30,14 @@
   </project-components>
 
   <actions>
+    <action id="org.jboss.errai.idea.actions.TemplateToggleAction"
+              class="org.jboss.errai.idea.actions.TemplateToggleAction"
+              text="Toggle between Errai UI template and backing bean"
+              description="Jumps between an Errai UI HTML template and the associated backing bean">
+          <keyboard-shortcut keymap="$default" first-keystroke="control shift T"/>
+          <keyboard-shortcut keymap="Mac OS X" first-keystroke="control shift T"/>
+          <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control shift T"/>
+      </action>
     <!-- Add your actions here -->
   </actions>
 

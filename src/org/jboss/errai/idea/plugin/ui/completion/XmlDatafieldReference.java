@@ -27,8 +27,8 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jboss.errai.idea.plugin.ui.TemplateDataField;
-import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
 import org.jboss.errai.idea.plugin.ui.TemplateUtil;
+import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Mike Brock
@@ -85,14 +84,11 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
     final Map<String, TemplateDataField> allDataFieldTags
         = TemplateUtil.findAllDataFieldTags(xmlFile, xmlFile.getRootTag(), true);
 
-    final Set<PsiClass> owners = TemplateUtil.getOwners(xmlFile);
-    for (PsiClass psiClass : owners) {
+    for (PsiClass psiClass : TemplateUtil.getTemplateOwners(xmlFile)) {
       final Collection<AnnotationSearchResult> allAnnotatedElements
           = Util.findAllAnnotatedElements(psiClass, Types.DATAFIELD_ANNOTATION_NAME);
 
-      final Collection<String> strings = TemplateUtil.extractDataFieldList(allAnnotatedElements);
-
-      for (String dataField : strings) {
+      for (String dataField : TemplateUtil.extractDataFieldList(allAnnotatedElements)) {
         if (allDataFieldTags.containsKey(dataField) || dataField.contains(Util.INTELLIJ_MAGIC_STRING)) continue;
 
         dataFieldRefs.add(new DataFieldRef(dataField, psiClass.getQualifiedName()));
