@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jboss.errai</id>
   <name>Errai Framework</name>
-  <version>0.1</version>
+  <version>0.2</version>
   <vendor email="cbrock@redhat.com" url="http://www.jboss.org/errai/">Red Hat, Inc.</vendor>
 
   <description><![CDATA[
@@ -10,6 +10,15 @@
       ]]></description>
 
   <change-notes>
+    <![CDATA[
+          New in v0.2!<br>
+          <small>
+            <ul>
+              <li>Now jump between template classes and template files with Ctrl-Shift-T</li>
+              <li>Bug fixes</li>
+            </ul>
+          </small>
+          ]]>
   </change-notes>
 
   <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Build+Number+Ranges for description -->
@@ -20,8 +29,8 @@
   <application-components>
     <!-- Add your application components here -->
     <component>
-       <implementation-class>org.jboss.errai.idea.plugin.ErraiFrameworkSupport</implementation-class>
-     </component>
+      <implementation-class>org.jboss.errai.idea.plugin.ErraiFrameworkSupport</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -31,21 +40,24 @@
 
   <actions>
     <action id="org.jboss.errai.idea.actions.TemplateToggleAction"
-              class="org.jboss.errai.idea.actions.TemplateToggleAction"
-              text="Toggle between Errai UI template and backing bean"
-              description="Jumps between an Errai UI HTML template and the associated backing bean">
-          <keyboard-shortcut keymap="$default" first-keystroke="control shift T"/>
-          <keyboard-shortcut keymap="Mac OS X" first-keystroke="control shift T"/>
-          <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control shift T"/>
-      </action>
+            class="org.jboss.errai.idea.actions.TemplateToggleAction"
+            text="Toggle between Errai UI template and backing bean"
+            description="Jumps between an Errai UI HTML template and the associated backing bean">
+      <keyboard-shortcut keymap="$default" first-keystroke="control shift T"/>
+      <keyboard-shortcut keymap="Mac OS X" first-keystroke="control shift T"/>
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control shift T"/>
+    </action>
     <!-- Add your actions here -->
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <psi.referenceContributor implementation="org.jboss.errai.idea.plugin.ui.completion.TemplatePropertyReferenceContributor"/>
-    <psi.referenceContributor implementation="org.jboss.errai.idea.plugin.databinding.completion.BeanPropertyReferenceContributor"/>
+    <psi.referenceContributor
+        implementation="org.jboss.errai.idea.plugin.ui.completion.TemplatePropertyReferenceContributor"/>
+    <psi.referenceContributor
+        implementation="org.jboss.errai.idea.plugin.databinding.completion.BeanPropertyReferenceContributor"/>
     <inspectionToolProvider implementation="org.jboss.errai.idea.plugin.ErraiUIInspectionToolProvider"/>
-    <renamePsiElementProcessor implementation="org.jboss.errai.idea.plugin.databinding.completion.BeanPropertyRenameProcessor"/>
+    <renamePsiElementProcessor
+        implementation="org.jboss.errai.idea.plugin.databinding.completion.BeanPropertyRenameProcessor"/>
 
     <!-- Add your extensions here -->
   </extensions>

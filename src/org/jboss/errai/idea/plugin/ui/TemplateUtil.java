@@ -437,7 +437,7 @@ public class TemplateUtil {
   }
 
   public static Set<PsiClass> getTemplateOwners(final PsiFile file) {
-    return Util.getOrCreateCache(OWNERSHIP_CACHE, file.getOriginalElement(), new CacheProvider<Ownership>() {
+    final Set<PsiClass> owners = Util.getOrCreateCache(OWNERSHIP_CACHE, file.getOriginalElement(), new CacheProvider<Ownership>() {
       @Override
       public Ownership provide() {
         final Collection<VirtualFile> javaFiles
@@ -473,6 +473,13 @@ public class TemplateUtil {
       }
     }).getTemplateClasses();
 
+    final Iterator<PsiClass> iter = owners.iterator();
+    while (iter.hasNext()) {
+      if (!iter.next().isValid()) {
+        iter.remove();
+      }
+    }
 
+    return owners;
   }
 }
