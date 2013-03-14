@@ -17,6 +17,7 @@
 package org.jboss.errai.idea.plugin.databinding.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -98,8 +99,17 @@ class PropertyPsiReference extends PsiReferenceBase<PsiLiteralExpression> {
       if (propertyType == null) {
         continue;
       }
-      variants.add(LookupElementBuilder.create(entry.getKey())
-          .withTypeText(propertyType.getQualifiedName(), true));
+      final LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(entry.getKey());
+      final LookupElementBuilder e;
+
+      if (DataBindUtil.typeIsBindable(entry.getValue().getPropertyType())) {
+        e = lookupElementBuilder.withIcon(AllIcons.Nodes.Class);
+      }
+      else {
+        e = lookupElementBuilder.withIcon(AllIcons.Nodes.Property);
+      }
+
+      variants.add(e.withTypeText(propertyType.getQualifiedName(), true));
     }
 
     return variants.toArray();

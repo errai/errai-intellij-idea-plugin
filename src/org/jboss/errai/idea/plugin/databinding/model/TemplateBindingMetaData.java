@@ -19,7 +19,6 @@ package org.jboss.errai.idea.plugin.databinding.model;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiVariable;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
-import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
@@ -51,10 +50,6 @@ public class TemplateBindingMetaData {
     if (autoBoundAnnotations.size() == 1) {
       AnnotationSearchResult result = autoBoundAnnotations.iterator().next();
       boundClass = Util.getErasedTypeParam(templateClass.getProject(), ((PsiVariable) result.getOwningElement()).getType().getCanonicalText());
-
-      if (boundClass != null) {
-        TemplateUtil.invalidateCache(boundClass.getContainingFile(), templateClass);
-      }
     }
     else {
       boundClass = null;

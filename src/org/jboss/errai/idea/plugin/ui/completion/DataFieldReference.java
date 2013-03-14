@@ -17,6 +17,7 @@
 package org.jboss.errai.idea.plugin.ui.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
@@ -83,7 +84,7 @@ public class DataFieldReference extends PsiReferenceBase<PsiLiteralExpression> {
     final ArrayList<Object> list = new ArrayList<Object>();
     for (final String value : getAvailableDataFields().keySet()) {
 
-      list.add(LookupElementBuilder.create(value));
+      list.add(LookupElementBuilder.create(value).withIcon(AllIcons.Xml.Html_id));
     }
     return list.toArray();
   }

@@ -19,7 +19,6 @@ package org.jboss.errai.idea.plugin.ui.completion;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
@@ -28,6 +27,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jboss.errai.idea.plugin.ui.TemplateDataField;
 import org.jboss.errai.idea.plugin.ui.TemplateUtil;
+import org.jboss.errai.idea.plugin.ui.model.TemplateMetaData;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
@@ -84,14 +84,14 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
     final Map<String, TemplateDataField> allDataFieldTags
         = TemplateUtil.findAllDataFieldTags(xmlFile, xmlFile.getRootTag(), true);
 
-    for (PsiClass psiClass : TemplateUtil.getTemplateOwners(xmlFile)) {
+    for (TemplateMetaData metaData : TemplateUtil.getTemplateOwners(xmlFile)) {
       final Collection<AnnotationSearchResult> allAnnotatedElements
-          = Util.findAllAnnotatedElements(psiClass, Types.DATAFIELD_ANNOTATION_NAME);
+          = Util.findAllAnnotatedElements(metaData.getTemplateClass(), Types.DATAFIELD_ANNOTATION_NAME);
 
       for (String dataField : TemplateUtil.extractDataFieldList(allAnnotatedElements)) {
         if (allDataFieldTags.containsKey(dataField) || dataField.contains(Util.INTELLIJ_MAGIC_STRING)) continue;
 
-        dataFieldRefs.add(new DataFieldRef(dataField, psiClass.getQualifiedName()));
+        dataFieldRefs.add(new DataFieldRef(dataField, metaData.getTemplateClass().getQualifiedName()));
       }
     }
 

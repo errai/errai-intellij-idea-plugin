@@ -16,21 +16,23 @@
 
 package org.jboss.errai.idea.plugin.ui;
 
+import static com.intellij.psi.search.GlobalSearchScope.projectScope;
+
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiNameValuePair;
-import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -49,7 +51,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -115,6 +116,10 @@ public class TemplateUtil {
   public static Map<String, TemplateDataField> findAllDataFieldTags(TemplateMetaData templateMetaData,
                                                                     Project project,
                                                                     boolean includeRoot) {
+    if (!templateMetaData.getTemplateExpression().hasRootNode()) {
+      includeRoot = true;
+    }
+
     VirtualFile vf = templateMetaData.getTemplateFile();
     XmlTag rootTag = templateMetaData.getRootTag();
     if (vf == null) {
@@ -130,11 +135,8 @@ public class TemplateUtil {
 
     final XmlFile xmlFile = (XmlFile) file;
     if (rootTag == null) {
-
       rootTag = xmlFile.getRootTag();
     }
-
-    invalidateCache(xmlFile, templateMetaData.getTemplateClass());
 
     return findAllDataFieldTags(file, rootTag, includeRoot);
   }
@@ -428,58 +430,32 @@ public class TemplateUtil {
     return results;
   }
 
-  public static void invalidateCache(final PsiFile file, final PsiClass psiClass) {
-    if (psiClass == null) {
-      return;
-    }
+  public static Collection<TemplateMetaData> getTemplateOwners(final PsiFile file) {
+    final List<TemplateMetaData> templateOwners = new ArrayList<TemplateMetaData>();
+    final PsiClass psiClass = JavaPsiFacade.getInstance(
+        file.getProject()).findClass(Types.GWT_COMPOSITE_REF,
+        GlobalSearchScope.allScope(file.getProject())
+    );
 
-    Util.invalidateCache(OWNERSHIP_CACHE, file.getOriginalElement());
-  }
-
-  public static Set<PsiClass> getTemplateOwners(final PsiFile file) {
-    final Set<PsiClass> owners = Util.getOrCreateCache(OWNERSHIP_CACHE, file.getOriginalElement(), new CacheProvider<Ownership>() {
-      @Override
-      public Ownership provide() {
-        final Collection<VirtualFile> javaFiles
-            = FilenameIndex.getAllFilesByExt(file.getProject(), "java", GlobalSearchScope.projectScope(file.getProject()));
-
-        final PsiManager psiManager = PsiManager.getInstance(file.getProject());
-        final PsiFile originalFile = file.getOriginalFile();
-        final Set<PsiClass> templateOwners = new HashSet<PsiClass>();
-
-        PsiFile f;
-        for (VirtualFile vf : javaFiles) {
-          f = psiManager.findFile(vf);
-          if (f instanceof PsiJavaFile) {
-            for (PsiClass psiClass : ((PsiJavaFile) f).getClasses()) {
-              if (Util.typeIsAnnotated(psiClass, Types.TEMPLATED_ANNOTATION_NAME)) {
-                final PsiFile templateFile
-                    = TemplateUtil.getTemplateMetaData(psiClass).getRootTag().getContainingFile().getOriginalFile();
-
-                if (originalFile.equals(templateFile)) {
-                  templateOwners.add(psiClass);
-                }
-              }
-            }
-          }
-        }
-
-        return new Ownership(templateOwners);
+    for (PsiClass c : ClassInheritorsSearch.search(psiClass, projectScope(file.getProject()), true)) {
+      final TemplateMetaData templateMetaData = TemplateUtil.getTemplateMetaData(c);
+      if (templateMetaData == null) {
+        continue;
       }
-
-      @Override
-      public boolean isCacheValid(Ownership ownership) {
-        return true;
+      final VirtualFile vTemplateFile = templateMetaData.getTemplateFile();
+      if (vTemplateFile == null) {
+        continue;
       }
-    }).getTemplateClasses();
-
-    final Iterator<PsiClass> iter = owners.iterator();
-    while (iter.hasNext()) {
-      if (!iter.next().isValid()) {
-        iter.remove();
+      final String templateFile = vTemplateFile.getCanonicalPath();
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile == null || templateFile == null) {
+        continue;
+      }
+      if (templateFile.equals(virtualFile.getCanonicalPath())) {
+        templateOwners.add(templateMetaData);
       }
     }
 
-    return owners;
+    return templateOwners;
   }
 }

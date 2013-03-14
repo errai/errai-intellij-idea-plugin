@@ -61,8 +61,6 @@ public class DataBindUtil {
       = Key.create("TEMPLATE_BINDING_META_DATA_KEY");
 
   public static Map<String, PropertyInfo> getAllProperties(PsiClass boundClass, String propertySearchRoot) {
-    final Set<String> bindableTypes = getConfiguredBindableTypes(boundClass.getProject());
-
     int idx = propertySearchRoot.lastIndexOf('.');
     if (idx == -1) {
       propertySearchRoot = null;
@@ -74,7 +72,7 @@ public class DataBindUtil {
     PsiClass cls = boundClass;
     if (propertySearchRoot != null) {
       for (String token : propertySearchRoot.split("\\.")) {
-        if (!bindableTypes.contains(cls.getQualifiedName()) && !Util.elementIsAnnotated(cls, Types.BINDABLE)) {
+        if (!typeIsBindable(cls)) {
           cls = null;
           break;
         }
@@ -384,5 +382,10 @@ public class DataBindUtil {
     }
 
     return bindableTypes;
+  }
+
+  public static boolean typeIsBindable(PsiClass psiClass) {
+    return !(!Util.typeIsAnnotated(psiClass, Types.BINDABLE)
+        && !getConfiguredBindableTypes(psiClass.getProject()).contains(psiClass.getQualifiedName()));
   }
 }

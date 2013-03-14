@@ -25,7 +25,6 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.databinding.model.TemplateBindingMetaData;
-import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 import org.jboss.errai.idea.plugin.util.ExpressionErrorReference;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.NotNull;
@@ -73,10 +72,7 @@ class BeanPropertyReferenceProvider extends PsiReferenceProvider {
       final PsiClass propPsiClass
           = DataBindUtil.getBeanPropertyType(cls, propertyName.trim());
 
-      if (propPsiClass != null) {
-        TemplateUtil.invalidateCache(propPsiClass.getContainingFile(), metaData.getTemplateClass());
-      }
-      else {
+      if (propPsiClass == null) {
         references.add(new ExpressionErrorReference(literalExpression, propertyName, range));
       }
 

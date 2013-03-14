@@ -17,6 +17,7 @@
 package org.jboss.errai.idea.plugin.ui.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -99,7 +100,7 @@ public class TemplateFileReference extends PsiReferenceBase<PsiLiteralExpression
     List<Object> list = new ArrayList<Object>();
 
     for (Map.Entry<String, PsiFile> entry : allPossibleTemplateFiles.entrySet()) {
-      list.add(LookupElementBuilder.create(entry.getKey()).withTypeText("File"));
+      list.add(LookupElementBuilder.create(entry.getKey()).withIcon(AllIcons.FileTypes.Html));
     }
 
     return list.toArray();

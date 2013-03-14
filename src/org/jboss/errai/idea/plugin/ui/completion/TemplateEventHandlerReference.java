@@ -17,6 +17,7 @@
 package org.jboss.errai.idea.plugin.ui.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
@@ -74,7 +75,7 @@ public class TemplateEventHandlerReference extends PsiReferenceBase<PsiLiteralEx
         lookupElementBuilder = lookupElementBuilder.strikeout();
       }
 
-      list.add(lookupElementBuilder.withTypeText(entry.getValue().getSourceName(), true));
+      list.add(lookupElementBuilder.withTypeText(entry.getValue().getSourceName(), true).withIcon(AllIcons.Xml.Html_id));
     }
 
     return list.toArray();
