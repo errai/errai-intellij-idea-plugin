@@ -34,8 +34,8 @@ public class TemplateBindingMetaData {
   private final PsiClass boundClass;
 
   private final long templateClassModifyTime;
-  //private final long boundClassModifyTime;
 
+  private final Collection<AnnotationSearchResult> autoBoundAnnotations;
 
   public TemplateBindingMetaData(PsiClass templateClass) {
     this.templateClass = templateClass;
@@ -45,7 +45,8 @@ public class TemplateBindingMetaData {
     This is so, if the user has specified more than one, we can detect and reference all of them for
     error highlighting;
    */
-    Collection<AnnotationSearchResult> autoBoundAnnotations = Util.findAllAnnotatedElements(templateClass, Types.AUTO_BOUND);
+    autoBoundAnnotations
+        = Util.findAllAnnotatedElements(templateClass, Types.AUTO_BOUND);
 
     if (autoBoundAnnotations.size() == 1) {
       AnnotationSearchResult result = autoBoundAnnotations.iterator().next();
@@ -60,25 +61,14 @@ public class TemplateBindingMetaData {
     return templateClass;
   }
 
-//  public PsiAnnotation getAutoboundAnnotation() {
-//    if (autoBoundAnnotations.size() == 1) {
-//      return autoBoundAnnotations.iterator().next().getAnnotation();
-//    }
-//    else {
-//      return null;
-//    }
-//  }
-//
-//  public PsiElement getDataBinderElement() {
-//    if (autoBoundAnnotations.size() == 1) {
-//      return autoBoundAnnotations.iterator().next().getOwningElement();
-//    }
-//    else {
-//      return null;
-//    }
-//  }
+  public Collection<AnnotationSearchResult> getAutoBoundAnnotations() {
+    return autoBoundAnnotations;
+  }
 
   public boolean isValidBindableModel() {
+    if (getAutoBoundAnnotations().size() > 1) {
+      return false;
+    }
     if (boundClass == null) {
       return false;
     }

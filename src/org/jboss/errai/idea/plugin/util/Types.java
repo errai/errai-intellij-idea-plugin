@@ -41,4 +41,8 @@ public class Types {
   public static final String GWT_EVENT_TYPE = "com.google.gwt.event.shared.GwtEvent";
   public static final String GWT_HAS_TEXT = "com.google.gwt.user.client.ui.HasText";
   public static final String GWT_TAKES_VALUE = "com.google.gwt.user.client.TakesValue";
+
+  /** 3.0 Types **/
+  public static final String MODEL = "org.jboss.errai.ui.shared.api.annotations.Model";
+  public static final String MODEL_SETTER = "org.jboss.errai.ui.shared.api.annotations.ModelSetter";
 }

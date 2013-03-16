@@ -306,21 +306,6 @@ public class Util {
         }
       }
     }
-    for (PsiMethod e : bean.getConstructors()) {
-      a = getAnnotationFromElement(e, annotation);
-
-      if (a != null) {
-        elementList.add(new AnnotationSearchResult(a, e));
-      }
-
-      for (PsiParameter p : e.getParameterList().getParameters()) {
-        a = getAnnotationFromElement(p, annotation);
-
-        if (a != null) {
-          elementList.add(new AnnotationSearchResult(a, p));
-        }
-      }
-    }
 
     return elementList;
   }

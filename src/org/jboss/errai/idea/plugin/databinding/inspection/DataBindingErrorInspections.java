@@ -40,6 +40,7 @@ import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.databinding.model.BindabilityValidation;
 import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyValidation;
+import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
 import org.jboss.errai.idea.plugin.util.ExpressionErrorReference;
 import org.jboss.errai.idea.plugin.util.TemplateUtil;
 import org.jboss.errai.idea.plugin.util.Types;
@@ -47,6 +48,7 @@ import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.HashMap;
 
 /**
@@ -116,7 +118,14 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
     final BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(psiAnnotation);
 
     if (boundMetaData.getBindingMetaData().getBoundClass() == null) {
-      holder.registerProblem(psiAnnotation, "@Bound property is not associated with any model.");
+      final Collection<AnnotationSearchResult> autoBoundAnnotations
+          = boundMetaData.getBindingMetaData().getAutoBoundAnnotations();
+      if (autoBoundAnnotations.size() > 1) {
+        holder.registerProblem(psiAnnotation, "@Bound property cannot be associated with model because multiple models are injected.");
+      }
+      else {
+        holder.registerProblem(psiAnnotation, "@Bound property is not associated with any model.");
+      }
       return;
     }
 
@@ -156,7 +165,7 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
                 final PsiClass topLevelClass = PsiUtil.getTopLevelClass(psiAnnotation);
                 final PsiDirectory directory = topLevelClass.getOriginalElement().getContainingFile().getParent();
 
-               TemplateUtil.createFileFromTemplate("Converter.java", name, directory
+                TemplateUtil.createFileFromTemplate("Converter.java", name, directory
                     , new HashMap<String, String>() {
                   {
                     put("CONVERTER_INTERFACE_TYPE", Types.CONVERTER);
@@ -166,7 +175,7 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
                 });
 
                 psiAnnotation.setDeclaredAttributeValue("converter", JavaPsiFacade.getInstance(psiAnnotation.getProject()).getElementFactory()
-                                    .createAnnotationFromText("@A(converter = " + name + ".class)", null).findDeclaredAttributeValue("converter"));
+                    .createAnnotationFromText("@A(converter = " + name + ".class)", null).findDeclaredAttributeValue("converter"));
               }
             });
       }
@@ -197,6 +206,7 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
 
   public static void ensureBoundModelIsValid(ProblemsHolder holder, PsiAnnotation annotation) {
     final BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(annotation);
+
     if (!boundMetaData.getBindingMetaData().isValidBindableModel()) {
       final PsiClass boundClass = boundMetaData.getBindingMetaData().getBoundClass();
       if (boundClass != null) {
@@ -209,6 +219,16 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
           return;
         }
         holder.registerProblem(typeElement, "The model type (" + boundClass.getQualifiedName() + ") is not bindable.");
+      }
+      else {
+        final Collection<AnnotationSearchResult> autoBoundAnnotations
+            = boundMetaData.getBindingMetaData().getAutoBoundAnnotations();
+
+        if (autoBoundAnnotations.size() > 1) {
+          for (AnnotationSearchResult result : autoBoundAnnotations) {
+            holder.registerProblem(result.getAnnotation(), "Multiple @AutoBound annotations found");
+          }
+        }
       }
     }
   }
