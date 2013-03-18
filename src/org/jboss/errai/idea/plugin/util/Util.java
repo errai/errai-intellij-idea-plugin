@@ -35,6 +35,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -331,18 +332,21 @@ public class Util {
     return null;
   }
 
-  public static PsiClass getTypeOfElement(PsiElement element, Project project) {
+  public static PsiClass getTypeOfElement(PsiElement element) {
     final String name;
-    if (element instanceof PsiField) {
-      name = Util.getErasedCanonicalText(((PsiField) element).getType().getCanonicalText());
+    if (element instanceof PsiVariable) {
+      name= Util.getErasedCanonicalText(((PsiVariable) element).getType().getCanonicalText());
     }
-    else if (element instanceof PsiParameter) {
-      name = Util.getErasedCanonicalText(((PsiParameter) element).getType().getCanonicalText());
-    }
+//    else if (element instanceof PsiField) {
+//      name = Util.getErasedCanonicalText(((PsiField) element).getType().getCanonicalText());
+//    }
+//    else if (element instanceof PsiParameter) {
+//      name = Util.getErasedCanonicalText(((PsiParameter) element).getType().getCanonicalText());
+//    }
     else {
       return null;
     }
-    return JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
+    return JavaPsiFacade.getInstance(element.getProject()).findClass(name, GlobalSearchScope.allScope(element.getProject()));
   }
 
   public static SuperTypeInfo getTypeInformation(PsiClass from, String toFQN) {
@@ -426,7 +430,7 @@ public class Util {
     }
   }
 
-  public static<T> void invalidateCache(Key<T> cacheKey, PsiElement element) {
+  public static <T> void invalidateCache(Key<T> cacheKey, PsiElement element) {
     element.getOriginalElement().putCopyableUserData(cacheKey, null);
   }
 
@@ -466,5 +470,14 @@ public class Util {
 
   public static PsiFile[] getAllErraiAppProperties(Project project) {
     return FilenameIndex.getFilesByName(project, "ErraiApp.properties", GlobalSearchScope.allScope(project));
+  }
+
+  public static long getLastUpdate(PsiElement element) {
+    final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
+    if (topLevelClass == null) {
+      return -1;
+    }
+    final PsiFile containingFile = topLevelClass.getContainingFile();
+    return containingFile.getModificationStamp();
   }
 }

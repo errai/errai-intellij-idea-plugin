@@ -83,5 +83,4 @@ class BeanPropertyReferenceProvider extends PsiReferenceProvider {
 
     return references.toArray(new PsiReference[references.size()]);
   }
-
 }

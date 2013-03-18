@@ -62,7 +62,10 @@ public class BeanPropertyRenameProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public void prepareRenaming(final PsiElement element, String replacementStr, Map<PsiElement, String> psiElementStringMap) {
+  public void prepareRenaming(final PsiElement element,
+                              final String replacementStr,
+                              final Map<PsiElement, String> psiElementStringMap) {
+
     final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
     if (topLevelClass == null) {
       return;

@@ -44,7 +44,10 @@ public class PropertyValidation {
   }
 
   public boolean isValid() {
-    return unresolvedPropertyElement == null && unresolvedParent == null && parentBindable && (bindabilityValidation != null && bindabilityValidation.isValid());
+    return unresolvedPropertyElement == null
+        && unresolvedParent == null
+        && parentBindable
+        && (bindabilityValidation != null && bindabilityValidation.isValid());
   }
 
   public String getUnresolvedPropertyElement() {

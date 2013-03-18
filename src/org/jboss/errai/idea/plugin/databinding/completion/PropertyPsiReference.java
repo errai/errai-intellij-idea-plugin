@@ -42,7 +42,10 @@ class PropertyPsiReference extends PsiReferenceBase<PsiLiteralExpression> {
   private final String propertyName;
   private final TextRange range;
 
-  public PropertyPsiReference(PsiLiteralExpression literalExpression, PsiClass parentType, String propertyName, TextRange range) {
+  public PropertyPsiReference(PsiLiteralExpression literalExpression,
+                              PsiClass parentType,
+                              String propertyName,
+                              TextRange range) {
     super(literalExpression, false);
     this.parentType = parentType;
     this.propertyName = propertyName;

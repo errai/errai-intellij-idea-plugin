@@ -30,14 +30,18 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiUtil;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.databinding.model.BindabilityValidation;
+import org.jboss.errai.idea.plugin.databinding.model.BindingType;
 import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyValidation;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
@@ -109,19 +113,36 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
         else if (qualifiedName.equals(Types.AUTO_BOUND)) {
           ensureBoundModelIsValid(holder, annotation);
         }
+        else if (qualifiedName.equals(Types.MODEL_SETTER)) {
+          ensureModelSetterIsValid(holder, annotation);
+        }
       }
     }
   }
 
-  public static void ensureBoundFieldIsValid(ProblemsHolder holder,
+  private static String renderAnnoString(BindingType type) {
+    switch (type) {
+      case DATA_BINDER:
+        return "@AutoBound";
+      case RAW_MODEL:
+        return "@Model";
+      default:
+      case UNKNOWN:
+        return "@AutoBound or @Model";
+    }
+  }
+
+  private static void ensureBoundFieldIsValid(ProblemsHolder holder,
                                              final PsiAnnotation psiAnnotation) {
+
     final BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(psiAnnotation);
 
     if (boundMetaData.getBindingMetaData().getBoundClass() == null) {
       final Collection<AnnotationSearchResult> autoBoundAnnotations
-          = boundMetaData.getBindingMetaData().getAutoBoundAnnotations();
+          = boundMetaData.getBindingMetaData().getModelAnnotations();
       if (autoBoundAnnotations.size() > 1) {
-        holder.registerProblem(psiAnnotation, "@Bound property cannot be associated with model because multiple models are injected.");
+        holder.registerProblem(psiAnnotation, "@Bound property cannot be associated with model because" +
+            " multiple models are injected.");
       }
       else {
         holder.registerProblem(psiAnnotation, "@Bound property is not associated with any model.");
@@ -143,7 +164,8 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
       }
       else if (validation.hasBindabilityProblem()) {
         final BindabilityValidation bindabilityValidation = validation.getBindabilityValidation();
-        holder.registerProblem(psiAnnotation, "The widget type cannot be bound to: " + validation.getBoundType().getQualifiedName()
+        holder.registerProblem(psiAnnotation,
+            "The widget type cannot be bound to: " + validation.getBoundType().getQualifiedName()
             + "; widget accepts type: " + bindabilityValidation.getExpectedWidgetType(),
             new LocalQuickFix() {
               @NotNull
@@ -174,14 +196,16 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
                   }
                 });
 
-                psiAnnotation.setDeclaredAttributeValue("converter", JavaPsiFacade.getInstance(psiAnnotation.getProject()).getElementFactory()
-                    .createAnnotationFromText("@A(converter = " + name + ".class)", null).findDeclaredAttributeValue("converter"));
+                psiAnnotation.setDeclaredAttributeValue("converter",
+                    JavaPsiFacade.getInstance(psiAnnotation.getProject()).getElementFactory()
+                        .createAnnotationFromText("@A(converter = " + name + ".class)", null)
+                        .findDeclaredAttributeValue("converter"));
               }
             });
       }
       else {
-        final String errorText = "The property '" + validation.getUnresolvedPropertyElement() + "' was not found in parent bean: "
-            + validation.getParentName();
+        final String errorText = "The property '" + validation.getUnresolvedPropertyElement()
+            + "' was not found in parent bean: " + validation.getParentName();
 
         final PsiNameValuePair[] attributes = psiAnnotation.getParameterList().getAttributes();
 
@@ -204,7 +228,7 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
     }
   }
 
-  public static void ensureBoundModelIsValid(ProblemsHolder holder, PsiAnnotation annotation) {
+  private static void ensureBoundModelIsValid(ProblemsHolder holder, PsiAnnotation annotation) {
     final BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(annotation);
 
     if (!boundMetaData.getBindingMetaData().isValidBindableModel()) {
@@ -222,14 +246,37 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
       }
       else {
         final Collection<AnnotationSearchResult> autoBoundAnnotations
-            = boundMetaData.getBindingMetaData().getAutoBoundAnnotations();
+            = boundMetaData.getBindingMetaData().getModelAnnotations();
 
         if (autoBoundAnnotations.size() > 1) {
           for (AnnotationSearchResult result : autoBoundAnnotations) {
-            holder.registerProblem(result.getAnnotation(), "Multiple @AutoBound annotations found");
+            holder.registerProblem(result.getAnnotation(), "Multiple "
+                + renderAnnoString(boundMetaData.getBindingMetaData().getBindingType())
+                + " annotations found");
           }
         }
       }
     }
   }
+
+  private static void ensureModelSetterIsValid(ProblemsHolder holder, PsiAnnotation annotation) {
+    final BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(annotation);
+    final PsiElement element = Util.getImmediateOwnerElement(annotation);
+    final PsiMethod method = (PsiMethod) element;
+
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length != 1) {
+      holder.registerProblem(method.getParameterList(), "@MethodSetter method must have exactly one parameter");
+    }
+    else {
+      final PsiParameter parameter = parameters[0];
+      final PsiClass typeOfElement = Util.getTypeOfElement(parameter);
+
+      if (!typeOfElement.equals(boundMetaData.getBindingMetaData().getBoundClass())) {
+        holder.registerProblem(parameter, "Wrong type found for @MethodSetter method. Expected: "
+            + boundMetaData.getBindingMetaData().getBoundClass().getQualifiedName());
+      }
+    }
+  }
+
 }

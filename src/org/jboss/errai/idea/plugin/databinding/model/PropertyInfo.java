@@ -16,15 +16,16 @@
 
 package org.jboss.errai.idea.plugin.databinding.model;
 
+import static org.jboss.errai.idea.plugin.util.Util.getErasedCanonicalText;
+
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiUtil;
-import org.jboss.errai.idea.plugin.util.Util;
 
 /**
-* @author Mike Brock
-*/
+ * @author Mike Brock
+ */
 public class PropertyInfo {
   private String propertyName;
   private PsiClass propertyType;
@@ -48,23 +49,13 @@ public class PropertyInfo {
 
     for (PsiField psiField : type.getAllFields()) {
       if (psiField.getName().equals(propertyName)
-          && Util.getErasedCanonicalText(psiField.getType().getCanonicalText()).equals(propertyType.getQualifiedName())) {
+          && getErasedCanonicalText(psiField.getType()
+          .getCanonicalText()).equals(propertyType.getQualifiedName())) {
+
         return psiField;
       }
     }
     return null;
-  }
-
-  public boolean isHasGetter() {
-    return getterElement != null;
-  }
-
-  public boolean isHasSetter() {
-    return setterElement != null;
-  }
-
-  public String getPropertyName() {
-    return propertyName;
   }
 
   public PsiClass getPropertyType() {

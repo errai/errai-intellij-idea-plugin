@@ -240,7 +240,7 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
           "No corresponding data-field element in template: " + annotationValue.getValue());
     }
 
-    final PsiClass typeOfElement = Util.getTypeOfElement(ownerElement, project);
+    final PsiClass typeOfElement = Util.getTypeOfElement(ownerElement);
     if (!Util.typeIsAssignableFrom(typeOfElement, Types.GWT_ELEMENT_TYPE, Types.GWT_WIDGET_TYPE)) {
       holder.registerProblem(ownerElement, "Type is not a valid template part (must be Element or Widget)");
     }

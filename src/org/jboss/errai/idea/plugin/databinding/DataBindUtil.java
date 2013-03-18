@@ -59,6 +59,9 @@ public class DataBindUtil {
   private static final int CASE_OFFSET = ('z' - 'Z');
   private static final Key<TemplateBindingMetaData> TEMPLATE_BINDING_META_DATA_KEY
       = Key.create("TEMPLATE_BINDING_META_DATA_KEY");
+  private static final Key<BoundMetaData> BOUND_META_DATA_KEY
+      = Key.create("BOUND_META_DATA_KEY");
+
 
   public static Map<String, PropertyInfo> getAllProperties(PsiClass boundClass, String propertySearchRoot) {
     int idx = propertySearchRoot.lastIndexOf('.');
@@ -142,8 +145,19 @@ public class DataBindUtil {
     return boundMetaDatas;
   }
 
-  public static BoundMetaData getBoundMetaData(PsiElement element) {
-    return new BoundMetaData(Util.getImmediateOwnerElement(element));
+  public static BoundMetaData getBoundMetaData(final PsiElement element) {
+    return Util.getOrCreateCache(BOUND_META_DATA_KEY, element, new CacheProvider<BoundMetaData>() {
+      @Override
+      public BoundMetaData provide() {
+        return new BoundMetaData(Util.getImmediateOwnerElement(element));
+      }
+
+      @Override
+      public boolean isCacheValid(BoundMetaData boundMetaData) {
+        return boundMetaData.isCacheValid();
+      }
+    });
+
   }
 
   public static TemplateBindingMetaData getTemplateBindingMetaData(final PsiElement element) {

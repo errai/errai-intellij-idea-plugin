@@ -20,9 +20,12 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiVariable;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
+import org.jboss.errai.idea.plugin.util.ErraiVersion;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
+import org.jboss.errai.idea.plugin.util.VersionSpec;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 
@@ -30,14 +33,19 @@ import java.util.Set;
  * @author Mike Brock
  */
 public class TemplateBindingMetaData {
+  private final VersionSpec versionSpec;
+  private final BindingType bindingType;
+
   private final PsiClass templateClass;
   private final PsiClass boundClass;
 
   private final long templateClassModifyTime;
 
-  private final Collection<AnnotationSearchResult> autoBoundAnnotations;
+  private final Collection<AnnotationSearchResult> modelAnnotations;
 
   public TemplateBindingMetaData(PsiClass templateClass) {
+    this.versionSpec = ErraiVersion.get(templateClass);
+
     this.templateClass = templateClass;
     templateClassModifyTime = templateClass.getContainingFile().getOriginalFile().getModificationStamp();
 
@@ -45,28 +53,63 @@ public class TemplateBindingMetaData {
     This is so, if the user has specified more than one, we can detect and reference all of them for
     error highlighting;
    */
-    autoBoundAnnotations
-        = Util.findAllAnnotatedElements(templateClass, Types.AUTO_BOUND);
+    modelAnnotations
+        = new ArrayList<AnnotationSearchResult>(Util.findAllAnnotatedElements(templateClass, Types.AUTO_BOUND));
 
-    if (autoBoundAnnotations.size() == 1) {
-      AnnotationSearchResult result = autoBoundAnnotations.iterator().next();
-      boundClass = Util.getErasedTypeParam(templateClass.getProject(), ((PsiVariable) result.getOwningElement()).getType().getCanonicalText());
+    if (modelAnnotations.size() == 1) {
+      bindingType = BindingType.DATA_BINDER;
+      AnnotationSearchResult result = modelAnnotations.iterator().next();
+      boundClass = Util.getErasedTypeParam(
+          templateClass.getProject(),
+          ((PsiVariable) result.getOwningElement()).getType().getCanonicalText()
+      );
+    }
+    else if (modelAnnotations.size() > 1) {
+      bindingType = BindingType.DATA_BINDER;
+      boundClass = null;
+    }
+    else if (versionSpec == VersionSpec.V3_0) {
+      modelAnnotations.addAll(Util.findAllAnnotatedElements(templateClass, Types.MODEL));
+
+      if (modelAnnotations.size() == 1) {
+        bindingType = BindingType.RAW_MODEL;
+        AnnotationSearchResult result = modelAnnotations.iterator().next();
+        boundClass = Util.getTypeOfElement(result.getOwningElement());
+      }
+      else if (modelAnnotations.size() > 1) {
+        bindingType = BindingType.RAW_MODEL;
+        boundClass = null;
+      }
+      else {
+        bindingType = BindingType.UNKNOWN;
+        boundClass = null;
+      }
     }
     else {
+      bindingType = BindingType.UNKNOWN;
       boundClass = null;
     }
   }
+//
+//  public PsiClass getTemplateClass() {
+//    return templateClass;
+//  }
 
-  public PsiClass getTemplateClass() {
-    return templateClass;
+
+  public VersionSpec getVersionSpec() {
+    return versionSpec;
   }
 
-  public Collection<AnnotationSearchResult> getAutoBoundAnnotations() {
-    return autoBoundAnnotations;
+  public BindingType getBindingType() {
+    return bindingType;
+  }
+
+  public Collection<AnnotationSearchResult> getModelAnnotations() {
+    return modelAnnotations;
   }
 
   public boolean isValidBindableModel() {
-    if (getAutoBoundAnnotations().size() > 1) {
+    if (getModelAnnotations().size() > 1) {
       return false;
     }
     if (boundClass == null) {

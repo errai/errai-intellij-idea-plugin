@@ -16,6 +16,9 @@
 
 package org.jboss.errai.idea.plugin.databinding.model;
 
+import static org.jboss.errai.idea.plugin.databinding.DataBindUtil.getConvertibilityMetaData;
+import static org.jboss.errai.idea.plugin.databinding.DataBindUtil.typeIsBindableToWidget;
+
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -35,19 +38,19 @@ public class BoundMetaData {
   private final PsiElement owner;
   private final PsiAnnotation psiAnnotation;
   private final String property;
+  private final long lastUpdate;
 
   public BoundMetaData(PsiElement owner) {
     this.templateBindingMetaData = DataBindUtil.getTemplateBindingMetaData(owner);
     this.owner = owner;
     this.psiAnnotation = Util.getAnnotationFromElement(owner, Types.BOUND);
+    this.lastUpdate = Util.getLastUpdate(owner);
 
     if (psiAnnotation != null) {
       property = Util.getAttributeValue(psiAnnotation, "property", DefaultPolicy.OWNER_IDENTIFIER_NAME);
-   //   bindableConverter = Util.getAttributeValue(psiAnnotation, "converter", DefaultPolicy.NULL);
     }
     else {
       property = null;
-     // bindableConverter = null;
     }
   }
 
@@ -90,9 +93,9 @@ public class BoundMetaData {
       PsiVariable variable = (PsiVariable) owner;
       final PsiClass widgetType = DataBindUtil.getPsiClassFromType(owner.getProject(), variable.getType());
       if (widgetType != null) {
-        final ConvertibilityMetaData convertibilityMetaData = DataBindUtil.getConvertibilityMetaData(psiAnnotation);
+        final ConvertibilityMetaData convertibilityMetaData = getConvertibilityMetaData(psiAnnotation);
 
-        validation.setBindabilityValidation(DataBindUtil.typeIsBindableToWidget(cls, widgetType, convertibilityMetaData));
+        validation.setBindabilityValidation(typeIsBindableToWidget(cls, widgetType, convertibilityMetaData));
       }
 
       validation.setBoundType(cls);
@@ -102,5 +105,13 @@ public class BoundMetaData {
     else {
       return new PropertyValidation(false);
     }
+  }
+
+  public boolean isCacheValid() {
+    if (lastUpdate == -1) {
+      return false;
+    }
+    long curr = Util.getLastUpdate(owner);
+    return curr != -1 && curr == lastUpdate;
   }
 }
