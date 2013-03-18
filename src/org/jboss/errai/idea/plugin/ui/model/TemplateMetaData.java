@@ -23,6 +23,7 @@ import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.xml.XmlTag;
 import org.jboss.errai.idea.plugin.ui.TemplateDataField;
 import org.jboss.errai.idea.plugin.ui.TemplateUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Map;
@@ -79,6 +80,7 @@ public class TemplateMetaData {
     return rootTag;
   }
 
+  @NotNull
   public Map<String, TemplateDataField> getAllDataFieldsInTemplate(boolean includeRootTag) {
     return TemplateUtil.findAllDataFieldTags(this, project, includeRootTag);
   }

@@ -278,5 +278,4 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
       }
     }
   }
-
 }

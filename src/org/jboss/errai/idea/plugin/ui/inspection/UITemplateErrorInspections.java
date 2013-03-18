@@ -249,6 +249,10 @@ public class UITemplateErrorInspections extends BaseJavaLocalInspectionTool {
   public static void ensureEventHandlerIsValid(ProblemsHolder holder,
                                                PsiAnnotation annotation) {
     final TemplateMetaData metaData = TemplateUtil.getTemplateMetaData(annotation);
+    if (metaData == null) {
+      return;
+    }
+
     final Project project = holder.getProject();
 
     final PsiClass bean = PsiUtil.getTopLevelClass(annotation);

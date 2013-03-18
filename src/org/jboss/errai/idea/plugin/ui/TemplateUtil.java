@@ -46,6 +46,7 @@ import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
 import org.jboss.errai.idea.plugin.util.CacheProvider;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -113,6 +114,7 @@ public class TemplateUtil {
    *
    * @return Map of all datafields in the template class.
    */
+  @NotNull
   public static Map<String, TemplateDataField> findAllDataFieldTags(TemplateMetaData templateMetaData,
                                                                     Project project,
                                                                     boolean includeRoot) {
@@ -165,6 +167,7 @@ public class TemplateUtil {
     return findAllDataFieldTags(file, rootTag, includeRoot);
   }
 
+  @NotNull
   public static Map<String, TemplateDataField> findAllDataFieldTags(final PsiFile templateFile,
                                                                     final XmlTag rootTag,
                                                                     final boolean includeRoot) {
