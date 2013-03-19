@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jboss.errai</id>
   <name>Errai Framework</name>
-  <version>0.3</version>
+  <version>0.4</version>
   <vendor email="cbrock@redhat.com" url="http://www.jboss.org/errai/">Red Hat, Inc.</vendor>
 
   <description><![CDATA[
@@ -11,14 +11,10 @@
 
   <change-notes>
     <![CDATA[
-          v0.3<br>
+          v0.4<br>
           <small>
             <ul>
               <li>Bug fixes</li>
-              <li>Support for @Model and @ModelSetter from Errai 3.0</li>
-              <li>Support for auto-migration from injected @AutoBound to injected @Model</li>
-              <li>Default key for jumping between templates and beans changed to Ctrl-T</li>
-              <li>Various improvements and polishing.</li>
             </ul>
           </small>
           ]]>

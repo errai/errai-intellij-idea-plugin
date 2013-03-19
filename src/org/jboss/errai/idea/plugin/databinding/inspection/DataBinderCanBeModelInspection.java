@@ -38,10 +38,10 @@ import org.jboss.errai.idea.plugin.util.VersionSpec;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -129,6 +129,9 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
       final PsiElement owningElement = Util.getMethodOrField(annotation);
       final Set<String> escapeSet = new HashSet<String>();
 
+      /** Map : getter references (key = reference to the method call; value = boolean if local to a constructor or setter injector  **/
+      final Map<PsiElement, Boolean> getModelRefExpressions = new HashMap<PsiElement, Boolean>();
+
       class ReplaceSafety {
         boolean safe = true;
       }
@@ -137,6 +140,8 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
 
       if (owningElement instanceof PsiMethod) {
         PsiMethod method = (PsiMethod) owningElement;
+
+        final String localVar = var.getName();
 
         childrenElements = Util.findChildrenElements(method.getBody(), new ElementFilter() {
           @Override
@@ -164,6 +169,18 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
               }
               escapeSet.add(lhs);
             }
+            else if (rExpression != null) {
+              String rhs = rExpression.getText().replaceAll(" ", "");
+              if (rhs.startsWith(localVar + ".")) {
+                if (rhs.equals(localVar + ".getModel()")) {
+                  getModelRefExpressions.put(rExpression, Boolean.TRUE);
+                }
+                else {
+                  safety.safe = false;
+                  break;
+                }
+              }
+            }
           }
           else if (element instanceof PsiExpressionStatement) {
             if (element.getText().indexOf('.') != -1) {
@@ -177,7 +194,6 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
         escapeSet.add(Util.getNameOfElement(Util.getImmediateOwnerElement(annotation)));
       }
 
-      final List<PsiElement> getModelRefExpressions = new ArrayList<PsiElement>();
       //  final List<PsiElement> setModelRefExpressions = new ArrayList<PsiElement>();
 
       if (safety.safe && !escapeSet.isEmpty()) {
@@ -224,7 +240,7 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
                 // there's a method call. disqualify!
                 if (text.indexOf('.') != -1) {
                   if (text.equals(escaped + ".getModel")) {
-                    getModelRefExpressions.add(element);
+                    getModelRefExpressions.put(element.getParent(), Boolean.FALSE);
                   }
                   else {
                     safety.safe = false;
@@ -310,10 +326,18 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
                       field.getTypeElement().getOriginalElement().replace(elementFactory.createTypeElement(newType));
                     }
                   }
-                  for (PsiElement element : getModelRefExpressions) {
-                    final PsiReferenceExpression stmt = (PsiReferenceExpression) element;
-                    final PsiExpression expression = elementFactory.createExpressionFromText("this." + name, element);
-                    stmt.getParent().replace(expression);
+
+                  for (Map.Entry<PsiElement, Boolean> entry : getModelRefExpressions.entrySet()) {
+                    final String replaceWithVar;
+                    if (entry.getValue()) {
+                      replaceWithVar = var.getName();
+                    }
+                    else {
+                      replaceWithVar = "this." + name;
+                    }
+
+                    final PsiExpression expression = elementFactory.createExpressionFromText(replaceWithVar, entry.getKey());
+                    entry.getKey().replace(expression);
                   }
                 }
               }
