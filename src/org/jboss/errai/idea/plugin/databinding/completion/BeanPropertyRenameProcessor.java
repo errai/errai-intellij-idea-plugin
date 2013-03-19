@@ -27,9 +27,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
+import org.jboss.errai.idea.plugin.databinding.model.BeanBindingMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyInfo;
-import org.jboss.errai.idea.plugin.databinding.model.TemplateBindingMetaData;
 import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 import org.jboss.errai.idea.plugin.ui.model.TemplateMetaData;
 import org.jboss.errai.idea.plugin.util.DefaultPolicy;
@@ -74,7 +74,7 @@ public class BeanPropertyRenameProcessor extends RenamePsiElementProcessor {
     for (TemplateMetaData metaData: TemplateUtil.getTemplateOwners(topLevelClass.getContainingFile())) {
       PsiClass psiClass = metaData.getTemplateClass();
 
-      final TemplateBindingMetaData dataBindMetaData = DataBindUtil.getTemplateBindingMetaData(psiClass);
+      final BeanBindingMetaData dataBindMetaData = DataBindUtil.getTemplateBindingMetaData(psiClass);
 
       for (BoundMetaData md : DataBindUtil.getAllBoundMetaDataFromClass(psiClass)) {
         final PsiAnnotation boundAnnotation = md.getPsiAnnotation();

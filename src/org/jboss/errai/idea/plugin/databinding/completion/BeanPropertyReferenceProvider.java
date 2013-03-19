@@ -24,7 +24,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
-import org.jboss.errai.idea.plugin.databinding.model.TemplateBindingMetaData;
+import org.jboss.errai.idea.plugin.databinding.model.BeanBindingMetaData;
 import org.jboss.errai.idea.plugin.util.ExpressionErrorReference;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ class BeanPropertyReferenceProvider extends PsiReferenceProvider {
       text = value.replace(Util.INTELLIJ_MAGIC_STRING, "");
     }
 
-    final TemplateBindingMetaData metaData = DataBindUtil.getTemplateBindingMetaData(element);
+    final BeanBindingMetaData metaData = DataBindUtil.getTemplateBindingMetaData(element);
     PsiClass cls = metaData.getBoundClass();
 
     final List<PsiReference> references = new ArrayList<PsiReference>();

@@ -28,6 +28,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.search.ProjectScope;
@@ -68,6 +69,13 @@ public class UITemplateIsValidWidgetInspection extends BaseJavaLocalInspectionTo
   @Override
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
+  }
+
+
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    return new MyJavaElementVisitor(holder);
   }
 
   private static class MyJavaElementVisitor extends JavaElementVisitor {

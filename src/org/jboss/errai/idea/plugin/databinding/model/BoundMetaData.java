@@ -34,14 +34,14 @@ import java.util.Set;
 * @author Mike Brock
 */
 public class BoundMetaData {
-  private final TemplateBindingMetaData templateBindingMetaData;
+  private final BeanBindingMetaData beanBindingMetaData;
   private final PsiElement owner;
   private final PsiAnnotation psiAnnotation;
   private final String property;
   private final long lastUpdate;
 
   public BoundMetaData(PsiElement owner) {
-    this.templateBindingMetaData = DataBindUtil.getTemplateBindingMetaData(owner);
+    this.beanBindingMetaData = DataBindUtil.getTemplateBindingMetaData(owner);
     this.owner = owner;
     this.psiAnnotation = Util.getAnnotationFromElement(owner, Types.BOUND);
     this.lastUpdate = Util.getLastUpdate(owner);
@@ -54,8 +54,8 @@ public class BoundMetaData {
     }
   }
 
-  public TemplateBindingMetaData getBindingMetaData() {
-    return templateBindingMetaData;
+  public BeanBindingMetaData getBindingMetaData() {
+    return beanBindingMetaData;
   }
 
   public PsiAnnotation getPsiAnnotation() {

@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * @author Mike Brock
  */
-public class TemplateBindingMetaData {
+public class BeanBindingMetaData {
   private final VersionSpec versionSpec;
   private final BindingType bindingType;
 
@@ -43,7 +43,7 @@ public class TemplateBindingMetaData {
 
   private final Collection<AnnotationSearchResult> modelAnnotations;
 
-  public TemplateBindingMetaData(PsiClass templateClass) {
+  public BeanBindingMetaData(PsiClass templateClass) {
     this.versionSpec = ErraiVersion.get(templateClass);
 
     this.templateClass = templateClass;
@@ -55,46 +55,56 @@ public class TemplateBindingMetaData {
    */
     modelAnnotations
         = new ArrayList<AnnotationSearchResult>(Util.findAllAnnotatedElements(templateClass, Types.AUTO_BOUND));
+    modelAnnotations.addAll(Util.findAllAnnotatedElements(templateClass, Types.MODEL));
 
     if (modelAnnotations.size() == 1) {
-      bindingType = BindingType.DATA_BINDER;
       AnnotationSearchResult result = modelAnnotations.iterator().next();
-      boundClass = Util.getErasedTypeParam(
-          templateClass.getProject(),
-          ((PsiVariable) result.getOwningElement()).getType().getCanonicalText()
-      );
+      bindingType = getBindingType(result);
+      boundClass = getTypeByBindingType(result, templateClass);
     }
     else if (modelAnnotations.size() > 1) {
       bindingType = BindingType.DATA_BINDER;
       boundClass = null;
-    }
-    else if (versionSpec == VersionSpec.V3_0) {
-      modelAnnotations.addAll(Util.findAllAnnotatedElements(templateClass, Types.MODEL));
-
-      if (modelAnnotations.size() == 1) {
-        bindingType = BindingType.RAW_MODEL;
-        AnnotationSearchResult result = modelAnnotations.iterator().next();
-        boundClass = Util.getTypeOfElement(result.getOwningElement());
-      }
-      else if (modelAnnotations.size() > 1) {
-        bindingType = BindingType.RAW_MODEL;
-        boundClass = null;
-      }
-      else {
-        bindingType = BindingType.UNKNOWN;
-        boundClass = null;
-      }
     }
     else {
       bindingType = BindingType.UNKNOWN;
       boundClass = null;
     }
   }
-//
-//  public PsiClass getTemplateClass() {
-//    return templateClass;
-//  }
 
+  private BindingType getBindingType(AnnotationSearchResult searchResult) {
+    final String qualifiedName = searchResult.getAnnotation().getQualifiedName();
+    if (qualifiedName == null) {
+      return BindingType.UNKNOWN;
+    }
+    if (versionSpec == VersionSpec.V3_0 && qualifiedName.equals(Types.MODEL)) {
+      return BindingType.RAW_MODEL;
+    }
+    else if (qualifiedName.equals(Types.AUTO_BOUND)) {
+      return BindingType.DATA_BINDER;
+    }
+    return BindingType.UNKNOWN;
+  }
+
+  private PsiClass getTypeByBindingType(AnnotationSearchResult result, PsiClass templateClass) {
+    final BindingType bindType = getBindingType(result);
+    if (bindType == BindingType.UNKNOWN) {
+      return null;
+    }
+
+    if (versionSpec == VersionSpec.V3_0 && bindType == BindingType.RAW_MODEL) {
+      return Util.getTypeOfElement(result.getOwningElement());
+    }
+
+    if (bindType == BindingType.DATA_BINDER) {
+      return Util.getErasedTypeParam(
+          templateClass.getProject(),
+          ((PsiVariable) result.getOwningElement()).getType().getCanonicalText()
+      );
+    }
+
+    return null;
+  }
 
   public VersionSpec getVersionSpec() {
     return versionSpec;

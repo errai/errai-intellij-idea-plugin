@@ -29,7 +29,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiUtil;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
-import org.jboss.errai.idea.plugin.databinding.model.TemplateBindingMetaData;
+import org.jboss.errai.idea.plugin.databinding.model.BeanBindingMetaData;
 import org.jboss.errai.idea.plugin.util.ElementFilter;
 import org.jboss.errai.idea.plugin.util.ErraiVersion;
 import org.jboss.errai.idea.plugin.util.Types;
@@ -274,7 +274,7 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
               public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
                 final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
                 final PsiElementFactory elementFactory = instance.getElementFactory();
-                final TemplateBindingMetaData metaData = DataBindUtil.getTemplateBindingMetaData(annotation);
+                final BeanBindingMetaData metaData = DataBindUtil.getTemplateBindingMetaData(annotation);
 
                 final PsiType typeFromText
                     = elementFactory.createTypeFromText(

@@ -19,13 +19,25 @@ package org.jboss.errai.idea.plugin.databinding.inspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.util.PsiUtil;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
@@ -115,12 +127,44 @@ public class BoundModelValidInspection extends BaseJavaLocalInspectionTool {
               = boundMetaData.getBindingMetaData().getModelAnnotations();
 
           if (autoBoundAnnotations.size() > 1) {
-            for (AnnotationSearchResult result : autoBoundAnnotations) {
-              holder.registerProblem(result.getAnnotation(), "Multiple "
-                  + DataBindUtil.renderBindingAnnotationString(boundMetaData.getBindingMetaData().getBindingType())
-                  + " annotations found");
-            }
+            holder.registerProblem(annotation, "Multiple model binding annotations found");
           }
+        }
+      }
+      else {
+        final PsiElement element = Util.getMethodOrField(annotation);
+
+        if (!Util.elementIsAnnotated(element, Types.JAVAX_INJECT)) {
+          holder.registerProblem(annotation, "Model specifier is not injected", new LocalQuickFix() {
+            @NotNull
+            @Override
+            public String getName() {
+              return "Add @Inject to class member";
+            }
+
+            @NotNull
+            @Override
+            public String getFamilyName() {
+              return GroupNames.BUGS_GROUP_NAME;
+            }
+
+            @Override
+            public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+              final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
+              final PsiElementFactory elementFactory = instance.getElementFactory();
+
+              final PsiImportStatement importJavaxInject = instance.getElementFactory()
+                  .createImportStatement(
+                      instance.findClass(Types.JAVAX_INJECT,
+                          ProjectScope.getAllScope(project))
+                  );
+
+              final PsiImportList importList = ((PsiJavaFile) PsiUtil.getTopLevelClass(element).getParent()).getImportList();
+              importList.add(importJavaxInject);
+
+              ((PsiModifierListOwner) element).getModifierList().addAnnotation("Inject");
+            }
+          });
         }
       }
     }

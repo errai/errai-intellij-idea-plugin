@@ -31,12 +31,12 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import org.jboss.errai.idea.plugin.databinding.model.BeanBindingMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.BindabilityValidation;
 import org.jboss.errai.idea.plugin.databinding.model.BindingType;
 import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.ConvertibilityMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyInfo;
-import org.jboss.errai.idea.plugin.databinding.model.TemplateBindingMetaData;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
 import org.jboss.errai.idea.plugin.util.CacheProvider;
 import org.jboss.errai.idea.plugin.util.DefaultPolicy;
@@ -58,7 +58,7 @@ import java.util.Stack;
  */
 public class DataBindUtil {
   private static final int CASE_OFFSET = ('z' - 'Z');
-  private static final Key<TemplateBindingMetaData> TEMPLATE_BINDING_META_DATA_KEY
+  private static final Key<BeanBindingMetaData> TEMPLATE_BINDING_META_DATA_KEY
       = Key.create("TEMPLATE_BINDING_META_DATA_KEY");
   private static final Key<BoundMetaData> BOUND_META_DATA_KEY
       = Key.create("BOUND_META_DATA_KEY");
@@ -150,17 +150,17 @@ public class DataBindUtil {
     return new BoundMetaData(Util.getImmediateOwnerElement(element));
   }
 
-  public static TemplateBindingMetaData getTemplateBindingMetaData(final PsiElement element) {
-    return Util.getOrCreateCache(TEMPLATE_BINDING_META_DATA_KEY, element, new CacheProvider<TemplateBindingMetaData>() {
+  public static BeanBindingMetaData getTemplateBindingMetaData(final PsiElement element) {
+    return Util.getOrCreateCache(TEMPLATE_BINDING_META_DATA_KEY, element, new CacheProvider<BeanBindingMetaData>() {
       @Override
-      public TemplateBindingMetaData provide() {
+      public BeanBindingMetaData provide() {
         final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
-        return new TemplateBindingMetaData(topLevelClass);
+        return new BeanBindingMetaData(topLevelClass);
       }
 
       @Override
-      public boolean isCacheValid(TemplateBindingMetaData templateBindingMetaData) {
-        return templateBindingMetaData.isCacheValid();
+      public boolean isCacheValid(BeanBindingMetaData beanBindingMetaData) {
+        return beanBindingMetaData.isCacheValid();
       }
     });
   }
