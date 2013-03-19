@@ -148,18 +148,6 @@ public class DataBindUtil {
 
   public static BoundMetaData getBoundMetaData(final PsiElement element) {
     return new BoundMetaData(Util.getImmediateOwnerElement(element));
-
-//    return Util.getOrCreateCache(BOUND_META_DATA_KEY, element, new CacheProvider<BoundMetaData>() {
-//      @Override
-//      public BoundMetaData provide() {
-//        return new BoundMetaData(Util.getImmediateOwnerElement(element));
-//      }
-//
-//      @Override
-//      public boolean isCacheValid(BoundMetaData boundMetaData) {
-//        return boundMetaData.isCacheValid();
-//      }
-//    });
   }
 
   public static TemplateBindingMetaData getTemplateBindingMetaData(final PsiElement element) {
@@ -352,14 +340,14 @@ public class DataBindUtil {
 
 
   public static ConvertibilityMetaData getConvertibilityMetaData(PsiAnnotation boundAnnotation) {
-    final ConvertibilityMetaData cm = new ConvertibilityMetaData();
+    final JavaPsiFacade instance = JavaPsiFacade.getInstance(boundAnnotation.getProject());
+    final ConvertibilityMetaData cm = new ConvertibilityMetaData(instance);
 
     final List<String> parms = Util.getErasedTypeParamsCanonicalText(Util.getAttributeValue(boundAnnotation, "converter", DefaultPolicy.NULL));
 
     if (!parms.isEmpty()) {
       final String converter = parms.get(0);
       final Project project = boundAnnotation.getProject();
-      final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
       final PsiClass psiClass
           = instance.findClass(converter, GlobalSearchScope.allScope(project));
 
@@ -368,7 +356,7 @@ public class DataBindUtil {
       }
 
       final SuperTypeInfo superTypeInfo = Util.getTypeInformation(psiClass, Types.CONVERTER);
-      final ConvertibilityMetaData metaData = new ConvertibilityMetaData();
+      final ConvertibilityMetaData metaData = new ConvertibilityMetaData(instance);
       if (superTypeInfo != null) {
         metaData.addConversionRule(
             instance.findClass(superTypeInfo.getTypeParms().get(0), GlobalSearchScope.allScope(project)),
