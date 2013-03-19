@@ -157,7 +157,6 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
           }
         });
 
-
         for (PsiElement element : childrenElements) {
           if (element instanceof PsiAssignmentExpression) {
             PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression) element;
@@ -193,8 +192,6 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
       else {
         escapeSet.add(Util.getNameOfElement(Util.getImmediateOwnerElement(annotation)));
       }
-
-      //  final List<PsiElement> setModelRefExpressions = new ArrayList<PsiElement>();
 
       if (safety.safe && !escapeSet.isEmpty()) {
         childrenElements = Util.findChildrenElements(declaringClass, new ElementFilter() {
@@ -326,19 +323,19 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
                       field.getTypeElement().getOriginalElement().replace(elementFactory.createTypeElement(newType));
                     }
                   }
+                }
 
-                  for (Map.Entry<PsiElement, Boolean> entry : getModelRefExpressions.entrySet()) {
-                    final String replaceWithVar;
-                    if (entry.getValue()) {
-                      replaceWithVar = var.getName();
-                    }
-                    else {
-                      replaceWithVar = "this." + name;
-                    }
-
-                    final PsiExpression expression = elementFactory.createExpressionFromText(replaceWithVar, entry.getKey());
-                    entry.getKey().replace(expression);
+                for (Map.Entry<PsiElement, Boolean> entry : getModelRefExpressions.entrySet()) {
+                  final String replaceWithVar;
+                  if (entry.getValue()) {
+                    replaceWithVar = var.getName();
                   }
+                  else {
+                    replaceWithVar = "this." + name;
+                  }
+
+                  final PsiExpression expression = elementFactory.createExpressionFromText(replaceWithVar, entry.getKey());
+                  entry.getKey().replace(expression);
                 }
               }
             });
