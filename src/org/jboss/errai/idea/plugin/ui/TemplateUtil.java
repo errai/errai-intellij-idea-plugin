@@ -43,6 +43,7 @@ import org.jboss.errai.idea.plugin.ui.model.DataFieldCacheHolder;
 import org.jboss.errai.idea.plugin.ui.model.TemplateExpression;
 import org.jboss.errai.idea.plugin.ui.model.TemplateMetaData;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
+import org.jboss.errai.idea.plugin.util.AnnotationValueElement;
 import org.jboss.errai.idea.plugin.util.CacheProvider;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
@@ -66,6 +67,31 @@ public class TemplateUtil {
 
   public static final Key<Ownership> OWNERSHIP_CACHE = Key.create("OWNERSHIP_CACHE");
   private static final Key<DataFieldCacheHolder> dataFieldsCacheKey = Key.create("dataFieldsCache");
+
+  public static DataFieldExistence dataFieldExistenceCheck(PsiAnnotation annotation, TemplateMetaData metaData) {
+    final Map<String, TemplateDataField> inScopeDataFields = metaData.getAllDataFieldsInTemplate(false);
+    final Map<String, ConsolidateDataFieldElementResult> dataFields = metaData.getConsolidatedDataFields();
+
+    final AnnotationValueElement annoValueEl = Util.getValueStringFromAnnotationWithDefault(annotation);
+    final String annoValue = annoValueEl.getValue();
+
+    final TemplateDataField result = inScopeDataFields.get(annoValue);
+    if (result == null) {
+      if (dataFields.containsKey(annoValue)) {
+        return DataFieldExistence.OUT_OF_SCOPE;
+      }
+      else {
+        return DataFieldExistence.DOES_NOT_EXIST;
+      }
+    }
+    else {
+      return DataFieldExistence.EXISTS;
+    }
+  }
+
+  public static enum DataFieldExistence {
+    EXISTS, DOES_NOT_EXIST, OUT_OF_SCOPE;
+  }
 
   public static class Ownership {
     private final Set<PsiClass> templateClasses;

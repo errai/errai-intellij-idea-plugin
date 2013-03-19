@@ -32,6 +32,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import org.jboss.errai.idea.plugin.databinding.model.BindabilityValidation;
+import org.jboss.errai.idea.plugin.databinding.model.BindingType;
 import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.ConvertibilityMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyInfo;
@@ -157,7 +158,6 @@ public class DataBindUtil {
         return boundMetaData.isCacheValid();
       }
     });
-
   }
 
   public static TemplateBindingMetaData getTemplateBindingMetaData(final PsiElement element) {
@@ -208,7 +208,6 @@ public class DataBindUtil {
     }
     return null;
   }
-
 
   public static PsiClass getPsiClassFromType(Project project, PsiType type) {
     String typeName = Util.getErasedCanonicalText(type.getCanonicalText());
@@ -401,5 +400,17 @@ public class DataBindUtil {
   public static boolean typeIsBindable(PsiClass psiClass) {
     return !(!Util.typeIsAnnotated(psiClass, Types.BINDABLE)
         && !getConfiguredBindableTypes(psiClass.getProject()).contains(psiClass.getQualifiedName()));
+  }
+
+  public static String renderBindingAnnotationString(BindingType type) {
+    switch (type) {
+      case DATA_BINDER:
+        return "@AutoBound";
+      case RAW_MODEL:
+        return "@Model";
+      default:
+      case UNKNOWN:
+        return "@AutoBound or @Model";
+    }
   }
 }

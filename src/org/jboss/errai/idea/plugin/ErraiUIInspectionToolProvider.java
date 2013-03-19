@@ -17,9 +17,16 @@
 package org.jboss.errai.idea.plugin;
 
 import com.intellij.codeInspection.InspectionToolProvider;
-import org.jboss.errai.idea.plugin.databinding.inspection.DataBindingErrorInspections;
-import org.jboss.errai.idea.plugin.ui.inspection.UITemplateErrorInspections;
-import org.jboss.errai.idea.plugin.ui.inspection.UITemplateCodeSmellInspections;
+import org.jboss.errai.idea.plugin.databinding.inspection.BoundFieldValidityInspection;
+import org.jboss.errai.idea.plugin.databinding.inspection.BoundModelValidInspection;
+import org.jboss.errai.idea.plugin.databinding.inspection.DataBinderCanBeModelInspection;
+import org.jboss.errai.idea.plugin.databinding.inspection.ModelSetterProxyableInspection;
+import org.jboss.errai.idea.plugin.databinding.inspection.ModelSetterValidityInspection;
+import org.jboss.errai.idea.plugin.ui.inspection.UIDataFieldInitProblemsInspection;
+import org.jboss.errai.idea.plugin.ui.inspection.UITemplateExistenceInspection;
+import org.jboss.errai.idea.plugin.ui.inspection.UITemplateIsValidWidgetInspection;
+import org.jboss.errai.idea.plugin.ui.inspection.UiDataFieldIsValidInspection;
+import org.jboss.errai.idea.plugin.ui.inspection.UiEventHandlerInspection;
 
 /**
  * @author Mike Brock
@@ -28,9 +35,16 @@ public class ErraiUIInspectionToolProvider implements InspectionToolProvider {
   @Override
   public Class[] getInspectionClasses() {
     return new Class[]{
-        UITemplateErrorInspections.class,
-        UITemplateCodeSmellInspections.class,
-        DataBindingErrorInspections.class
+        UIDataFieldInitProblemsInspection.class,
+        UITemplateExistenceInspection.class,
+        UITemplateIsValidWidgetInspection.class,
+        UiDataFieldIsValidInspection.class,
+        UiEventHandlerInspection.class,
+        BoundFieldValidityInspection.class,
+        BoundModelValidInspection.class,
+        DataBinderCanBeModelInspection.class,
+        ModelSetterValidityInspection.class,
+        ModelSetterProxyableInspection.class
     };
   }
 }

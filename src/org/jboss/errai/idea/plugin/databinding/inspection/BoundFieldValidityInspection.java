@@ -30,18 +30,12 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNameValuePair;
-import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiUtil;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.databinding.model.BindabilityValidation;
-import org.jboss.errai.idea.plugin.databinding.model.BindingType;
 import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyValidation;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
@@ -58,12 +52,12 @@ import java.util.HashMap;
 /**
  * @author Mike Brock
  */
-public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
+public class BoundFieldValidityInspection extends BaseJavaLocalInspectionTool {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Perform validity checks for Errai databinding semantics";
+    return "Perform validity checks for Errai @Bound elements.";
   }
 
   @Nls
@@ -76,7 +70,7 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public String getShortName() {
-    return "ErraiDataBindingChecks";
+    return "BoundElementIsValid";
   }
 
   @Override
@@ -110,30 +104,12 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
         if (qualifiedName.equals(Types.BOUND)) {
           ensureBoundFieldIsValid(holder, annotation);
         }
-        else if (qualifiedName.equals(Types.AUTO_BOUND)) {
-          ensureBoundModelIsValid(holder, annotation);
-        }
-        else if (qualifiedName.equals(Types.MODEL_SETTER)) {
-          ensureModelSetterIsValid(holder, annotation);
-        }
       }
     }
   }
 
-  private static String renderAnnoString(BindingType type) {
-    switch (type) {
-      case DATA_BINDER:
-        return "@AutoBound";
-      case RAW_MODEL:
-        return "@Model";
-      default:
-      case UNKNOWN:
-        return "@AutoBound or @Model";
-    }
-  }
-
   private static void ensureBoundFieldIsValid(ProblemsHolder holder,
-                                             final PsiAnnotation psiAnnotation) {
+                                              final PsiAnnotation psiAnnotation) {
 
     final BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(psiAnnotation);
 
@@ -166,7 +142,7 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
         final BindabilityValidation bindabilityValidation = validation.getBindabilityValidation();
         holder.registerProblem(psiAnnotation,
             "The widget type cannot be bound to: " + validation.getBoundType().getQualifiedName()
-            + "; widget accepts type: " + bindabilityValidation.getExpectedWidgetType(),
+                + "; widget accepts type: " + bindabilityValidation.getExpectedWidgetType(),
             new LocalQuickFix() {
               @NotNull
               @Override
@@ -224,57 +200,6 @@ public class DataBindingErrorInspections extends BaseJavaLocalInspectionTool {
         }
 
         holder.registerProblem(psiAnnotation, errorText);
-      }
-    }
-  }
-
-  private static void ensureBoundModelIsValid(ProblemsHolder holder, PsiAnnotation annotation) {
-    final BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(annotation);
-
-    if (!boundMetaData.getBindingMetaData().isValidBindableModel()) {
-      final PsiClass boundClass = boundMetaData.getBindingMetaData().getBoundClass();
-      if (boundClass != null) {
-        final PsiVariable var = (PsiVariable) Util.getImmediateOwnerElement(annotation);
-        if (var == null) {
-          return;
-        }
-        final PsiTypeElement typeElement = var.getTypeElement();
-        if (typeElement == null) {
-          return;
-        }
-        holder.registerProblem(typeElement, "The model type (" + boundClass.getQualifiedName() + ") is not bindable.");
-      }
-      else {
-        final Collection<AnnotationSearchResult> autoBoundAnnotations
-            = boundMetaData.getBindingMetaData().getModelAnnotations();
-
-        if (autoBoundAnnotations.size() > 1) {
-          for (AnnotationSearchResult result : autoBoundAnnotations) {
-            holder.registerProblem(result.getAnnotation(), "Multiple "
-                + renderAnnoString(boundMetaData.getBindingMetaData().getBindingType())
-                + " annotations found");
-          }
-        }
-      }
-    }
-  }
-
-  private static void ensureModelSetterIsValid(ProblemsHolder holder, PsiAnnotation annotation) {
-    final BoundMetaData boundMetaData = DataBindUtil.getBoundMetaData(annotation);
-    final PsiElement element = Util.getImmediateOwnerElement(annotation);
-    final PsiMethod method = (PsiMethod) element;
-
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != 1) {
-      holder.registerProblem(method.getParameterList(), "@MethodSetter method must have exactly one parameter");
-    }
-    else {
-      final PsiParameter parameter = parameters[0];
-      final PsiClass typeOfElement = Util.getTypeOfElement(parameter);
-
-      if (!typeOfElement.equals(boundMetaData.getBindingMetaData().getBoundClass())) {
-        holder.registerProblem(parameter, "Wrong type found for @MethodSetter method. Expected: "
-            + boundMetaData.getBindingMetaData().getBoundClass().getQualifiedName());
       }
     }
   }

@@ -29,11 +29,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.FilenameIndex;
@@ -168,6 +170,21 @@ public class Util {
         return el;
       }
       else if (el instanceof PsiClass) {
+        return el;
+      }
+    }
+    while ((el = el.getParent()) != null);
+
+    return null;
+  }
+
+  public static PsiElement getMethodOrField(PsiElement element) {
+    PsiElement el = element;
+    do {
+      if (el instanceof PsiField) {
+        return el;
+      }
+      else if (el instanceof PsiMethod) {
         return el;
       }
     }
@@ -335,7 +352,7 @@ public class Util {
   public static PsiClass getTypeOfElement(PsiElement element) {
     final String name;
     if (element instanceof PsiVariable) {
-      name= Util.getErasedCanonicalText(((PsiVariable) element).getType().getCanonicalText());
+      name = Util.getErasedCanonicalText(((PsiVariable) element).getType().getCanonicalText());
     }
 //    else if (element instanceof PsiField) {
 //      name = Util.getErasedCanonicalText(((PsiField) element).getType().getCanonicalText());
@@ -347,6 +364,17 @@ public class Util {
       return null;
     }
     return JavaPsiFacade.getInstance(element.getProject()).findClass(name, GlobalSearchScope.allScope(element.getProject()));
+  }
+
+  public static PsiVariable getEnclosingVariable(PsiElement element) {
+    PsiElement el = element;
+    while ((el = el.getParent()) != null) {
+      if (el instanceof PsiVariable) {
+        return (PsiVariable) el;
+      }
+    }
+
+    return null;
   }
 
   public static SuperTypeInfo getTypeInformation(PsiClass from, String toFQN) {
@@ -473,11 +501,49 @@ public class Util {
   }
 
   public static long getLastUpdate(PsiElement element) {
-    final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
-    if (topLevelClass == null) {
+    try {
+      final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
+      if (topLevelClass == null) {
+        return -1;
+      }
+      final PsiFile containingFile = topLevelClass.getContainingFile();
+      return containingFile.getModificationStamp();
+    }
+    catch (PsiInvalidElementAccessException e) {
       return -1;
     }
-    final PsiFile containingFile = topLevelClass.getContainingFile();
-    return containingFile.getModificationStamp();
+  }
+
+  public static boolean isDefaultInstantiable(PsiClass psiClass) {
+    final PsiMethod[] constructors = psiClass.getConstructors();
+
+    if (constructors.length == 0) {
+      return true;
+    }
+
+    for (PsiMethod psiMethod : constructors) {
+      final PsiParameterList parameterList = psiMethod.getParameterList();
+      if (psiMethod.getModifierList().hasModifierProperty("public") && parameterList.getParameters().length == 0) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public static Collection<PsiElement> findChildrenElements(PsiElement element, ElementFilter filter) {
+    final List<PsiElement> found = new ArrayList<PsiElement>();
+    _findChildrenElements(found, element, filter);
+    return found;
+  }
+
+  private static void _findChildrenElements(Collection<PsiElement> found, PsiElement element, ElementFilter filter) {
+    for (PsiElement e : element.getChildren()) {
+      if (filter.filter(e)) {
+        found.add(e);
+      }
+
+      _findChildrenElements(found, e, filter);
+    }
   }
 }
