@@ -119,17 +119,26 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
       final PsiClass declaringClass = PsiUtil.getTopLevelClass(annotation);
       final PsiVariable var = Util.getEnclosingVariable(annotation);
 
+      Collection<PsiElement> childrenElements;
+
       if (var == null) {
         return;
       }
 
       final String name = var.getName();
       final PsiElement owningElement = Util.getMethodOrField(annotation);
+      final Set<String> escapeSet = new HashSet<String>();
+
+      class ReplaceSafety {
+        boolean safe = true;
+      }
+
+      final ReplaceSafety safety = new ReplaceSafety();
+
       if (owningElement instanceof PsiMethod) {
         PsiMethod method = (PsiMethod) owningElement;
 
-        Collection<PsiElement> childrenElements
-            = Util.findChildrenElements(method.getBody(), new ElementFilter() {
+        childrenElements = Util.findChildrenElements(method.getBody(), new ElementFilter() {
           @Override
           public boolean filter(PsiElement element) {
             if (element instanceof PsiAssignmentExpression) {
@@ -143,12 +152,6 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
           }
         });
 
-        final Set<String> escapeSet = new HashSet<String>();
-        class ReplaceSafety {
-          boolean safe = true;
-        }
-
-        final ReplaceSafety safety = new ReplaceSafety();
 
         for (PsiElement element : childrenElements) {
           if (element instanceof PsiAssignmentExpression) {
@@ -169,138 +172,152 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
             }
           }
         }
+      }
+      else {
+        escapeSet.add(Util.getNameOfElement(Util.getImmediateOwnerElement(annotation)));
+      }
 
-        final List<PsiElement> getModelRefExpressions = new ArrayList<PsiElement>();
-        final List<PsiElement> setModelRefExpressions = new ArrayList<PsiElement>();
+      final List<PsiElement> getModelRefExpressions = new ArrayList<PsiElement>();
+      //  final List<PsiElement> setModelRefExpressions = new ArrayList<PsiElement>();
 
-        if (safety.safe && !escapeSet.isEmpty()) {
-          childrenElements
-              = Util.findChildrenElements(declaringClass, new ElementFilter() {
-            @Override
-            public boolean filter(PsiElement element) {
-              if (element instanceof PsiReferenceExpression) {
-                return true;
-              }
-              else if (element.getChildren().length != 0) {
-                return false;
-              }
-
-              return element instanceof PsiExpressionStatement;
+      if (safety.safe && !escapeSet.isEmpty()) {
+        childrenElements = Util.findChildrenElements(declaringClass, new ElementFilter() {
+          @Override
+          public boolean filter(PsiElement element) {
+            if (element instanceof PsiReferenceExpression) {
+              return true;
             }
-          });
-
-          DeepCheck:
-          for (PsiElement element : childrenElements) {
-            // PsiExpressionStatement psiExpressionStatement = (PsiExpressionStatement) element;
-
-            boolean refDisqualifies = false;
-
-            // if the parent is a PisExpressionList, then this is a method or constructor call. in which case
-            // an expression containing the reference means this can't be safe.
-            PsiElement el = element;
-            while ((el = el.getParent()) != null) {
-              if (el instanceof PsiExpressionList) {
-                refDisqualifies = true;
-                break;
-              }
-              else if (el instanceof PsiMethod) {
-                break;
-              }
+            else if (element.getChildren().length != 0) {
+              return false;
             }
 
-            String text = element.getText().replaceAll(" ", "");
-            for (String escaped : escapeSet) {
-              if (text.startsWith("this.")) {
-                text = text.substring(5);
-              }
-              if (text.startsWith(escaped)) {
-                if (!refDisqualifies) {
-                  // there's a method call. disqualify!
-                  if (text.indexOf('.') != -1) {
-                    if (text.equals(escaped + ".getModel")) {
-                      getModelRefExpressions.add(element);
-                    }
-//                    else if (text.equals(escaped + ".setModel")) {
-//                      setModelRefExpressions.add(element);
-//                    }
-                    else {
-                      safety.safe = false;
-                      break DeepCheck;
-                    }
+            return element instanceof PsiExpressionStatement;
+          }
+        });
+
+        DeepCheck:
+        for (PsiElement element : childrenElements) {
+          // PsiExpressionStatement psiExpressionStatement = (PsiExpressionStatement) element;
+
+          boolean refDisqualifies = false;
+
+          // if the parent is a PisExpressionList, then this is a method or constructor call. in which case
+          // an expression containing the reference means this can't be safe.
+          PsiElement el = element;
+          while ((el = el.getParent()) != null) {
+            if (el instanceof PsiExpressionList) {
+              refDisqualifies = true;
+              break;
+            }
+            else if (el instanceof PsiMethod) {
+              break;
+            }
+          }
+
+          String text = element.getText().replaceAll(" ", "");
+          for (String escaped : escapeSet) {
+            if (text.startsWith("this.")) {
+              text = text.substring(5);
+            }
+            if (text.startsWith(escaped)) {
+              if (!refDisqualifies) {
+                // there's a method call. disqualify!
+                if (text.indexOf('.') != -1) {
+                  if (text.equals(escaped + ".getModel")) {
+                    getModelRefExpressions.add(element);
+                  }
+                  else {
+                    safety.safe = false;
+                    break DeepCheck;
                   }
                 }
-                else {
-                  safety.safe = false;
-                  break DeepCheck;
-                }
+              }
+              else {
+                safety.safe = false;
+                break DeepCheck;
               }
             }
           }
         }
+      }
 
-        if (safety.safe) {
-          holder.registerProblem(annotation.getParent().getParent(),
-              "Injected @AutoBound DataBinder can safely be replaced with @Model.",
-              new LocalQuickFix() {
-                @NotNull
-                @Override
-                public String getName() {
-                  return "Replace @AutoBound with injected @Model";
-                }
+      if (safety.safe) {
+        holder.registerProblem(annotation.getParent().getParent(),
+            "Injected @AutoBound DataBinder can safely be replaced with @Model.",
+            new LocalQuickFix() {
+              @NotNull
+              @Override
+              public String getName() {
+                return "Replace @AutoBound with injected @Model";
+              }
 
-                @NotNull
-                @Override
-                public String getFamilyName() {
-                  return GroupNames.VERBOSE_GROUP_NAME;
-                }
+              @NotNull
+              @Override
+              public String getFamilyName() {
+                return GroupNames.VERBOSE_GROUP_NAME;
+              }
 
-                @Override
-                public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-                  final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
-                  final PsiElementFactory elementFactory = instance.getElementFactory();
-                  final TemplateBindingMetaData metaData = DataBindUtil.getTemplateBindingMetaData(annotation);
+              @Override
+              public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+                final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
+                final PsiElementFactory elementFactory = instance.getElementFactory();
+                final TemplateBindingMetaData metaData = DataBindUtil.getTemplateBindingMetaData(annotation);
 
-                  final PsiType typeFromText
-                      = elementFactory.createTypeFromText(
-                      metaData.getBoundClass().getQualifiedName(),
-                      var.getTypeElement()
-                  );
+                final PsiType typeFromText
+                    = elementFactory.createTypeFromText(
+                    metaData.getBoundClass().getQualifiedName(),
+                    var.getTypeElement()
+                );
 
-                  var.getTypeElement().replace(elementFactory.createTypeElement(typeFromText));
-                  for (PsiAnnotation psiAnnotation : var.getModifierList().getAnnotations()) {
-                    if (psiAnnotation.getQualifiedName().equals(Types.AUTO_BOUND)) {
-                      psiAnnotation.delete();
-                    }
+                var.getTypeElement().replace(elementFactory.createTypeElement(typeFromText));
+                boolean removeInject = false;
+                for (PsiAnnotation psiAnnotation : var.getModifierList().getAnnotations()) {
+                  if (psiAnnotation.getQualifiedName().equals(Types.AUTO_BOUND)) {
+                    psiAnnotation.delete();
                   }
+                  else if (psiAnnotation.getQualifiedName().equals(Types.JAVAX_INJECT)) {
+                    psiAnnotation.delete();
+                    removeInject = true;
+                  }
+                }
 
-                  final PsiImportStatement importModelAnnot = instance.getElementFactory()
-                      .createImportStatement(
-                          instance.findClass(Types.MODEL,
-                              ProjectScope.getAllScope(project))
+                final PsiImportStatement importModelAnnot = instance.getElementFactory()
+                    .createImportStatement(
+                        instance.findClass(Types.MODEL,
+                            ProjectScope.getAllScope(project))
+                    );
+
+                final PsiImportList importList = ((PsiJavaFile) declaringClass.getParent()).getImportList();
+                importList.add(importModelAnnot);
+
+                var.getModifierList().addAnnotation("Model");
+
+                if (removeInject) {
+                  var.getModifierList().addAnnotation("Inject");
+                }
+
+                if (!escapeSet.isEmpty()) {
+                  final String name = escapeSet.iterator().next();
+
+                  for (final PsiField field : declaringClass.getAllFields()) {
+                    if (field.getName().equals(name)) {
+                      final PsiType newType
+                          = elementFactory.createTypeFromText(
+                          metaData.getBoundClass().getQualifiedName(),
+                          var.getTypeElement()
                       );
 
-                  final PsiImportList importList = ((PsiJavaFile) declaringClass.getParent()).getImportList();
-                  importList.add(importModelAnnot);
-
-                  var.getModifierList().addAnnotation("Model");
-
-                  if (!escapeSet.isEmpty()) {
-                    final String name = escapeSet.iterator().next();
-
-                    for (PsiField field : declaringClass.getAllFields()) {
-                      if (field.getName().equals(name)) {
-                        field.getTypeElement().replace(elementFactory.createTypeElement(typeFromText));
-                      }
-                    }
-                    for (PsiElement element : getModelRefExpressions) {
-                      PsiReferenceExpression stmt = (PsiReferenceExpression) element;
-                      final PsiExpression expression = elementFactory.createExpressionFromText("this." + name, element);
-                      stmt.getParent().replace(expression);
+                      field.getTypeElement().getOriginalElement().replace(elementFactory.createTypeElement(newType));
                     }
                   }
+                  for (PsiElement element : getModelRefExpressions) {
+                    final PsiReferenceExpression stmt = (PsiReferenceExpression) element;
+                    final PsiExpression expression = elementFactory.createExpressionFromText("this." + name, element);
+                    stmt.getParent().replace(expression);
+                  }
                 }
-              });
-        }
+              }
+            });
       }
     }
   }

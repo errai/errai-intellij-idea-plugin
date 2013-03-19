@@ -507,7 +507,7 @@ public class Util {
         return -1;
       }
       final PsiFile containingFile = topLevelClass.getContainingFile();
-      return containingFile.getModificationStamp();
+      return containingFile.getOriginalFile().getModificationStamp();
     }
     catch (PsiInvalidElementAccessException e) {
       return -1;
