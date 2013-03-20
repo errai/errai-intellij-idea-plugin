@@ -27,7 +27,7 @@ import org.jboss.errai.idea.plugin.util.Types;
 public class TemplatePropertyReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.TEMPLATED_ANNOTATION_NAME), new TemplatedReferenceProvider());
-    registrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.DATAFIELD_ANNOTATION_NAME), new DataFieldReferenceProvider());
+    registrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.TEMPLATED), new TemplatedReferenceProvider());
+    registrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.DATAFIELD), new DataFieldReferenceProvider());
   }
 }

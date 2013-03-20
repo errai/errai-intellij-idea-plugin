@@ -24,9 +24,9 @@ public class Types {
 
   public static final String ENTRY_POINT = "org.jboss.errai.ioc.client.api.EntryPoint";
 
-  public static final String TEMPLATED_ANNOTATION_NAME = "org.jboss.errai.ui.shared.api.annotations.Templated";
-  public static final String DATAFIELD_ANNOTATION_NAME = "org.jboss.errai.ui.shared.api.annotations.DataField";
-  public static final String EVENTHANDLER_ANNOTATION_NAME = "org.jboss.errai.ui.shared.api.annotations.EventHandler";
+  public static final String TEMPLATED = "org.jboss.errai.ui.shared.api.annotations.Templated";
+  public static final String DATAFIELD = "org.jboss.errai.ui.shared.api.annotations.DataField";
+  public static final String EVENTHANDLER = "org.jboss.errai.ui.shared.api.annotations.EventHandler";
   public static final String SINKNATIVE_ANNOTATION_NAME = "org.jboss.errai.ui.shared.api.annotations.SinkNative";
 
   public static final String AUTO_BOUND = "org.jboss.errai.ui.shared.api.annotations.AutoBound";
@@ -34,13 +34,18 @@ public class Types {
   public static final String BOUND = "org.jboss.errai.ui.shared.api.annotations.Bound";
   public static final String CONVERTER = "org.jboss.errai.databinding.client.api.Converter";
 
-  public static final String GWT_COMPOSITE_REF = "com.google.gwt.user.client.ui.Composite";
+  public static final String GWT_COMPOSITE = "com.google.gwt.user.client.ui.Composite";
   public static final String GWT_WIDGET_TYPE = "com.google.gwt.user.client.ui.Widget";
   public static final String GWT_ELEMENT_TYPE = "com.google.gwt.dom.client.Element";
   public static final String GWT_DOM_EVENT_TYPE = "com.google.gwt.user.client.Event";
   public static final String GWT_EVENT_TYPE = "com.google.gwt.event.shared.GwtEvent";
   public static final String GWT_HAS_TEXT = "com.google.gwt.user.client.ui.HasText";
   public static final String GWT_TAKES_VALUE = "com.google.gwt.user.client.TakesValue";
+
+  public static final String GWT_BUTTON = "com.google.gwt.user.client.ui.Button";
+  public static final String GWT_TEXTBOX = "com.google.gwt.user.client.ui.TextBox";
+
+  public static final String GWT_CLICKEVENT = "com.google.gwt.event.dom.client.ClickEvent";
 
   /** 3.0 Types **/
   public static final String MODEL = "org.jboss.errai.ui.shared.api.annotations.Model";

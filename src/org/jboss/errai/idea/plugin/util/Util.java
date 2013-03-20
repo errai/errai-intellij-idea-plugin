@@ -16,8 +16,14 @@
 
 package org.jboss.errai.idea.plugin.util;
 
+import com.intellij.ide.IdeView;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
@@ -25,6 +31,7 @@ import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassObjectAccessExpression;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
@@ -546,4 +553,17 @@ public class Util {
       _findChildrenElements(found, e, filter);
     }
   }
+
+  public static boolean isInsideProjectSources(AnActionEvent event) {
+    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(event.getProject()).getFileIndex();
+     final IdeView view = event.getData(DataKeys.IDE_VIEW);
+
+     for (PsiDirectory dir : view.getDirectories()) {
+       if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && JavaDirectoryService.getInstance().getPackage(dir) != null) {
+         return true;
+       }
+     }
+    return false;
+  }
+
 }

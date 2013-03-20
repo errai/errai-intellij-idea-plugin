@@ -302,7 +302,7 @@ public class TemplateUtil {
       if (qualifiedName == null) {
         continue;
       }
-      if (qualifiedName.equals(Types.TEMPLATED_ANNOTATION_NAME)) {
+      if (qualifiedName.equals(Types.TEMPLATED)) {
         return psiAnnotation;
       }
     }
@@ -320,7 +320,7 @@ public class TemplateUtil {
 
     if (qualifiedName == null) return null;
 
-    if (!qualifiedName.equals(Types.TEMPLATED_ANNOTATION_NAME)) {
+    if (!qualifiedName.equals(Types.TEMPLATED)) {
       annotation = findTemplatedAnnotation(annotation);
       if (annotation == null) return null;
     }
@@ -432,7 +432,7 @@ public class TemplateUtil {
     final Map<String, ConsolidateDataFieldElementResult> results = new LinkedHashMap<String, ConsolidateDataFieldElementResult>();
 
     final Collection<AnnotationSearchResult> allInjectionPoints
-        = Util.findAllAnnotatedElements(element, Types.DATAFIELD_ANNOTATION_NAME);
+        = Util.findAllAnnotatedElements(element, Types.DATAFIELD);
 
     for (AnnotationSearchResult r : allInjectionPoints) {
       final String value = Util.getValueStringFromAnnotationWithDefault(r.getAnnotation()).getValue();
@@ -462,9 +462,13 @@ public class TemplateUtil {
   public static Collection<TemplateMetaData> getTemplateOwners(final PsiFile file) {
     final List<TemplateMetaData> templateOwners = new ArrayList<TemplateMetaData>();
     final PsiClass psiClass = JavaPsiFacade.getInstance(
-        file.getProject()).findClass(Types.GWT_COMPOSITE_REF,
+        file.getProject()).findClass(Types.GWT_COMPOSITE,
         GlobalSearchScope.allScope(file.getProject())
     );
+
+    if (psiClass == null) {
+      return Collections.emptyList();
+    }
 
     for (PsiClass c : ClassInheritorsSearch.search(psiClass, projectScope(file.getProject()), true)) {
       final TemplateMetaData templateMetaData = TemplateUtil.getTemplateMetaData(c);

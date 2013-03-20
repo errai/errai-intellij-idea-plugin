@@ -16,6 +16,11 @@
 
 package org.jboss.errai.idea.plugin.databinding;
 
+import static com.intellij.psi.search.GlobalSearchScope.allScope;
+import static com.intellij.psi.search.GlobalSearchScope.projectScope;
+import static com.intellij.psi.search.searches.AnnotatedElementsSearch.searchPsiFields;
+import static com.intellij.psi.search.searches.AnnotatedElementsSearch.searchPsiParameters;
+
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.openapi.project.Project;
@@ -150,7 +155,7 @@ public class DataBindUtil {
     return new BoundMetaData(Util.getImmediateOwnerElement(element));
   }
 
-  public static BeanBindingMetaData getTemplateBindingMetaData(final PsiElement element) {
+  public static BeanBindingMetaData getDataBindingMetaData(final PsiElement element) {
     return Util.getOrCreateCache(TEMPLATE_BINDING_META_DATA_KEY, element, new CacheProvider<BeanBindingMetaData>() {
       @Override
       public BeanBindingMetaData provide() {
@@ -390,6 +395,40 @@ public class DataBindUtil {
   public static boolean typeIsBindable(PsiClass psiClass) {
     return !(!Util.typeIsAnnotated(psiClass, Types.BINDABLE)
         && !getConfiguredBindableTypes(psiClass.getProject()).contains(psiClass.getQualifiedName()));
+  }
+
+  public static Collection<PsiClass> getModelOwners(PsiClass modelClass) {
+    final Project project = modelClass.getProject();
+
+    final PsiClass autoBoundPsi = JavaPsiFacade.getInstance(project).findClass(Types.AUTO_BOUND,
+        allScope(project));
+    final PsiClass modelPsi = JavaPsiFacade.getInstance(project).findClass(Types.MODEL,
+        allScope(project));
+
+    final Collection<PsiClass> boundElements = new HashSet<PsiClass>();
+    findClassesWithInjectedModelByAnnotation(boundElements, modelClass, autoBoundPsi, project);
+    findClassesWithInjectedModelByAnnotation(boundElements, modelClass, modelPsi, project);
+    return boundElements;
+  }
+
+  private static void findClassesWithInjectedModelByAnnotation(Collection<PsiClass> found,
+                                                               PsiClass modelClass,
+                                                               PsiClass annotation,
+                                                               Project project) {
+
+    for (PsiElement element : searchPsiFields(annotation, projectScope(project))) {
+      final BoundMetaData metaData = getBoundMetaData(element);
+      if (metaData != null && metaData.isModelApplicable(modelClass)) {
+        found.add(PsiUtil.getTopLevelClass(element));
+      }
+    }
+
+    for (PsiElement element : searchPsiParameters(annotation, projectScope(project))) {
+      final BoundMetaData metaData = getBoundMetaData(element);
+      if (metaData != null && metaData.isModelApplicable(modelClass)) {
+        found.add(PsiUtil.getTopLevelClass(element));
+      }
+    }
   }
 
   public static String renderBindingAnnotationString(BindingType type) {

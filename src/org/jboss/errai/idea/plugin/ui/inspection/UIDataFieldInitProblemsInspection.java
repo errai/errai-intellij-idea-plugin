@@ -85,7 +85,7 @@ public class UIDataFieldInitProblemsInspection extends BaseJavaLocalInspectionTo
     public void visitAnnotation(PsiAnnotation annotation) {
       final String qualifiedName = annotation.getQualifiedName();
       if (qualifiedName != null) {
-        if (qualifiedName.equals(Types.DATAFIELD_ANNOTATION_NAME)) {
+        if (qualifiedName.equals(Types.DATAFIELD)) {
           checkForDataFieldInitializationProblems(holder, annotation);
         }
       }

@@ -50,7 +50,7 @@ class BeanPropertyReferenceProvider extends PsiReferenceProvider {
       text = value.replace(Util.INTELLIJ_MAGIC_STRING, "");
     }
 
-    final BeanBindingMetaData metaData = DataBindUtil.getTemplateBindingMetaData(element);
+    final BeanBindingMetaData metaData = DataBindUtil.getDataBindingMetaData(element);
     PsiClass cls = metaData.getBoundClass();
 
     final List<PsiReference> references = new ArrayList<PsiReference>();

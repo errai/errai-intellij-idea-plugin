@@ -89,7 +89,7 @@ public class UITemplateIsValidWidgetInspection extends BaseJavaLocalInspectionTo
     public void visitAnnotation(PsiAnnotation annotation) {
       final String qualifiedName = annotation.getQualifiedName();
       if (qualifiedName != null) {
-        if (qualifiedName.equals(Types.TEMPLATED_ANNOTATION_NAME)) {
+        if (qualifiedName.equals(Types.TEMPLATED)) {
           ensureTemplateClassIsComposite(holder, PsiUtil.getTopLevelClass(annotation));
         }
       }
@@ -100,7 +100,7 @@ public class UITemplateIsValidWidgetInspection extends BaseJavaLocalInspectionTo
     boolean isComposite = false;
     PsiClass cls = templateClass;
     while ((cls = cls.getSuperClass()) != null) {
-      if (cls.getQualifiedName().equals(Types.GWT_COMPOSITE_REF)) {
+      if (cls.getQualifiedName().equals(Types.GWT_COMPOSITE)) {
         isComposite = true;
         break;
       }
@@ -111,12 +111,12 @@ public class UITemplateIsValidWidgetInspection extends BaseJavaLocalInspectionTo
         return;
       }
 
-      holder.registerProblem(templateClass.getNameIdentifier(), "Errai UI @Templated bean must extend " + Types.GWT_COMPOSITE_REF,
+      holder.registerProblem(templateClass.getNameIdentifier(), "Errai UI @Templated bean must extend " + Types.GWT_COMPOSITE,
           new LocalQuickFix() {
             @NotNull
             @Override
             public String getName() {
-              return "Make bean extend " + Types.GWT_COMPOSITE_REF;
+              return "Make bean extend " + Types.GWT_COMPOSITE;
             }
 
             @NotNull
@@ -131,7 +131,7 @@ public class UITemplateIsValidWidgetInspection extends BaseJavaLocalInspectionTo
               final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
               final PsiElementFactory elementFactory = instance.getElementFactory();
               final PsiJavaCodeReferenceElement classRef
-                  = elementFactory.createReferenceElementByFQClassName(Types.GWT_COMPOSITE_REF, ProjectScope.getAllScope(project));
+                  = elementFactory.createReferenceElementByFQClassName(Types.GWT_COMPOSITE, ProjectScope.getAllScope(project));
 
               if (extendsList != null) {
                 if (extendsList.getReferenceElements().length > 0) {

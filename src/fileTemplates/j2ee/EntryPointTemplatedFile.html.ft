@@ -1,0 +1,14 @@
+<div>
+    <h1>My EntryPoint</h1>
+
+    <div data-field="root">
+        <label>
+            My New Data Field:
+            <input type="text" data-field="myField">
+        </label>
+
+        <button data-field="myButton">Click Me</button>
+
+        <!-- Template Content Here -->
+    </div>
+</div>

@@ -46,7 +46,26 @@
       <keyboard-shortcut keymap="Mac OS X" first-keystroke="control T"/>
       <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control T"/>
     </action>
-    <!-- Add your actions here -->
+
+    <action id="org.jboss.errai.idea.actions.NewTemplatedWidgetAction"
+            class="org.jboss.errai.idea.actions.NewTemplatedWidgetAction"
+            text="@Templated Widget"
+            description="Creates anew Errai UI HTML template backed widget.">
+    </action>
+    <action id="org.jboss.errai.idea.actions.NewErraiUIEntryPoint"
+              class="org.jboss.errai.idea.actions.NewErraiUIEntryPoint"
+              text="Errai UI @EntryPoint"
+              description="Creates anew Errai UI-based @EntryPoint.">
+      </action>
+
+
+    <group id="org.jboss.errai.NewFileAction" class="org.jboss.errai.idea.actions.ErraiActionGroup">
+      <separator/>
+      <reference ref="org.jboss.errai.idea.actions.NewTemplatedWidgetAction"/>
+      <reference ref="org.jboss.errai.idea.actions.NewErraiUIEntryPoint"/>
+      <add-to-group group-id="NewGroup"/>
+    </group>
+
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -49,7 +49,7 @@ public class ErraiFrameworkSupport implements ApplicationComponent {
 
   public void initComponent() {
     final PsiReferenceRegistrar javaRegistrar = registry.getRegistrar(Language.findInstance(JavaLanguage.class));
-    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.EVENTHANDLER_ANNOTATION_NAME),
+    javaRegistrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.EVENTHANDLER),
         new PsiReferenceProvider() {
           @NotNull
           @Override

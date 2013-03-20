@@ -30,8 +30,6 @@ import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.databinding.model.BeanBindingMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyInfo;
-import org.jboss.errai.idea.plugin.ui.TemplateUtil;
-import org.jboss.errai.idea.plugin.ui.model.TemplateMetaData;
 import org.jboss.errai.idea.plugin.util.DefaultPolicy;
 import org.jboss.errai.idea.plugin.util.FakeNamedPsi;
 import org.jboss.errai.idea.plugin.util.Types;
@@ -71,14 +69,22 @@ public class BeanPropertyRenameProcessor extends RenamePsiElementProcessor {
       return;
     }
 
-    for (TemplateMetaData metaData: TemplateUtil.getTemplateOwners(topLevelClass.getContainingFile())) {
-      PsiClass psiClass = metaData.getTemplateClass();
 
-      final BeanBindingMetaData dataBindMetaData = DataBindUtil.getTemplateBindingMetaData(psiClass);
+    //final PsiManager instance = PsiManager.getInstance(element.getProject());
+   // final PsiFile file = instance.findFile(td.getTemplateFile());
 
-      for (BoundMetaData md : DataBindUtil.getAllBoundMetaDataFromClass(psiClass)) {
+    for (PsiClass owner : DataBindUtil.getModelOwners(topLevelClass)) {
+  //    PsiClass psiClass = metaData.getTemplateClass();
+
+      final BeanBindingMetaData dataBindMetaData = DataBindUtil.getDataBindingMetaData(owner);
+
+      for (BoundMetaData md : DataBindUtil.getAllBoundMetaDataFromClass(owner)) {
         final PsiAnnotation boundAnnotation = md.getPsiAnnotation();
         final String property = Util.getAttributeValue(boundAnnotation, "property", DefaultPolicy.NULL);
+
+        if (property == null) {
+          continue;
+        }
 
         final StringBuilder sb = new StringBuilder();
         boolean first = true;

@@ -1,0 +1,22 @@
+import ${TEMPLATED_ANNOTATION_TYPE};
+import ${ERRAI_ENTRYPOINT_TYPE};
+import ${ERRAI_DATAFIELD_TYPE};
+import ${ERRAI_EVENTHANDLER_TYPE};
+
+import ${GWT_BUTTON_TYPE};
+import ${GWT_TEXTBOX_TYPE};
+import ${GWT_CLICKEVENT_TYPE};
+import ${GWT_COMPOSITE_TYPE};
+import ${JAVAX_INJECT_TYPE};
+
+@EntryPoint
+@Templated("#root")
+public class ${NAME} extends Composite {
+  @Inject @DataField private TextBox myField;
+  @Inject @DataField private Button myButton;
+
+  @EventHandler
+  void onClickMyButton(ClickEvent event) {
+    // do something when clicked.
+  }
+}

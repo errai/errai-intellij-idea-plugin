@@ -86,7 +86,7 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
 
     for (TemplateMetaData metaData : TemplateUtil.getTemplateOwners(xmlFile)) {
       final Collection<AnnotationSearchResult> allAnnotatedElements
-          = Util.findAllAnnotatedElements(metaData.getTemplateClass(), Types.DATAFIELD_ANNOTATION_NAME);
+          = Util.findAllAnnotatedElements(metaData.getTemplateClass(), Types.DATAFIELD);
 
       for (String dataField : TemplateUtil.extractDataFieldList(allAnnotatedElements)) {
         if (allDataFieldTags.containsKey(dataField) || dataField.contains(Util.INTELLIJ_MAGIC_STRING)) continue;

@@ -85,7 +85,7 @@ public class UITemplateExistenceInspection extends BaseJavaLocalInspectionTool {
     public void visitAnnotation(PsiAnnotation annotation) {
       final String qualifiedName = annotation.getQualifiedName();
       if (qualifiedName != null) {
-        if (qualifiedName.equals(Types.TEMPLATED_ANNOTATION_NAME)) {
+        if (qualifiedName.equals(Types.TEMPLATED)) {
           ensureTemplateExists(holder, annotation);
         }
       }

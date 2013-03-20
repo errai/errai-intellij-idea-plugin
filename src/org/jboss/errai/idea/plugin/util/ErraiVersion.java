@@ -16,12 +16,19 @@ public abstract class ErraiVersion {
     if (hasErrai30Types(project)) {
       return VersionSpec.V3_0;
     }
-    else {
+    else if (hasErrai22Types(project)) {
       return VersionSpec.V2_2;
+    }
+    else {
+      return VersionSpec.NONE;
     }
   }
 
   private static boolean hasErrai30Types(final Project project) {
     return JavaPsiFacade.getInstance(project).findClass(Types.MODEL, GlobalSearchScope.allScope(project)) != null;
+  }
+
+  private static boolean hasErrai22Types(final Project project) {
+    return JavaPsiFacade.getInstance(project).findClass(Types.AUTO_BOUND, GlobalSearchScope.allScope(project)) != null;
   }
 }

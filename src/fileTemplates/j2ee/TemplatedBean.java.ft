@@ -1,0 +1,8 @@
+import ${TEMPLATED_ANNOTATION_TYPE};
+import ${GWT_COMPOSITE_TYPE};
+import ${JAVAX_INJECT_TYPE};
+
+@Templated("#root")
+public class ${NAME} extends Composite {
+
+}

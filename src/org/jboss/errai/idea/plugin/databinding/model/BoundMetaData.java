@@ -16,12 +16,15 @@
 
 package org.jboss.errai.idea.plugin.databinding.model;
 
+import static com.intellij.psi.search.GlobalSearchScope.allScope;
 import static org.jboss.errai.idea.plugin.databinding.DataBindUtil.getConvertibilityMetaData;
 import static org.jboss.errai.idea.plugin.databinding.DataBindUtil.typeIsBindableToWidget;
 
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiVariable;
 import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 import org.jboss.errai.idea.plugin.util.DefaultPolicy;
@@ -41,7 +44,7 @@ public class BoundMetaData {
   private final long lastUpdate;
 
   public BoundMetaData(PsiElement owner) {
-    this.beanBindingMetaData = DataBindUtil.getTemplateBindingMetaData(owner);
+    this.beanBindingMetaData = DataBindUtil.getDataBindingMetaData(owner);
     this.owner = owner;
     this.psiAnnotation = Util.getAnnotationFromElement(owner, Types.BOUND);
     this.lastUpdate = Util.getLastUpdate(owner);
@@ -106,6 +109,32 @@ public class BoundMetaData {
       return new PropertyValidation(false);
     }
   }
+
+  public boolean isModelApplicable(PsiClass modelClass) {
+    final PsiClass boundClass = getBindingMetaData().getBoundClass();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(modelClass.getProject());
+
+    return boundClass != null && _isModelApplicable(boundClass, modelClass, facade);
+  }
+
+  private static boolean _isModelApplicable(PsiClass toCheck, PsiClass modelClass, JavaPsiFacade facade) {
+    if (toCheck == null) {
+      return false;
+    }
+
+    for (PsiField field : toCheck.getAllFields()) {
+      if (field.getType().getCanonicalText().equals(modelClass.getQualifiedName())) {
+        return true;
+      }
+
+      final PsiClass psiClass = facade.findClass(field.getType().getCanonicalText(), allScope(facade.getProject()));
+      if (_isModelApplicable(psiClass, modelClass, facade)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   public boolean isCacheValid() {
     if (lastUpdate == -1) {

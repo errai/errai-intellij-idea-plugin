@@ -22,6 +22,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiUtil;
+import org.jboss.errai.idea.plugin.databinding.DataBindUtil;
 
 /**
  * @author Mike Brock
@@ -48,9 +49,9 @@ public class PropertyInfo {
     }
 
     for (PsiField psiField : type.getAllFields()) {
+      final PsiClass effectiveFieldType = DataBindUtil.getPsiClassFromType(psiField.getProject(), psiField.getType());
       if (psiField.getName().equals(propertyName)
-          && getErasedCanonicalText(psiField.getType()
-          .getCanonicalText()).equals(propertyType.getQualifiedName())) {
+          && getErasedCanonicalText(effectiveFieldType.getQualifiedName()).equals(propertyType.getQualifiedName())) {
 
         return psiField;
       }

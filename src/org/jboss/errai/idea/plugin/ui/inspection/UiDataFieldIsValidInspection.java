@@ -89,7 +89,7 @@ public class UiDataFieldIsValidInspection extends BaseJavaLocalInspectionTool {
     public void visitAnnotation(PsiAnnotation annotation) {
       final String qualifiedName = annotation.getQualifiedName();
       if (qualifiedName != null) {
-        if (qualifiedName.equals(Types.DATAFIELD_ANNOTATION_NAME)) {
+        if (qualifiedName.equals(Types.DATAFIELD)) {
           ensureDataFieldIsValid(holder, annotation);
         }
       }

@@ -100,7 +100,7 @@ public class UiEventHandlerInspection extends BaseJavaLocalInspectionTool {
     public void visitAnnotation(PsiAnnotation annotation) {
       final String qualifiedName = annotation.getQualifiedName();
       if (qualifiedName != null) {
-        if (qualifiedName.equals(Types.EVENTHANDLER_ANNOTATION_NAME)) {
+        if (qualifiedName.equals(Types.EVENTHANDLER)) {
           ensureEventHandlerIsValid(holder, annotation);
         }
       }

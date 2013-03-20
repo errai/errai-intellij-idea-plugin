@@ -274,7 +274,7 @@ public class DataBinderCanBeModelInspection extends BaseJavaLocalInspectionTool 
               public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
                 final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
                 final PsiElementFactory elementFactory = instance.getElementFactory();
-                final BeanBindingMetaData metaData = DataBindUtil.getTemplateBindingMetaData(annotation);
+                final BeanBindingMetaData metaData = DataBindUtil.getDataBindingMetaData(annotation);
 
                 final PsiType typeFromText
                     = elementFactory.createTypeFromText(

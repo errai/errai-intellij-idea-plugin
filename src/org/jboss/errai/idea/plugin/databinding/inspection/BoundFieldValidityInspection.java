@@ -40,7 +40,7 @@ import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyValidation;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
 import org.jboss.errai.idea.plugin.util.ExpressionErrorReference;
-import org.jboss.errai.idea.plugin.util.TemplateUtil;
+import org.jboss.errai.idea.plugin.util.FileTemplateUtil;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.Nls;
@@ -163,7 +163,7 @@ public class BoundFieldValidityInspection extends BaseJavaLocalInspectionTool {
                 final PsiClass topLevelClass = PsiUtil.getTopLevelClass(psiAnnotation);
                 final PsiDirectory directory = topLevelClass.getOriginalElement().getContainingFile().getParent();
 
-                TemplateUtil.createFileFromTemplate("Converter.java", name, directory
+                FileTemplateUtil.createFileFromTemplate("Converter.java", name, directory
                     , new HashMap<String, String>() {
                   {
                     put("CONVERTER_INTERFACE_TYPE", Types.CONVERTER);
