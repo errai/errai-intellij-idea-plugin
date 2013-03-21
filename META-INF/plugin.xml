@@ -6,7 +6,7 @@
 
   <description><![CDATA[
       Errai Framework Support<br>
-      <small>Add code inspections and other tools for the Errai Framework to IntelliJ IDEA.</small>
+      <small>Add code inspections, refactoring support, and other tools for the Errai Framework to IntelliJ IDEA.</small>
       ]]></description>
 
   <change-notes>

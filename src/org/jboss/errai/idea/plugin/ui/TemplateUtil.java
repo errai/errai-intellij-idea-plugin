@@ -480,7 +480,7 @@ public class TemplateUtil {
         continue;
       }
       final String templateFile = vTemplateFile.getCanonicalPath();
-      final VirtualFile virtualFile = file.getVirtualFile();
+      final VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
       if (virtualFile == null || templateFile == null) {
         continue;
       }
