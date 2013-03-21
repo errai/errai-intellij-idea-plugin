@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jboss.errai</id>
   <name>Errai Framework</name>
-  <version>0.4.2</version>
+  <version>0.4.3</version>
   <vendor email="cbrock@redhat.com" url="http://www.jboss.org/errai/">Red Hat, Inc.</vendor>
 
   <description><![CDATA[
@@ -11,12 +11,9 @@
 
   <change-notes>
     <![CDATA[
-          v0.4.2<br>
+          v0.4.3<br>
           <small>
             <ul>
-              <li>Problem with databinding refactoring fixed.</li>
-              <li>Support for standalone databound beans added.</li>
-              <li>New Errai component creation actions in the IntelliJ new menu</li>
               <li>Bug Fixes</li>
             </ul>
           </small>
