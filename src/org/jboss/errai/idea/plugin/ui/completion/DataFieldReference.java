@@ -46,7 +46,6 @@ public class DataFieldReference extends PsiReferenceBase<PsiLiteralExpression> {
     this.considerRoot = considerRoot;
   }
 
-
   private Map<String, PsiElement> getAvailableDataFields() {
     Map<String, PsiElement> map = new HashMap<String, PsiElement>();
     final TemplateMetaData metaData = TemplateUtil.getTemplateMetaData(getElement());

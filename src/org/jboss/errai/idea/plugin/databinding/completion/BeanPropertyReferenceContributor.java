@@ -29,5 +29,4 @@ public class BeanPropertyReferenceContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.BOUND), new BeanPropertyReferenceProvider());
   }
-
 }

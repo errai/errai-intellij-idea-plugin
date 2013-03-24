@@ -65,7 +65,6 @@ import java.util.Set;
 public class TemplateUtil {
   public static final String DATA_FIELD_TAG_ATTRIBUTE = "data-field";
 
-  public static final Key<Ownership> OWNERSHIP_CACHE = Key.create("OWNERSHIP_CACHE");
   private static final Key<DataFieldCacheHolder> dataFieldsCacheKey = Key.create("dataFieldsCache");
 
   public static DataFieldExistence dataFieldExistenceCheck(PsiAnnotation annotation, TemplateMetaData metaData) {

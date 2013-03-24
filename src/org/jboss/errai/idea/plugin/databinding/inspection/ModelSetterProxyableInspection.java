@@ -75,7 +75,6 @@ public class ModelSetterProxyableInspection extends BaseJavaLocalInspectionTool 
     return HighlightDisplayLevel.ERROR;
   }
 
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {

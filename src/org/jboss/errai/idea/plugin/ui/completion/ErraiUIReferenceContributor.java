@@ -16,18 +16,20 @@
 
 package org.jboss.errai.idea.plugin.ui.completion;
 
+import static org.jboss.errai.idea.plugin.util.Types.DATAFIELD;
+import static org.jboss.errai.idea.plugin.util.Types.TEMPLATED;
+
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import org.jboss.errai.idea.plugin.util.AnnotationMatchingPattern;
-import org.jboss.errai.idea.plugin.util.Types;
 
 /**
  * @author Mike Brock
  */
-public class TemplatePropertyReferenceContributor extends PsiReferenceContributor {
+public class ErraiUIReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.TEMPLATED), new TemplatedReferenceProvider());
-    registrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.DATAFIELD), new DataFieldReferenceProvider());
+    registrar.registerReferenceProvider(new AnnotationMatchingPattern(TEMPLATED), new TemplatedReferenceProvider());
+    registrar.registerReferenceProvider(new AnnotationMatchingPattern(DATAFIELD), new DataFieldReferenceProvider());
   }
 }

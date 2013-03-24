@@ -71,8 +71,7 @@ public class Util {
       typeParam = null;
     }
     else {
-      String s = signature.substring(typeParamBegin + 1, signature.indexOf('>'));
-      typeParam = getErasedCanonicalText(s);
+      typeParam = getErasedCanonicalText(signature.substring(typeParamBegin + 1, signature.indexOf('>')));
     }
 
     if (typeParam != null) {

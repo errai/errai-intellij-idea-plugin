@@ -72,7 +72,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <psi.referenceContributor
-        implementation="org.jboss.errai.idea.plugin.ui.completion.TemplatePropertyReferenceContributor"/>
+        implementation="org.jboss.errai.idea.plugin.ui.completion.ErraiUIReferenceContributor"/>
     <psi.referenceContributor
         implementation="org.jboss.errai.idea.plugin.databinding.completion.BeanPropertyReferenceContributor"/>
     <inspectionToolProvider implementation="org.jboss.errai.idea.plugin.ErraiUIInspectionToolProvider"/>

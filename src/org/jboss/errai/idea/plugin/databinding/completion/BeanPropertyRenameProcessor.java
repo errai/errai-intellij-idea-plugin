@@ -69,13 +69,7 @@ public class BeanPropertyRenameProcessor extends RenamePsiElementProcessor {
       return;
     }
 
-
-    //final PsiManager instance = PsiManager.getInstance(element.getProject());
-   // final PsiFile file = instance.findFile(td.getTemplateFile());
-
     for (PsiClass owner : DataBindUtil.getModelOwners(topLevelClass)) {
-  //    PsiClass psiClass = metaData.getTemplateClass();
-
       final BeanBindingMetaData dataBindMetaData = DataBindUtil.getDataBindingMetaData(owner);
 
       for (BoundMetaData md : DataBindUtil.getAllBoundMetaDataFromClass(owner)) {
