@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jboss.errai</id>
   <name>Errai Framework</name>
-  <version>0.4.3</version>
+  <version>0.4.4</version>
   <vendor email="cbrock@redhat.com" url="http://www.jboss.org/errai/">Red Hat, Inc.</vendor>
 
   <description><![CDATA[
@@ -14,7 +14,7 @@
           v0.4.3<br>
           <small>
             <ul>
-              <li>Bug Fixes</li>
+              <li>Refactoring improvements</li>
             </ul>
           </small>
           ]]>
