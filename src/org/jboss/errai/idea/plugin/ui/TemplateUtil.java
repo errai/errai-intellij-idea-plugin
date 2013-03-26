@@ -490,4 +490,13 @@ public class TemplateUtil {
 
     return templateOwners;
   }
+
+  public static PsiFile getFileFromElement(PsiElement element) {
+    do {
+      if (element instanceof PsiFile) {
+        return (PsiFile) element;
+      }
+    } while ((element = element.getParent()) != null);
+    return null;
+  }
 }

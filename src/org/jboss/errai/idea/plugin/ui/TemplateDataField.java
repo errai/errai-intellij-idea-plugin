@@ -16,11 +16,12 @@
 
 package org.jboss.errai.idea.plugin.ui;
 
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 
 /**
-* @author Mike Brock
-*/
+ * @author Mike Brock
+ */
 public class TemplateDataField {
   private final XmlTag tag;
   private final String dataFieldName;
@@ -32,6 +33,22 @@ public class TemplateDataField {
 
   public XmlTag getTag() {
     return tag;
+  }
+
+  public void setDataField(String text) {
+    if (tag != null) {
+      final XmlAttribute value = tag.getAttribute("value");
+      if (value != null) {
+        value.setValue(text);
+      }
+    }
+  }
+
+  public XmlAttribute getDataFieldAttribute() {
+    if (tag != null) {
+      return tag.getAttribute("data-field");
+    }
+    return null;
   }
 
   public String getDataFieldName() {

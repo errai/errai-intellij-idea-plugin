@@ -67,8 +67,7 @@ public class ErraiFrameworkSupport implements ApplicationComponent {
           public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
             return new XmlDatafieldReference[]{new XmlDatafieldReference((XmlAttribute) element, false)};
           }
-        });
-  }
+        });  }
 
   public void disposeComponent() {
   }

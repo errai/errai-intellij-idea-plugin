@@ -360,12 +360,6 @@ public class Util {
     if (element instanceof PsiVariable) {
       name = Util.getErasedCanonicalText(((PsiVariable) element).getType().getCanonicalText());
     }
-//    else if (element instanceof PsiField) {
-//      name = Util.getErasedCanonicalText(((PsiField) element).getType().getCanonicalText());
-//    }
-//    else if (element instanceof PsiParameter) {
-//      name = Util.getErasedCanonicalText(((PsiParameter) element).getType().getCanonicalText());
-//    }
     else {
       return null;
     }

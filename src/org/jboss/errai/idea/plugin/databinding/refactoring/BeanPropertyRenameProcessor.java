@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package org.jboss.errai.idea.plugin.databinding.completion;
+package org.jboss.errai.idea.plugin.databinding.refactoring;
 
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;

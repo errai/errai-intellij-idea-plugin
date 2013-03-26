@@ -54,11 +54,11 @@
             description="Creates anew Errai UI HTML template backed widget.">
     </action>
     <action id="org.jboss.errai.idea.actions.NewErraiUIEntryPoint"
-              class="org.jboss.errai.idea.actions.NewErraiUIEntryPoint"
-              text="@Templated @EntryPoint Widget"
-              icon="/icons/errai_doc_icon_16px.png"
-              description="Creates anew Errai UI-based @EntryPoint.">
-      </action>
+            class="org.jboss.errai.idea.actions.NewErraiUIEntryPoint"
+            text="@Templated @EntryPoint Widget"
+            icon="/icons/errai_doc_icon_16px.png"
+            description="Creates anew Errai UI-based @EntryPoint.">
+    </action>
 
 
     <group id="org.jboss.errai.NewFileAction" class="org.jboss.errai.idea.actions.ErraiActionGroup">
@@ -76,8 +76,17 @@
     <psi.referenceContributor
         implementation="org.jboss.errai.idea.plugin.databinding.completion.BeanPropertyReferenceContributor"/>
     <inspectionToolProvider implementation="org.jboss.errai.idea.plugin.ErraiUIInspectionToolProvider"/>
+
     <renamePsiElementProcessor
-        implementation="org.jboss.errai.idea.plugin.databinding.completion.BeanPropertyRenameProcessor"/>
+        implementation="org.jboss.errai.idea.plugin.databinding.refactoring.BeanPropertyRenameProcessor" order="first"/>
+    <renamePsiElementProcessor
+        implementation="org.jboss.errai.idea.plugin.databinding.refactoring.BoundFieldRenameProcessor" order="first"/>
+
+    <renamePsiElementProcessor
+        implementation="org.jboss.errai.idea.plugin.ui.refactoring.BeanDataFieldRenameProcessor" order="first"/>
+    <renamePsiElementProcessor
+        implementation="org.jboss.errai.idea.plugin.ui.refactoring.TemplateDataFieldRenameProcessor" order="first"/>
+
 
     <!-- Add your extensions here -->
   </extensions>

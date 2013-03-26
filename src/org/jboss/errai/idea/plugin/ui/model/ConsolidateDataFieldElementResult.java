@@ -47,6 +47,10 @@ public class ConsolidateDataFieldElementResult {
     this.linkingElement = linkingElement;
   }
 
+  public PsiElement getElement() {
+    return element;
+  }
+
   public PsiElement getLinkingElement() {
     return linkingElement != null ? linkingElement : element;
   }
