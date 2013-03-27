@@ -21,7 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.refactoring.rename.RenameXmlAttributeProcessor;
 import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 import org.jboss.errai.idea.plugin.ui.model.ConsolidateDataFieldElementResult;
 import org.jboss.errai.idea.plugin.ui.model.TemplateMetaData;
@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * @author Mike Brock
  */
-public class TemplateDataFieldRenameProcessor extends RenamePsiElementProcessor {
+public class TemplateDataFieldRenameProcessor extends RenameXmlAttributeProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     if (element instanceof XmlAttributeValue) {
