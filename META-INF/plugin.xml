@@ -38,8 +38,8 @@
   </project-components>
 
   <actions>
-    <action id="org.jboss.errai.idea.actions.TemplateToggleAction"
-            class="org.jboss.errai.idea.actions.TemplateToggleAction"
+    <action id="org.jboss.errai.idea.plugin.actions.TemplateToggleAction"
+            class="org.jboss.errai.idea.plugin.actions.TemplateToggleAction"
             text="Toggle between Errai UI template and backing bean"
             description="Jumps between an Errai UI HTML template and the associated backing bean">
       <keyboard-shortcut keymap="$default" first-keystroke="control T"/>
@@ -47,24 +47,24 @@
       <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control T"/>
     </action>
 
-    <action id="org.jboss.errai.idea.actions.NewTemplatedWidgetAction"
-            class="org.jboss.errai.idea.actions.NewTemplatedWidgetAction"
+    <action id="org.jboss.errai.idea.plugin.actions.NewTemplatedWidgetAction"
+            class="org.jboss.errai.idea.plugin.actions.NewTemplatedWidgetAction"
             text="@Templated Widget"
             icon="/icons/errai_doc_icon_16px.png"
             description="Creates anew Errai UI HTML template backed widget.">
     </action>
-    <action id="org.jboss.errai.idea.actions.NewErraiUIEntryPoint"
-            class="org.jboss.errai.idea.actions.NewErraiUIEntryPoint"
+    <action id="org.jboss.errai.idea.plugin.actions.NewErraiUIEntryPoint"
+            class="org.jboss.errai.idea.plugin.actions.NewErraiUIEntryPoint"
             text="@Templated @EntryPoint Widget"
             icon="/icons/errai_doc_icon_16px.png"
             description="Creates anew Errai UI-based @EntryPoint.">
     </action>
 
 
-    <group id="org.jboss.errai.NewFileAction" class="org.jboss.errai.idea.actions.ErraiActionGroup">
+    <group id="org.jboss.errai.NewFileAction" class="org.jboss.errai.idea.plugin.actions.ErraiActionGroup">
       <separator/>
-      <reference ref="org.jboss.errai.idea.actions.NewTemplatedWidgetAction"/>
-      <reference ref="org.jboss.errai.idea.actions.NewErraiUIEntryPoint"/>
+      <reference ref="org.jboss.errai.idea.plugin.actions.NewTemplatedWidgetAction"/>
+      <reference ref="org.jboss.errai.idea.plugin.actions.NewErraiUIEntryPoint"/>
       <add-to-group group-id="NewGroup"/>
     </group>
 
@@ -73,8 +73,10 @@
   <extensions defaultExtensionNs="com.intellij">
     <psi.referenceContributor
         implementation="org.jboss.errai.idea.plugin.ui.completion.ErraiUIReferenceContributor"/>
+
     <psi.referenceContributor
         implementation="org.jboss.errai.idea.plugin.databinding.completion.BeanPropertyReferenceContributor"/>
+
     <inspectionToolProvider implementation="org.jboss.errai.idea.plugin.ErraiUIInspectionToolProvider"/>
 
     <renamePsiElementProcessor
@@ -86,7 +88,6 @@
         implementation="org.jboss.errai.idea.plugin.ui.refactoring.BeanDataFieldRenameProcessor" order="first"/>
     <renamePsiElementProcessor
         implementation="org.jboss.errai.idea.plugin.ui.refactoring.TemplateDataFieldRenameProcessor" order="first"/>
-
 
     <!-- Add your extensions here -->
   </extensions>

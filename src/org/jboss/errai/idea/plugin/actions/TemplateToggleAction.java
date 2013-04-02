@@ -1,4 +1,4 @@
-package org.jboss.errai.idea.actions;
+package org.jboss.errai.idea.plugin.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.icons.AllIcons;
@@ -28,6 +28,7 @@ public class TemplateToggleAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final PsiFile data = e.getData(DataKeys.PSI_FILE);
+
     final Editor editor = e.getData(DataKeys.EDITOR);
     if (editor == null) {
       return;

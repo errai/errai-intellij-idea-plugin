@@ -47,7 +47,12 @@ public class Types {
 
   public static final String GWT_CLICKEVENT = "com.google.gwt.event.dom.client.ClickEvent";
 
-  /** 3.0 Types **/
+  public static final String CALLER = "org.jboss.errai.common.client.api.Caller";
+  public static final String REMOTE_CALLBACK = "org.jboss.errai.common.client.api.RemoteCallback";
+
+  /**
+   * 3.0 Types *
+   */
   public static final String MODEL = "org.jboss.errai.ui.shared.api.annotations.Model";
   public static final String MODEL_SETTER = "org.jboss.errai.ui.shared.api.annotations.ModelSetter";
 }

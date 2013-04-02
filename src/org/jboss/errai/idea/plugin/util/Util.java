@@ -559,4 +559,30 @@ public class Util {
     return false;
   }
 
+  public static String boxedType(String type) {
+    if ("int".equals(type)) {
+      return Integer.class.getName();
+    }
+    else if ("double".equals(type)) {
+      return Double.class.getName();
+    }
+    else if ("boolean".equals(type)) {
+      return Double.class.getName();
+    }
+    else if ("float".equals(type)) {
+      return Double.class.getName();
+    }
+    else if ("short".equals(type)) {
+      return Double.class.getName();
+    }
+    else if ("byte".equals(type)) {
+      return Double.class.getName();
+    }
+    else if ("long".equals(type)) {
+      return Double.class.getName();
+    }
+
+    return type;
+  }
+
 }

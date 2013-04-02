@@ -41,13 +41,11 @@ public class BoundMetaData {
   private final PsiElement owner;
   private final PsiAnnotation psiAnnotation;
   private final String property;
-  private final long lastUpdate;
 
   public BoundMetaData(PsiElement owner) {
     this.beanBindingMetaData = DataBindUtil.getDataBindingMetaData(owner);
     this.owner = owner;
     this.psiAnnotation = Util.getAnnotationFromElement(owner, Types.BOUND);
-    this.lastUpdate = Util.getLastUpdate(owner);
 
     if (psiAnnotation != null) {
       property = Util.getAttributeValue(psiAnnotation, "property", DefaultPolicy.OWNER_IDENTIFIER_NAME);
@@ -133,14 +131,5 @@ public class BoundMetaData {
       }
     }
     return false;
-  }
-
-
-  public boolean isCacheValid() {
-    if (lastUpdate == -1) {
-      return false;
-    }
-    long curr = Util.getLastUpdate(owner);
-    return curr != -1 && curr == lastUpdate;
   }
 }

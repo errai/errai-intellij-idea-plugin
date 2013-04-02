@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package org.jboss.errai.idea.actions;
+package org.jboss.errai.idea.plugin.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;

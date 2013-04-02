@@ -123,11 +123,6 @@ public class BeanPropertyRenameProcessor extends RenamePsiElementProcessor {
             final String text = Util.getAnnotationMemberValue(boundAnnotation, "property").getText();
             return text.substring(1, text.length() - 1);
           }
-
-          @Override
-          public boolean isPhysical() {
-            return false;
-          }
         };
 
         psiElementStringMap.put(dummy, sb.toString());

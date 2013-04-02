@@ -33,4 +33,9 @@ public class FakeNamedPsi extends FakePsiElement implements PsiNamedElement {
   public PsiElement getParent() {
     return parent;
   }
+
+  @Override
+  public boolean isPhysical() {
+    return false;
+  }
 }
