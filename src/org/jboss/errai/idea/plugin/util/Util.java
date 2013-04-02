@@ -567,19 +567,19 @@ public class Util {
       return Double.class.getName();
     }
     else if ("boolean".equals(type)) {
-      return Double.class.getName();
+      return Boolean.class.getName();
     }
     else if ("float".equals(type)) {
-      return Double.class.getName();
+      return Float.class.getName();
     }
     else if ("short".equals(type)) {
-      return Double.class.getName();
+      return Short.class.getName();
     }
     else if ("byte".equals(type)) {
-      return Double.class.getName();
+      return Byte.class.getName();
     }
     else if ("long".equals(type)) {
-      return Double.class.getName();
+      return Long.class.getName();
     }
 
     return type;
