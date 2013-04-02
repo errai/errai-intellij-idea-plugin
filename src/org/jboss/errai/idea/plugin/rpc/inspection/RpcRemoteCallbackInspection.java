@@ -135,7 +135,7 @@ public class RpcRemoteCallbackInspection extends BaseJavaLocalInspectionTool {
                                                           PsiMethodCallExpression expression) {
 
     if (!Util.typeIsAssignableFrom(callbackType,
-        Util.getErasedCanonicalText(resolvedMethod.getReturnType().getCanonicalText()))) {
+        Util.boxedType(Util.getErasedCanonicalText(resolvedMethod.getReturnType().getCanonicalText())))) {
       holder.registerProblem(expression,
           "RemoteCallback accepts wrong return type (" + callbackType.getQualifiedName() + "); expected: "
               + resolvedMethod.getReturnType().getCanonicalText());
