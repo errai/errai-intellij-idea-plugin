@@ -11,9 +11,10 @@
 
   <change-notes>
     <![CDATA[
-          v0.4.4<br>
+          v0.5.0<br>
           <small>
             <ul>
+              <li>Add support for RPC validations</li>
               <li>Bug fixes</li>
             </ul>
           </small>
