@@ -50,6 +50,9 @@ public class Types {
   public static final String CALLER = "org.jboss.errai.common.client.api.Caller";
   public static final String REMOTE_CALLBACK = "org.jboss.errai.common.client.api.RemoteCallback";
 
+  public static final String PORTABLE = "org.jboss.errai.common.client.api.annotations.Portable";
+  public static final String MAPS_TO = "org.jboss.errai.marshalling.client.api.annotations.MapsTo";
+
   /**
    * 3.0 Types *
    */

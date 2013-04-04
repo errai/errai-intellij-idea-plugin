@@ -18,6 +18,7 @@ package org.jboss.errai.idea.plugin.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.util.IconLoader;
 import org.jboss.errai.idea.plugin.util.Util;
 
@@ -37,6 +38,7 @@ public class ErraiActionGroup extends DefaultActionGroup {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(Util.isInsideProjectSources(e));
+    e.getPresentation().setVisible(Util.isInsideProjectSources(e)
+        && e.getData(PlatformDataKeys.VIRTUAL_FILE) != null);
   }
 }

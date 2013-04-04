@@ -160,11 +160,21 @@ public class RpcRemoteCallbackInspection extends BaseJavaLocalInspectionTool {
     if (expressionTypes.length == 0) {
       return null;
     }
+    final Project project = expression.getProject();
 
-    return Util.getErasedTypeParam(expression.getProject(), expressionTypes[0].getCanonicalText());
+    if (Util.typeIsAssignableFrom(getPsiClass(project, expressionTypes[0]), Types.REMOTE_CALLBACK)) {
+      return Util.getErasedTypeParam(project, expressionTypes[0].getCanonicalText());
+    }
+    else {
+      return null;
+    }
   }
 
   private static PsiClass getPsiClass(Project project, PsiType element) {
+    if (element == null) {
+      return null;
+    }
+
     return JavaPsiFacade.getInstance(project).findClass(
         Util.getErasedCanonicalText(element.getCanonicalText())
         , GlobalSearchScope.allScope(project));

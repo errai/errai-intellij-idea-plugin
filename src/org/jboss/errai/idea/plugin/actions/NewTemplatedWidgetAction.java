@@ -37,7 +37,15 @@ import java.util.HashMap;
 public class NewTemplatedWidgetAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final VirtualFile directory = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile directory;
+
+    if (virtualFile.isDirectory()) {
+      directory = virtualFile;
+    }
+    else {
+      directory = virtualFile.getParent();
+    }
 
     final String name = Messages.showInputDialog(e.getProject(),
         "Type a new name for your Errai UI template. (Do not include file extension)",
@@ -72,6 +80,8 @@ public class NewTemplatedWidgetAction extends AnAction {
     }
 
     final String trimmed = name.trim();
+
+
 
     final PsiDirectory psiDirectory = PsiManager.getInstance(e.getProject()).findDirectory(directory);
 
