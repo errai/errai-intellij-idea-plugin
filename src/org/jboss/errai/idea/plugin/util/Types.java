@@ -52,6 +52,9 @@ public class Types {
 
   public static final String PORTABLE = "org.jboss.errai.common.client.api.annotations.Portable";
   public static final String MAPS_TO = "org.jboss.errai.marshalling.client.api.annotations.MapsTo";
+  public static final String CLIENT_MARSHALLER = "org.jboss.errai.marshalling.client.api.annotations.ClientMarshaller";
+  public static final String SERVER_MARSHALLER = "org.jboss.errai.marshalling.client.api.annotations.ServerMarshaller";
+  public static final String MARSHALLER = "org.jboss.errai.marshalling.client.api.Marshaller";
 
   /**
    * 3.0 Types *

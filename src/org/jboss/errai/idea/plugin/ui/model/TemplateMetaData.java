@@ -16,6 +16,7 @@
 
 package org.jboss.errai.idea.plugin.ui.model;
 
+import com.google.common.collect.Multimap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -81,7 +82,7 @@ public class TemplateMetaData {
   }
 
   @NotNull
-  public Map<String, TemplateDataField> getAllDataFieldsInTemplate(boolean includeRootTag) {
+  public Multimap<String, TemplateDataField> getAllDataFieldsInTemplate(boolean includeRootTag) {
     return TemplateUtil.findAllDataFieldTags(this, project, includeRootTag);
   }
 

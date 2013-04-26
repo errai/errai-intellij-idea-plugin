@@ -16,18 +16,17 @@
 
 package org.jboss.errai.idea.plugin.ui.model;
 
+import com.google.common.collect.Multimap;
 import org.jboss.errai.idea.plugin.ui.TemplateDataField;
-
-import java.util.Map;
 
 /**
 * @author Mike Brock
 */
 public class DataFieldCacheHolder {
   private final long time;
-  private final Map<String, TemplateDataField> value;
+  private final Multimap<String, TemplateDataField> value;
 
-  public DataFieldCacheHolder(long time, Map<String, TemplateDataField> value) {
+  public DataFieldCacheHolder(long time, Multimap<String, TemplateDataField> value) {
     this.time = time;
     this.value = value;
   }
@@ -36,7 +35,7 @@ public class DataFieldCacheHolder {
     return time;
   }
 
-  public Map<String, TemplateDataField> getValue() {
+  public Multimap<String, TemplateDataField> getValue() {
     return value;
   }
 }

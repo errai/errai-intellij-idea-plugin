@@ -65,9 +65,6 @@ public class DataBindUtil {
   private static final int CASE_OFFSET = ('z' - 'Z');
   private static final Key<BeanBindingMetaData> TEMPLATE_BINDING_META_DATA_KEY
       = Key.create("TEMPLATE_BINDING_META_DATA_KEY");
-  private static final Key<BoundMetaData> BOUND_META_DATA_KEY
-      = Key.create("BOUND_META_DATA_KEY");
-
 
   public static Map<String, PropertyInfo> getAllProperties(PsiClass boundClass, String propertySearchRoot) {
     int idx = propertySearchRoot.lastIndexOf('.');
@@ -314,9 +311,7 @@ public class DataBindUtil {
           chars[0] = c[3];
         }
 
-        for (int i = 1; i < chars.length; i++) {
-          chars[i] = c[i + 3];
-        }
+        System.arraycopy(c, 4, chars, 1, chars.length - 1);
 
         return new String(chars);
       }
@@ -334,9 +329,7 @@ public class DataBindUtil {
         chars[0] = c[2];
       }
 
-      for (int i = 1; i < chars.length; i++) {
-        chars[i] = c[i + 2];
-      }
+      System.arraycopy(c, 3, chars, 1, chars.length - 1);
 
       return new String(chars);
     }

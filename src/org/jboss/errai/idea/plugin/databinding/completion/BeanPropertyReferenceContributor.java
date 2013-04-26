@@ -27,6 +27,6 @@ import org.jboss.errai.idea.plugin.util.Types;
 public class BeanPropertyReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.BOUND), new BeanPropertyReferenceProvider());
+    registrar.registerReferenceProvider(new AnnotationMatchingPattern(Types.BOUND, "property"), new BeanPropertyReferenceProvider());
   }
 }

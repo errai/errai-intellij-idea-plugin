@@ -52,7 +52,7 @@ import java.util.HashMap;
 /**
  * @author Mike Brock
  */
-public class BoundFieldValidityInspection extends BaseJavaLocalInspectionTool {
+public class  BoundFieldValidityInspection extends BaseJavaLocalInspectionTool {
   @Nls
   @NotNull
   @Override

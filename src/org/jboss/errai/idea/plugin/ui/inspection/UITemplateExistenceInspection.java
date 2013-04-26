@@ -16,6 +16,7 @@
 
 package org.jboss.errai.idea.plugin.ui.inspection;
 
+import com.google.common.collect.Multimap;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
@@ -31,8 +32,6 @@ import org.jboss.errai.idea.plugin.ui.model.TemplateMetaData;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 /**
  * @author Mike Brock
@@ -112,7 +111,7 @@ public class UITemplateExistenceInspection extends BaseJavaLocalInspectionTool {
         }
       }
       else if (attribute != null && !metaData.getTemplateExpression().getRootNode().equals("")) {
-        final Map<String, TemplateDataField> allDataFieldTags = metaData.getAllDataFieldsInTemplate(true);
+        final Multimap<String, TemplateDataField> allDataFieldTags = metaData.getAllDataFieldsInTemplate(true);
 
         if (!allDataFieldTags.containsKey(metaData.getTemplateExpression().getRootNode())) {
           holder.registerProblem(attribute, "The data-field element specified for the root " +

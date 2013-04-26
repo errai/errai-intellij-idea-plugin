@@ -22,6 +22,7 @@ import org.jboss.errai.idea.plugin.databinding.inspection.BoundModelValidInspect
 import org.jboss.errai.idea.plugin.databinding.inspection.DataBinderCanBeModelInspection;
 import org.jboss.errai.idea.plugin.databinding.inspection.ModelSetterProxyableInspection;
 import org.jboss.errai.idea.plugin.databinding.inspection.ModelSetterValidityInspection;
+import org.jboss.errai.idea.plugin.marshalling.inspection.PortableTypeValidExtension;
 import org.jboss.errai.idea.plugin.rpc.inspection.RpcRemoteCallbackInspection;
 import org.jboss.errai.idea.plugin.ui.inspection.UIDataFieldInitProblemsInspection;
 import org.jboss.errai.idea.plugin.ui.inspection.UITemplateExistenceInspection;
@@ -46,7 +47,8 @@ public class ErraiUIInspectionToolProvider implements InspectionToolProvider {
         DataBinderCanBeModelInspection.class,
         ModelSetterValidityInspection.class,
         ModelSetterProxyableInspection.class,
-        RpcRemoteCallbackInspection.class
+        RpcRemoteCallbackInspection.class,
+        PortableTypeValidExtension.class
     };
   }
 }

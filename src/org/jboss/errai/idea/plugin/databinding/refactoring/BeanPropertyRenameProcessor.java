@@ -36,6 +36,7 @@ import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -69,7 +70,8 @@ public class BeanPropertyRenameProcessor extends RenamePsiElementProcessor {
       return;
     }
 
-    for (PsiClass owner : DataBindUtil.getModelOwners(topLevelClass)) {
+    final Collection<PsiClass> modelOwners = DataBindUtil.getModelOwners(topLevelClass);
+    for (PsiClass owner : modelOwners) {
       final BeanBindingMetaData dataBindMetaData = DataBindUtil.getDataBindingMetaData(owner);
 
       for (BoundMetaData md : DataBindUtil.getAllBoundMetaDataFromClass(owner)) {

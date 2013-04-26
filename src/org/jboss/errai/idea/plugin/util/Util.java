@@ -48,6 +48,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlFile;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,7 +72,13 @@ public class Util {
       typeParam = null;
     }
     else {
-      typeParam = getErasedCanonicalText(signature.substring(typeParamBegin + 1, signature.indexOf('>')));
+      final int endIndex = signature.indexOf('>');
+      if (endIndex == -1) {
+        typeParam = null;
+      }
+      else {
+        typeParam = getErasedCanonicalText(signature.substring(typeParamBegin + 1, endIndex));
+      }
     }
 
     if (typeParam != null) {
@@ -157,8 +164,10 @@ public class Util {
 
   public static boolean isChild(PsiElement child, PsiElement parent) {
     PsiElement el = child;
-    while ((el = el.getParent()) != null) {
-      if (el.equals(parent)) return true;
+    while ((el = el.getParent()) != null && !(el instanceof XmlFile)) {
+      if (el.equals(parent)) {
+        return true;
+      }
     }
     return false;
   }
@@ -549,13 +558,13 @@ public class Util {
 
   public static boolean isInsideProjectSources(AnActionEvent event) {
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(event.getProject()).getFileIndex();
-     final IdeView view = event.getData(DataKeys.IDE_VIEW);
+    final IdeView view = event.getData(DataKeys.IDE_VIEW);
 
-     for (PsiDirectory dir : view.getDirectories()) {
-       if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && JavaDirectoryService.getInstance().getPackage(dir) != null) {
-         return true;
-       }
-     }
+    for (PsiDirectory dir : view.getDirectories()) {
+      if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && JavaDirectoryService.getInstance().getPackage(dir) != null) {
+        return true;
+      }
+    }
     return false;
   }
 

@@ -66,7 +66,7 @@ public class BoundMetaData {
   public PropertyValidation validateProperty() {
     final PsiClass boundClass = getBindingMetaData().getBoundClass();
 
-    if (property != null && boundClass != null) {
+    if (property != null && boundClass != null && boundClass.getParent() != null) {
       final Set<String> bindableTypes = DataBindUtil.getConfiguredBindableTypes(boundClass.getProject());
 
       PsiClass cls = boundClass;
@@ -118,6 +118,16 @@ public class BoundMetaData {
   private static boolean _isModelApplicable(PsiClass toCheck, PsiClass modelClass, JavaPsiFacade facade) {
     if (toCheck == null) {
       return false;
+    }
+
+    final String qualifiedName = toCheck.getQualifiedName();
+
+    if (qualifiedName == null) {
+      return false;
+    }
+
+    if (qualifiedName.equals(modelClass.getQualifiedName())) {
+      return true;
     }
 
     for (PsiField field : toCheck.getAllFields()) {

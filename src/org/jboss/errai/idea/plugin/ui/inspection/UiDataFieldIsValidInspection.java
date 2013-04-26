@@ -16,11 +16,11 @@
 
 package org.jboss.errai.idea.plugin.ui.inspection;
 
+import com.google.common.collect.Multimap;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -34,8 +34,6 @@ import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 /**
  * @author Mike Brock
@@ -103,9 +101,7 @@ public class UiDataFieldIsValidInspection extends BaseJavaLocalInspectionTool {
     if (templateMetaData == null) {
       return;
     }
-
-    final Project project = holder.getProject();
-    final Map<String, TemplateDataField> allDataFieldTags
+    final Multimap<String, TemplateDataField> allDataFieldTags
         = templateMetaData.getAllDataFieldsInTemplate(false);
 
     final PsiElement ownerElement = Util.getImmediateOwnerElement(annotation);

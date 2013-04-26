@@ -134,7 +134,7 @@ public class BeanBindingMetaData {
   }
 
   public boolean isCacheValid() {
-    return boundClass != null && templateClassModifyTime == templateClass.getContainingFile().getOriginalFile().getModificationStamp();
+    return templateClass != null && boundClass != null && templateClassModifyTime == templateClass.getContainingFile().getOriginalFile().getModificationStamp();
 
   }
 

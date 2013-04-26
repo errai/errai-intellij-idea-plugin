@@ -28,6 +28,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiParameter;
@@ -126,13 +127,10 @@ public class RpcRemoteCallbackInspection extends BaseJavaLocalInspectionTool {
     }
   }
 
-
-
-
-  private static void ensureRemoteCallbackValidReturnType(ProblemsHolder holder,
-                                                          PsiMethod resolvedMethod,
-                                                          PsiClass callbackType,
-                                                          PsiMethodCallExpression expression) {
+  private static void ensureRemoteCallbackValidReturnType(final ProblemsHolder holder,
+                                                          final PsiMethod resolvedMethod,
+                                                          final PsiClass callbackType,
+                                                          final PsiMethodCallExpression expression) {
 
     if (!Util.typeIsAssignableFrom(callbackType,
         Util.boxedType(Util.getErasedCanonicalText(resolvedMethod.getReturnType().getCanonicalText())))) {
@@ -143,6 +141,19 @@ public class RpcRemoteCallbackInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static PsiClass getRemoteCallbackReturnType(PsiMethodCallExpression expression) {
+    return Util.getErasedTypeParam(expression.getProject(), getRemoteCallbackPsiType(expression).getCanonicalText());
+  }
+
+  private static PsiType getRemoteCallbackPsiType(PsiMethodCallExpression expression) {
+    final PsiElement remoteCallbackDeclarationSite = getRemoteCallbackDeclarationSite(expression);
+    if (remoteCallbackDeclarationSite == null) {
+      return null;
+    }
+
+    return ((PsiExpression) remoteCallbackDeclarationSite).getType();
+  }
+
+  private static PsiExpression getRemoteCallbackDeclarationSite(PsiMethodCallExpression expression) {
     final PsiElement parent = expression.getParent();
     PsiElement el = parent.getFirstChild();
     while ((el = el.getFirstChild()) != null) {
@@ -163,7 +174,7 @@ public class RpcRemoteCallbackInspection extends BaseJavaLocalInspectionTool {
     final Project project = expression.getProject();
 
     if (Util.typeIsAssignableFrom(getPsiClass(project, expressionTypes[0]), Types.REMOTE_CALLBACK)) {
-      return Util.getErasedTypeParam(project, expressionTypes[0].getCanonicalText());
+      return methodCallExpression.getArgumentList().getExpressions()[0];
     }
     else {
       return null;
@@ -199,7 +210,6 @@ public class RpcRemoteCallbackInspection extends BaseJavaLocalInspectionTool {
     for (PsiMethod psiMethod : remoteClass.getAllMethods()) {
       if (psiMethod.getName().equals(methodName)
           && expressionTypes.length == psiMethod.getParameterList().getParametersCount()) {
-
         final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
 
         for (int i = 0; i < parameters.length; i++) {

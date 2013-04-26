@@ -1,5 +1,6 @@
 package org.jboss.errai.idea.plugin.ui.refactoring;
 
+import com.google.common.collect.Multimap;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -18,6 +19,7 @@ import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -48,10 +50,14 @@ public class BeanDataFieldRenameProcessor extends RenameJavaVariableProcessor {
 
     final TemplateMetaData templateMetaData = TemplateUtil.getTemplateMetaData(topLevelClass);
 
-    final Map<String, TemplateDataField> dataFields = templateMetaData.getAllDataFieldsInTemplate(false);
-    final TemplateDataField dataField = dataFields.get(oldName);
+    final Multimap<String, TemplateDataField> dataFields = templateMetaData.getAllDataFieldsInTemplate(false);
+    final Collection<TemplateDataField> dataField = dataFields.get(oldName);
 
-    final XmlAttribute dataFieldAttribute = dataField.getDataFieldAttribute();
+    if (dataField.size() != 1) {
+      return;
+    }
+
+    final XmlAttribute dataFieldAttribute = dataField.iterator().next().getDataFieldAttribute();
     if (dataFieldAttribute != null && dataFieldAttribute.getValueElement() != null) {
       FakeNamedPsi fakeNamedPsi = new FakeNamedPsi(dataFieldAttribute) {
         @Override

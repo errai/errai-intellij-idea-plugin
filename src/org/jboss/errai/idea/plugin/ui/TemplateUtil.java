@@ -18,6 +18,9 @@ package org.jboss.errai.idea.plugin.ui;
 
 import static com.intellij.psi.search.GlobalSearchScope.projectScope;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,7 +55,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -68,14 +70,14 @@ public class TemplateUtil {
   private static final Key<DataFieldCacheHolder> dataFieldsCacheKey = Key.create("dataFieldsCache");
 
   public static DataFieldExistence dataFieldExistenceCheck(PsiAnnotation annotation, TemplateMetaData metaData) {
-    final Map<String, TemplateDataField> inScopeDataFields = metaData.getAllDataFieldsInTemplate(false);
+    final Multimap<String, TemplateDataField> inScopeDataFields = metaData.getAllDataFieldsInTemplate(false);
     final Map<String, ConsolidateDataFieldElementResult> dataFields = metaData.getConsolidatedDataFields();
 
     final AnnotationValueElement annoValueEl = Util.getValueStringFromAnnotationWithDefault(annotation);
     final String annoValue = annoValueEl.getValue();
 
-    final TemplateDataField result = inScopeDataFields.get(annoValue);
-    if (result == null) {
+    final Collection<TemplateDataField> result = inScopeDataFields.get(annoValue);
+    if (result.isEmpty()) {
       if (dataFields.containsKey(annoValue)) {
         return DataFieldExistence.OUT_OF_SCOPE;
       }
@@ -140,9 +142,9 @@ public class TemplateUtil {
    * @return Map of all datafields in the template class.
    */
   @NotNull
-  public static Map<String, TemplateDataField> findAllDataFieldTags(TemplateMetaData templateMetaData,
-                                                                    Project project,
-                                                                    boolean includeRoot) {
+  public static Multimap<String, TemplateDataField> findAllDataFieldTags(TemplateMetaData templateMetaData,
+                                                                         Project project,
+                                                                         boolean includeRoot) {
     if (!templateMetaData.getTemplateExpression().hasRootNode()) {
       includeRoot = true;
     }
@@ -150,14 +152,14 @@ public class TemplateUtil {
     VirtualFile vf = templateMetaData.getTemplateFile();
     XmlTag rootTag = templateMetaData.getRootTag();
     if (vf == null) {
-      return Collections.emptyMap();
+      return ImmutableMultimap.of();
     }
 
     final PsiManager instance = PsiManager.getInstance(project);
     final PsiFile file = instance.findFile(vf);
 
     if (file == null) {
-      return Collections.emptyMap();
+      return ImmutableMultimap.of();
     }
 
     final XmlFile xmlFile = (XmlFile) file;
@@ -168,19 +170,20 @@ public class TemplateUtil {
     return findAllDataFieldTags(file, rootTag, includeRoot);
   }
 
-  private static Map<String, TemplateDataField> findAllDataFieldTags(VirtualFile vf,
-                                                                     XmlTag rootTag,
-                                                                     Project project,
-                                                                     boolean includeRoot) {
+  private static Multimap<String, TemplateDataField> findAllDataFieldTags(VirtualFile vf,
+                                                                          XmlTag rootTag,
+                                                                          Project project,
+                                                                          boolean includeRoot) {
     if (vf == null) {
-      return Collections.emptyMap();
+      return ImmutableMultimap.of();
     }
 
     final PsiManager instance = PsiManager.getInstance(project);
     final PsiFile file = instance.findFile(vf);
 
     if (file == null) {
-      return Collections.emptyMap();
+      return ImmutableMultimap.of();
+
     }
 
     if (rootTag == null) {
@@ -193,14 +196,14 @@ public class TemplateUtil {
   }
 
   @NotNull
-  public static Map<String, TemplateDataField> findAllDataFieldTags(final PsiFile templateFile,
-                                                                    final XmlTag rootTag,
-                                                                    final boolean includeRoot) {
-    final Map<String, TemplateDataField> value
+  public static Multimap<String, TemplateDataField> findAllDataFieldTags(final PsiFile templateFile,
+                                                                         final XmlTag rootTag,
+                                                                         final boolean includeRoot) {
+    final Multimap<String, TemplateDataField> value
         = Util.getOrCreateCache(dataFieldsCacheKey, templateFile, new CacheProvider<DataFieldCacheHolder>() {
       @Override
       public DataFieldCacheHolder provide() {
-        final Map<String, TemplateDataField> allDataFieldTags = findAllDataFieldTags(rootTag, includeRoot);
+        final Multimap<String, TemplateDataField> allDataFieldTags = findAllDataFieldTags(rootTag, includeRoot);
         return new DataFieldCacheHolder(templateFile.getModificationStamp(), allDataFieldTags);
       }
 
@@ -210,7 +213,7 @@ public class TemplateUtil {
       }
     }).getValue();
 
-    final Map<String, TemplateDataField> templateDataFields = new HashMap<String, TemplateDataField>(value);
+    final Multimap<String, TemplateDataField> templateDataFields = HashMultimap.create(value);
     Iterator<TemplateDataField> iterator = templateDataFields.values().iterator();
     final PsiElement rootElement = rootTag.getOriginalElement();
 
@@ -221,12 +224,13 @@ public class TemplateUtil {
       if (!includeRoot && !Util.isChild(originalElement, rootElement)) {
         iterator.remove();
       }
+
     }
     return templateDataFields;
   }
 
-  private static Map<String, TemplateDataField> findAllDataFieldTags(XmlTag rootTag, boolean includeRoot) {
-    Map<String, TemplateDataField> references = new HashMap<String, TemplateDataField>();
+  private static Multimap<String, TemplateDataField> findAllDataFieldTags(XmlTag rootTag, boolean includeRoot) {
+    Multimap<String, TemplateDataField> references = HashMultimap.create();
     if (rootTag == null) {
       return references;
     }
@@ -245,7 +249,7 @@ public class TemplateUtil {
     return references;
   }
 
-  private static void _findDataFieldTags(Map<String, TemplateDataField> foundTags, XmlTag root) {
+  private static void _findDataFieldTags(Multimap<String, TemplateDataField> foundTags, XmlTag root) {
     PsiElement n = root;
     do {
       if (!(n instanceof XmlTag)) {
@@ -256,14 +260,14 @@ public class TemplateUtil {
     while ((n = n.getNextSibling()) != null);
   }
 
-  private static void _scanSubTags(Map<String, TemplateDataField> foundTags, XmlTag root) {
+  private static void _scanSubTags(Multimap<String, TemplateDataField> foundTags, XmlTag root) {
     _scanTag(foundTags, root);
     for (XmlTag xmlTag : root.getSubTags()) {
       _scanSubTags(foundTags, xmlTag);
     }
   }
 
-  private static void _scanTag(Map<String, TemplateDataField> foundTags, XmlTag xmlTag) {
+  private static void _scanTag(Multimap<String, TemplateDataField> foundTags, XmlTag xmlTag) {
     XmlAttribute xmlAttribute = xmlTag.getAttribute(DATA_FIELD_TAG_ATTRIBUTE);
     if (xmlAttribute != null) {
       foundTags.put(xmlAttribute.getValue(), new TemplateDataField(xmlTag, xmlAttribute.getValue()));
@@ -388,10 +392,12 @@ public class TemplateUtil {
       }
     }
     else {
-      final Map<String, TemplateDataField> allDataFieldTags = findAllDataFieldTags(fileByRelativePath, null, project, true);
-      final TemplateDataField dataFieldReference = allDataFieldTags.get(reference.getRootNode());
-      if (dataFieldReference != null) {
-        rootTag = dataFieldReference.getTag();
+      Multimap<String, TemplateDataField> allDataFieldTags
+          = findAllDataFieldTags(fileByRelativePath, null, project, true);
+
+      final Collection<TemplateDataField> dataFieldReference = allDataFieldTags.get(reference.getRootNode());
+      if (dataFieldReference.size() == 1) {
+        rootTag = dataFieldReference.iterator().next().getTag();
       }
       else {
         rootTag = null;
@@ -438,7 +444,7 @@ public class TemplateUtil {
       results.put(value, new ConsolidateDataFieldElementResult(value, beanClass, r.getOwningElement(), true));
     }
 
-    final Map<String, TemplateDataField> allDataFieldTags = TemplateUtil.findAllDataFieldTags(metaData, project, false);
+    final Multimap<String, TemplateDataField> allDataFieldTags = TemplateUtil.findAllDataFieldTags(metaData, project, false);
     for (TemplateDataField ref : allDataFieldTags.values()) {
       final XmlAttribute attribute = ref.getTag().getAttribute("data-field");
       if (attribute == null) {
@@ -496,7 +502,8 @@ public class TemplateUtil {
       if (element instanceof PsiFile) {
         return (PsiFile) element;
       }
-    } while ((element = element.getParent()) != null);
+    }
+    while ((element = element.getParent()) != null);
     return null;
   }
 }

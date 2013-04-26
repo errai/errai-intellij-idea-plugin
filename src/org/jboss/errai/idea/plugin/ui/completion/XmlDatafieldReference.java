@@ -16,6 +16,7 @@
 
 package org.jboss.errai.idea.plugin.ui.completion;
 
+import com.google.common.collect.Multimap;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Mike Brock
@@ -81,7 +81,7 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
 
     final List<DataFieldRef> dataFieldRefs = new ArrayList<DataFieldRef>();
     final XmlFile xmlFile = (XmlFile) el;
-    final Map<String, TemplateDataField> allDataFieldTags
+    final Multimap<String, TemplateDataField> allDataFieldTags
         = TemplateUtil.findAllDataFieldTags(xmlFile, xmlFile.getRootTag(), true);
 
     for (TemplateMetaData metaData : TemplateUtil.getTemplateOwners(xmlFile)) {

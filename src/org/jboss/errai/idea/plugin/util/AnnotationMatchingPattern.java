@@ -21,29 +21,46 @@ import com.intellij.patterns.ElementPatternCondition;
 import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 
 /**
-* @author Mike Brock
-*/
+ * @author Mike Brock
+ */
 public class AnnotationMatchingPattern implements ElementPattern<PsiLiteralExpression> {
   private final String type;
+  private final String attributeName;
+
   private final ElementPatternCondition<PsiLiteralExpression> patternCondition =
       new ElementPatternCondition<PsiLiteralExpression>(new InitialPatternCondition<PsiLiteralExpression>(PsiLiteralExpression.class) {
         @Override
         public boolean accepts(@Nullable Object o, ProcessingContext context) {
           if (o instanceof PsiLiteralExpression) {
             final PsiAnnotation parentOfType = PsiTreeUtil.getParentOfType((PsiLiteralExpression) o, PsiAnnotation.class);
-            return parentOfType != null && type.equals(parentOfType.getQualifiedName());
+
+            if (parentOfType != null && type.equals(parentOfType.getQualifiedName())) {
+              if (attributeName != null) {
+                final PsiNameValuePair nvp = PsiTreeUtil.getParentOfType((PsiLiteralExpression) o, PsiNameValuePair.class);
+                return nvp != null && attributeName.equals(nvp.getName());
+              }
+              else {
+                return true;
+              }
+            }
           }
           return false;
         }
       });
 
-  public AnnotationMatchingPattern(String type) {
+  public AnnotationMatchingPattern(String type, String attributeName) {
     this.type = type;
+    this.attributeName = attributeName;
+  }
+
+  public AnnotationMatchingPattern(String type) {
+    this(type, null);
   }
 
   @Override

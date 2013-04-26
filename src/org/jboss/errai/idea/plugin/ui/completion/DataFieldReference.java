@@ -52,7 +52,7 @@ public class DataFieldReference extends PsiReferenceBase<PsiLiteralExpression> {
     if (metaData != null) {
       final String rootNode = metaData.getTemplateExpression().getRootNode();
 
-      for (Map.Entry<String, TemplateDataField> entry : metaData.getAllDataFieldsInTemplate(considerRoot).entrySet()) {
+      for (Map.Entry<String, TemplateDataField> entry : metaData.getAllDataFieldsInTemplate(considerRoot).entries()) {
         if (!considerRoot && rootNode.equals(entry.getKey())) continue;
 
         final XmlAttribute attribute = entry.getValue().getTag().getAttribute(TemplateUtil.DATA_FIELD_TAG_ATTRIBUTE);
