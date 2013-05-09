@@ -34,13 +34,15 @@ import org.jboss.errai.idea.plugin.util.Util;
 import java.util.Set;
 
 /**
-* @author Mike Brock
-*/
+ * @author Mike Brock
+ */
 public class BoundMetaData {
   private final BeanBindingMetaData beanBindingMetaData;
   private final PsiElement owner;
   private final PsiAnnotation psiAnnotation;
   private final String property;
+  private PsiClass propertyType;
+
 
   public BoundMetaData(PsiElement owner) {
     this.beanBindingMetaData = DataBindUtil.getDataBindingMetaData(owner);
@@ -54,6 +56,15 @@ public class BoundMetaData {
       property = null;
     }
   }
+
+  public PsiClass getPropertyType() {
+    return propertyType;
+  }
+
+  public void setPropertyType(PsiClass propertyType) {
+    this.propertyType = propertyType;
+  }
+
 
   public BeanBindingMetaData getBindingMetaData() {
     return beanBindingMetaData;
@@ -94,7 +105,12 @@ public class BoundMetaData {
       PsiVariable variable = (PsiVariable) owner;
       final PsiClass widgetType = DataBindUtil.getPsiClassFromType(owner.getProject(), variable.getType());
       if (widgetType != null) {
-        final ConvertibilityMetaData convertibilityMetaData = getConvertibilityMetaData(psiAnnotation);
+        final ConvertibilityMetaData convertibilityMetaData = getConvertibilityMetaData(cls, psiAnnotation);
+        if (convertibilityMetaData.isConverterInputInvalid()) {
+          validation.setConverterInputInvalid(true);
+          propertyType = cls;
+          return validation;
+        }
 
         validation.setBindabilityValidation(typeIsBindableToWidget(cls, widgetType, convertibilityMetaData));
       }

@@ -27,6 +27,7 @@ public class PropertyValidation {
   private PsiClass unresolvedParent;
   private PsiClass boundType;
   private boolean parentBindable;
+  private boolean converterInputInvalid;
 
   public PropertyValidation() {
   }
@@ -43,8 +44,18 @@ public class PropertyValidation {
     return bindabilityValidation;
   }
 
+  public boolean isConverterInputInvalid() {
+    return converterInputInvalid;
+  }
+
+  public void setConverterInputInvalid(boolean converterInputInvalid) {
+    this.converterInputInvalid = converterInputInvalid;
+  }
+
   public boolean isValid() {
-    return unresolvedPropertyElement == null
+    return
+        !converterInputInvalid
+        && unresolvedPropertyElement == null
         && unresolvedParent == null
         && parentBindable
         && (bindabilityValidation != null && bindabilityValidation.isValid());

@@ -32,6 +32,7 @@ import java.util.Set;
  * @author Mike Brock
  */
 public class ConvertibilityMetaData {
+  private boolean converterInputInvalid = false;
   private final Map<PsiClass, Set<PsiClass>> conversionRules = new HashMap<PsiClass, Set<PsiClass>>();
 
   public ConvertibilityMetaData(JavaPsiFacade facade) {
@@ -46,8 +47,20 @@ public class ConvertibilityMetaData {
     set.add(to);
   }
 
+  public void cleareConversionRules() {
+    conversionRules.clear();
+  }
+
   public boolean canConvert(PsiClass from, PsiClass to) {
     return conversionRules.containsKey(from) && conversionRules.get(from).contains(to);
+  }
+
+  public boolean isConverterInputInvalid() {
+    return converterInputInvalid;
+  }
+
+  public void setConverterInputInvalid(boolean converterInputInvalid) {
+    this.converterInputInvalid = converterInputInvalid;
   }
 
   private static Map<PsiClass, Set<PsiClass>> _defaultConversionsCache;

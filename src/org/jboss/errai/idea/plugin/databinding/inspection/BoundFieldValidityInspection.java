@@ -52,7 +52,7 @@ import java.util.HashMap;
 /**
  * @author Mike Brock
  */
-public class  BoundFieldValidityInspection extends BaseJavaLocalInspectionTool {
+public class BoundFieldValidityInspection extends BaseJavaLocalInspectionTool {
   @Nls
   @NotNull
   @Override
@@ -128,6 +128,15 @@ public class  BoundFieldValidityInspection extends BaseJavaLocalInspectionTool {
 
     final PropertyValidation validation = boundMetaData.validateProperty();
     if (!validation.isValid()) {
+      if (validation.isConverterInputInvalid()) {
+        holder.registerProblem(
+            Util.getAnnotationMemberValue(psiAnnotation, "converter"),
+            "The converter accepts the wrong input type. Expected: "
+                + boundMetaData.getPropertyType().getQualifiedName());
+
+        return;
+      }
+
       if (!validation.isParentBindable()) {
         final PsiClass unresolvedParent = validation.getUnresolvedParent();
         if (unresolvedParent == null) {
