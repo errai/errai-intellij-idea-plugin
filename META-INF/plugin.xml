@@ -89,6 +89,10 @@
     <renamePsiElementProcessor
         implementation="org.jboss.errai.idea.plugin.ui.refactoring.TemplateDataFieldRenameProcessor" order="first"/>
 
+
+    <codeInsight.lineMarkerProvider language="JAVA"
+                                    implementationClass="org.jboss.errai.idea.plugin.ui.completion.DataFieldLineMarkProvider"/>
+
     <!-- Add your extensions here -->
   </extensions>
 </idea-plugin>
