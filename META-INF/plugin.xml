@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jboss.errai</id>
   <name>Errai Framework</name>
-  <version>0.5.6</version>
+  <version>0.5.7</version>
   <vendor email="cbrock@redhat.com" url="http://www.jboss.org/errai/">Red Hat, Inc.</vendor>
 
   <description><![CDATA[
@@ -11,10 +11,11 @@
 
   <change-notes>
     <![CDATA[
-          v0.5.6<br>
+          v0.5.7<br>
           <small>
             <ul>
-              <li>Fix NPE.</li>
+              <li>Add support to show injection points in the gutter of the editor</li>
+              <li>Fix additional NPEs</li>
             </ul>
           </small>
           ]]>

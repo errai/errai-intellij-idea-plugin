@@ -27,6 +27,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Query;
 import org.jboss.errai.idea.plugin.util.DefaultPolicy;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
@@ -72,13 +73,14 @@ public class MarshallingUtil {
 
     final PsiClass serverMarAnno = instance.findClass(Types.SERVER_MARSHALLER, allScope);
 
-    for (PsiClass psiClass : searchPsiClasses(clientMarAnno, allScope(project))) {
+    final Query<PsiClass> psiClasses = searchPsiClasses(clientMarAnno, allScope(project));
+    for (PsiClass psiClass : psiClasses) {
       final PsiAnnotation element = Util.getAnnotationFromElement(psiClass, Types.CLIENT_MARSHALLER);
       element.findDeclaredAttributeValue("value");
 
       final String value = Util.getAttributeValue(element, "value", DefaultPolicy.NULL);
 
-    //  System.out.println(value);
+   //   System.out.println(value);
 
     }
 
@@ -87,24 +89,4 @@ public class MarshallingUtil {
 
     return exposed;
   }
-
-//  public static void extractType(final Set<String> exposed,
-//                                 final PsiClass marshallerClass,
-//                                 final Project project,
-//                                 final JavaPsiFacade instance,
-//                                 final GlobalSearchScope scope) {
-//
-//
-//    for (PsiClassType type : marshallerClass.getSuperTypes()) {
-//      if (Util.getErasedCanonicalText(type.getCanonicalText()).equals(Types.MARSHALLER)) {
-//        exposed.add(Util.getErasedTypeParam(project, type.getCanonicalText()).getQualifiedName());
-//      }
-//      else {
-//        final PsiClass superCls = instance.findClass(type.getClassName(), scope);
-//        if (Util.typeIsAssignableFrom(superCls, Types.MARSHALLER)) {
-//          extractType(exposed, marshallerClass, project, instance, scope);
-//        }
-//      }
-//    }
-//  }
 }

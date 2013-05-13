@@ -97,6 +97,10 @@ public class UITemplateIsValidWidgetInspection extends BaseJavaLocalInspectionTo
   }
 
   private static void ensureTemplateClassIsComposite(final ProblemsHolder holder, final PsiClass templateClass) {
+    if (templateClass == null) {
+      return;
+    }
+
     boolean isComposite = false;
     PsiClass cls = templateClass;
     while ((cls = cls.getSuperClass()) != null) {
