@@ -46,9 +46,9 @@ public class DataFieldReference extends PsiReferenceBase<PsiLiteralExpression> {
     this.considerRoot = considerRoot;
   }
 
-  private Map<String, PsiElement> getAvailableDataFields() {
+  static Map<String, PsiElement> getAvailableDataFields(boolean considerRoot, PsiElement element) {
     Map<String, PsiElement> map = new HashMap<String, PsiElement>();
-    final TemplateMetaData metaData = TemplateUtil.getTemplateMetaData(getElement());
+    final TemplateMetaData metaData = TemplateUtil.getTemplateMetaData(element);
     if (metaData != null) {
       final String rootNode = metaData.getTemplateExpression().getRootNode();
 
@@ -69,7 +69,7 @@ public class DataFieldReference extends PsiReferenceBase<PsiLiteralExpression> {
   @Nullable
   @Override
   public PsiElement resolve() {
-    return getAvailableDataFields().get(getValue());
+    return getAvailableDataFields(considerRoot, getElement()).get(getValue());
   }
 
   @Override
@@ -81,7 +81,7 @@ public class DataFieldReference extends PsiReferenceBase<PsiLiteralExpression> {
   @Override
   public Object[] getVariants() {
     final ArrayList<Object> list = new ArrayList<Object>();
-    for (final String value : getAvailableDataFields().keySet()) {
+    for (final String value : getAvailableDataFields(considerRoot, getElement()).keySet()) {
 
       list.add(LookupElementBuilder.create(value).withIcon(AllIcons.Xml.Html_id));
     }
