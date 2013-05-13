@@ -31,6 +31,7 @@ import org.jboss.errai.idea.plugin.util.DefaultPolicy;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -64,6 +65,11 @@ public class MarshallingUtil {
     final GlobalSearchScope allScope = allScope(project);
 
     final PsiClass clientMarAnno = instance.findClass(Types.CLIENT_MARSHALLER, allScope);
+
+    if (clientMarAnno == null) {
+      return Collections.emptySet();
+    }
+
     final PsiClass serverMarAnno = instance.findClass(Types.SERVER_MARSHALLER, allScope);
 
     for (PsiClass psiClass : searchPsiClasses(clientMarAnno, allScope(project))) {

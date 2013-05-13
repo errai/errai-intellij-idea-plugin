@@ -43,7 +43,6 @@ import org.jboss.errai.idea.plugin.databinding.model.BoundMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.ConvertibilityMetaData;
 import org.jboss.errai.idea.plugin.databinding.model.PropertyInfo;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
-import org.jboss.errai.idea.plugin.util.CacheProvider;
 import org.jboss.errai.idea.plugin.util.DefaultPolicy;
 import org.jboss.errai.idea.plugin.util.SuperTypeInfo;
 import org.jboss.errai.idea.plugin.util.Types;
@@ -153,18 +152,20 @@ public class DataBindUtil {
   }
 
   public static BeanBindingMetaData getDataBindingMetaData(final PsiElement element) {
-    return Util.getOrCreateCache(TEMPLATE_BINDING_META_DATA_KEY, element, new CacheProvider<BeanBindingMetaData>() {
-      @Override
-      public BeanBindingMetaData provide() {
-        final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
-        return new BeanBindingMetaData(topLevelClass);
-      }
+    return new BeanBindingMetaData(PsiUtil.getTopLevelClass(element));
 
-      @Override
-      public boolean isCacheValid(BeanBindingMetaData beanBindingMetaData) {
-        return beanBindingMetaData.isCacheValid();
-      }
-    });
+//    return Util.getOrCreateCache(TEMPLATE_BINDING_META_DATA_KEY, element, new CacheProvider<BeanBindingMetaData>() {
+//      @Override
+//      public BeanBindingMetaData provide() {
+//        final PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
+//        return new BeanBindingMetaData(topLevelClass);
+//      }
+//
+//      @Override
+//      public boolean isCacheValid(BeanBindingMetaData beanBindingMetaData) {
+//        return beanBindingMetaData.isCacheValid();
+//      }
+//    });
   }
 
   public static PsiClass getBeanPropertyType(PsiClass type, String property) {
@@ -337,7 +338,7 @@ public class DataBindUtil {
   }
 
 
-  public static ConvertibilityMetaData getConvertibilityMetaData(PsiAnnotation boundAnnotation) {
+  public static ConvertibilityMetaData getConvertibilityMetaData(PsiClass propertyType, PsiAnnotation boundAnnotation) {
     final JavaPsiFacade instance = JavaPsiFacade.getInstance(boundAnnotation.getProject());
     final ConvertibilityMetaData cm = new ConvertibilityMetaData(instance);
 
@@ -355,9 +356,19 @@ public class DataBindUtil {
 
       final SuperTypeInfo superTypeInfo = Util.getTypeInformation(psiClass, Types.CONVERTER);
       final ConvertibilityMetaData metaData = new ConvertibilityMetaData(instance);
+      metaData.cleareConversionRules();
       if (superTypeInfo != null) {
+        final String qualifiedName = superTypeInfo.getTypeParms().get(0);
+        final PsiClass converterInputType = instance.findClass(qualifiedName, GlobalSearchScope.allScope(project));
+
+        if (!Util.typeIsAssignableFrom(converterInputType, propertyType.getQualifiedName())) {
+          metaData.setConverterInputInvalid(true);
+
+          return metaData;
+        }
+
         metaData.addConversionRule(
-            instance.findClass(superTypeInfo.getTypeParms().get(0), GlobalSearchScope.allScope(project)),
+            converterInputType,
             instance.findClass(superTypeInfo.getTypeParms().get(1), GlobalSearchScope.allScope(project))
         );
       }
