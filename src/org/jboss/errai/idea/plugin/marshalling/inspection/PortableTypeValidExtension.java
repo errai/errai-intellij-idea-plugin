@@ -5,11 +5,13 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jboss.errai.idea.plugin.marshalling.MarshallingUtil;
 import org.jboss.errai.idea.plugin.util.ErraiVersion;
 import org.jboss.errai.idea.plugin.util.Types;
@@ -82,13 +84,29 @@ public class PortableTypeValidExtension extends BaseJavaLocalInspectionTool {
       if (portableAnno != null) {
         final Set<String> allProprtableTypes = MarshallingUtil.getAllProprtableTypes(aClass.getProject());
 
+        FieldScan:
         for (PsiField psiField : aClass.getFields()) {
           final PsiModifierList modifierList = psiField.getModifierList();
           if (modifierList == null || modifierList.hasModifierProperty("transient")) {
             continue;
           }
 
-          if (!allProprtableTypes.contains(Util. boxedType(psiField.getType().getCanonicalText()))) {
+          final String canonicalText = psiField.getType().getCanonicalText();
+
+          if (!allProprtableTypes.contains(Util.boxedType(canonicalText))) {
+            for (String type : allProprtableTypes) {
+              if (Object.class.getName().equals(type)) {
+                continue;
+              }
+
+              PsiClass cls = JavaPsiFacade.getInstance(aClass.getProject()).findClass(type,
+                  GlobalSearchScope.allScope(aClass.getProject()));
+
+              if (Util.typeIsAssignableFrom(cls, canonicalText)) {
+                continue FieldScan;
+              }
+            }
+
             holder.registerProblem(psiField.getTypeElement(), "field of portable type is not portable");
           }
         }

@@ -29,6 +29,7 @@ import com.intellij.psi.PsiArrayInitializerMemberValue;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassObjectAccessExpression;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
 import org.jboss.errai.idea.plugin.util.Types;
@@ -85,15 +86,27 @@ public class MarshallingUtil {
     final Query<PsiClass> psiClasses = searchPsiClasses(clientMarAnno, allScope(project));
     for (PsiClass psiClass : psiClasses) {
       final PsiAnnotation element = Util.getAnnotationFromElement(psiClass, Types.CLIENT_MARSHALLER);
-      String fqcn = ((PsiClassObjectAccessExpression) element.findDeclaredAttributeValue("value")).getOperand()
+      final PsiAnnotationMemberValue declaredAttributeValue = element.findDeclaredAttributeValue("value");
+
+      if (declaredAttributeValue == null) {
+        continue;
+      }
+
+      String fqcn = ((PsiClassObjectAccessExpression) declaredAttributeValue).getOperand()
           .getType().getCanonicalText();
       exposed.add(fqcn);
 
       final PsiAnnotation implAliases = Util.getAnnotationFromElement(psiClass, Types.IMPLEMENTATION_ALIASES);
 
       if (implAliases != null) {
+        final PsiAnnotationMemberValue value = implAliases.findAttributeValue("value");
+
+        if (value == null) {
+          continue;
+        }
+
         final PsiAnnotationMemberValue[] values
-            = ((PsiArrayInitializerMemberValue) implAliases.findAttributeValue("value")).getInitializers();
+            = ((PsiArrayInitializerMemberValue) value).getInitializers();
 
         for (PsiAnnotationMemberValue v : values) {
           final String text = ((PsiClassObjectAccessExpression) v).getOperand().getType().getCanonicalText();
@@ -114,16 +127,28 @@ public class MarshallingUtil {
 
     for (PsiClass psiClass : psiClasses3) {
       final PsiAnnotation customMapping = Util.getAnnotationFromElement(psiClass, Types.CUSTOM_MAPPING);
-      final String value = ((PsiClassObjectAccessExpression) customMapping.findDeclaredAttributeValue("value")).getOperand()
-          .getType().getCanonicalText();
+      final PsiAnnotationMemberValue declaredAttributeValue = customMapping.findDeclaredAttributeValue("value");
+
+      if (declaredAttributeValue == null) {
+        continue;
+      }
+
+      final PsiTypeElement operand = ((PsiClassObjectAccessExpression) declaredAttributeValue).getOperand();
+      final String value = operand .getType().getCanonicalText();
 
       exposed.add(value);
 
       final PsiAnnotation inheretedMappings = Util.getAnnotationFromElement(psiClass, Types.INHERITED_MAPPINGS);
 
       if (inheretedMappings != null) {
+        final PsiAnnotationMemberValue attributeValue = inheretedMappings.findAttributeValue("value");
+
+        if (attributeValue == null) {
+          continue;
+        }
+
         final PsiAnnotationMemberValue[] values
-            = ((PsiArrayInitializerMemberValue) inheretedMappings.findAttributeValue("value")).getInitializers();
+            = ((PsiArrayInitializerMemberValue) attributeValue).getInitializers();
 
         for (PsiAnnotationMemberValue v : values) {
           final String text = ((PsiClassObjectAccessExpression) v).getOperand().getType().getCanonicalText();
