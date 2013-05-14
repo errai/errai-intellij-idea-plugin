@@ -27,7 +27,8 @@ import javax.swing.*;
 /**
  * @author Mike Brock
  */
-public class ErraiActionGroup extends DefaultActionGroup {
+public class
+    ErraiActionGroup extends DefaultActionGroup {
   public static final Icon ERRAI_ICON = IconLoader.findIcon("/icons/errai_icon_16px.png");
 
   public ErraiActionGroup() {

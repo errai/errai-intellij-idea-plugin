@@ -12,7 +12,10 @@ public abstract class ErraiVersion {
   private ErraiVersion() {}
 
   public static VersionSpec get(final PsiElement element) {
-    final Project project = element.getProject();
+    return get(element.getProject());
+  }
+
+  public static VersionSpec get(final Project project) {
     if (hasErrai30Types(project)) {
       return VersionSpec.V3_0;
     }

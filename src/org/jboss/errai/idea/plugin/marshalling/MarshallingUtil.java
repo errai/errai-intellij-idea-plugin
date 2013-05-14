@@ -24,11 +24,13 @@ import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiArrayInitializerMemberValue;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassObjectAccessExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
-import org.jboss.errai.idea.plugin.util.DefaultPolicy;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 
@@ -40,6 +42,13 @@ import java.util.Set;
  * @author Mike Brock
  */
 public class MarshallingUtil {
+  public static Set<String> getAllProprtableTypes(Project project) {
+    final Set<String> bindableTypes = new HashSet<String>();
+    bindableTypes.addAll(getConfiguredPortableTypes(project));
+    bindableTypes.addAll(getAllClasspathMarshallers(project));
+    return bindableTypes;
+  }
+
   public static Set<String> getConfiguredPortableTypes(Project project) {
     final Set<String> bindableTypes = new HashSet<String>();
 
@@ -76,15 +85,52 @@ public class MarshallingUtil {
     final Query<PsiClass> psiClasses = searchPsiClasses(clientMarAnno, allScope(project));
     for (PsiClass psiClass : psiClasses) {
       final PsiAnnotation element = Util.getAnnotationFromElement(psiClass, Types.CLIENT_MARSHALLER);
-      element.findDeclaredAttributeValue("value");
+      String fqcn = ((PsiClassObjectAccessExpression) element.findDeclaredAttributeValue("value")).getOperand()
+          .getType().getCanonicalText();
+      exposed.add(fqcn);
 
-      final String value = Util.getAttributeValue(element, "value", DefaultPolicy.NULL);
+      final PsiAnnotation implAliases = Util.getAnnotationFromElement(psiClass, Types.IMPLEMENTATION_ALIASES);
 
-   //   System.out.println(value);
+      if (implAliases != null) {
+        final PsiAnnotationMemberValue[] values
+            = ((PsiArrayInitializerMemberValue) implAliases.findAttributeValue("value")).getInitializers();
 
+        for (PsiAnnotationMemberValue v : values) {
+          final String text = ((PsiClassObjectAccessExpression) v).getOperand().getType().getCanonicalText();
+          exposed.add(text);
+        }
+      }
     }
 
-    for (PsiClass psiClass : searchPsiClasses(serverMarAnno, allScope(project))) {
+    final PsiClass portableAnno = instance.findClass(Types.PORTABLE, allScope);
+    final Query<PsiClass> psiClasses2 = searchPsiClasses(portableAnno, allScope);
+
+    for (PsiClass psiClass : psiClasses2) {
+      exposed.add(psiClass.getQualifiedName());
+    }
+
+    final PsiClass customMappingAnno = instance.findClass(Types.CUSTOM_MAPPING, allScope);
+    final Query<PsiClass> psiClasses3 = searchPsiClasses(customMappingAnno, allScope);
+
+    for (PsiClass psiClass : psiClasses3) {
+      final PsiAnnotation customMapping = Util.getAnnotationFromElement(psiClass, Types.CUSTOM_MAPPING);
+      final String value = ((PsiClassObjectAccessExpression) customMapping.findDeclaredAttributeValue("value")).getOperand()
+          .getType().getCanonicalText();
+
+      exposed.add(value);
+
+      final PsiAnnotation inheretedMappings = Util.getAnnotationFromElement(psiClass, Types.INHERITED_MAPPINGS);
+
+      if (inheretedMappings != null) {
+        final PsiAnnotationMemberValue[] values
+            = ((PsiArrayInitializerMemberValue) inheretedMappings.findAttributeValue("value")).getInitializers();
+
+        for (PsiAnnotationMemberValue v : values) {
+          final String text = ((PsiClassObjectAccessExpression) v).getOperand().getType().getCanonicalText();
+          exposed.add(text);
+        }
+      }
+
     }
 
     return exposed;

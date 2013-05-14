@@ -356,7 +356,7 @@ public class DataBindUtil {
 
       final SuperTypeInfo superTypeInfo = Util.getTypeInformation(psiClass, Types.CONVERTER);
       final ConvertibilityMetaData metaData = new ConvertibilityMetaData(instance);
-      metaData.cleareConversionRules();
+
       if (superTypeInfo != null) {
         final String qualifiedName = superTypeInfo.getTypeParms().get(0);
         final PsiClass converterInputType = instance.findClass(qualifiedName, GlobalSearchScope.allScope(project));

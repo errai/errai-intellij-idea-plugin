@@ -8,11 +8,17 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifierList;
 import org.jboss.errai.idea.plugin.marshalling.MarshallingUtil;
+import org.jboss.errai.idea.plugin.util.ErraiVersion;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
+import org.jboss.errai.idea.plugin.util.VersionSpec;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * @author Mike Brock
@@ -65,8 +71,28 @@ public class PortableTypeValidExtension extends BaseJavaLocalInspectionTool {
 
     @Override
     public void visitClass(PsiClass aClass) {
+      if (ErraiVersion.get(aClass) != VersionSpec.V3_0) {
+        /**
+         * If this not version 3.0, this inspection is not applicable.
+         */
+        return;
+      }
+
       final PsiAnnotation portableAnno = Util.getAnnotationFromElement(aClass, Types.PORTABLE);
-      MarshallingUtil.getAllClasspathMarshallers(aClass.getProject());
+      if (portableAnno != null) {
+        final Set<String> allProprtableTypes = MarshallingUtil.getAllProprtableTypes(aClass.getProject());
+
+        for (PsiField psiField : aClass.getFields()) {
+          final PsiModifierList modifierList = psiField.getModifierList();
+          if (modifierList == null || modifierList.hasModifierProperty("transient")) {
+            continue;
+          }
+
+          if (!allProprtableTypes.contains(Util. boxedType(psiField.getType().getCanonicalText()))) {
+            holder.registerProblem(psiField.getTypeElement(), "field of portable type is not portable");
+          }
+        }
+      }
     }
   }
 }

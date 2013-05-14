@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.jboss.errai</id>
   <name>Errai Framework</name>
-  <version>0.5.7</version>
+  <version>0.5.8</version>
   <vendor email="cbrock@redhat.com" url="http://www.jboss.org/errai/">Red Hat, Inc.</vendor>
 
   <description><![CDATA[
@@ -11,18 +11,18 @@
 
   <change-notes>
     <![CDATA[
-          v0.5.7<br>
+          v0.5.8<br>
           <small>
             <ul>
-              <li>Add support to show injection points in the gutter of the editor</li>
-              <li>Fix additional NPEs</li>
+              <li>Now requires IntelliJ IDEA 12.1.3 in order to support new marshallability inspections for Errai 3.0</li>
+              <li>Fix issue with convertability rules.</li>
             </ul>
           </small>
           ]]>
   </change-notes>
 
   <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Build+Number+Ranges for description -->
-  <idea-version since-build="107.105"/>
+  <idea-version since-build="129.451"/>
 
   <depends>com.intellij.properties</depends>
 

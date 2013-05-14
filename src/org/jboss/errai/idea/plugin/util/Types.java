@@ -55,6 +55,9 @@ public class Types {
   public static final String CLIENT_MARSHALLER = "org.jboss.errai.marshalling.client.api.annotations.ClientMarshaller";
   public static final String SERVER_MARSHALLER = "org.jboss.errai.marshalling.client.api.annotations.ServerMarshaller";
   public static final String MARSHALLER = "org.jboss.errai.marshalling.client.api.Marshaller";
+  public static final String IMPLEMENTATION_ALIASES = "org.jboss.errai.marshalling.client.api.annotations.ImplementationAliases";
+  public static final String CUSTOM_MAPPING = "org.jboss.errai.marshalling.rebind.api.CustomMapping";
+  public static final String INHERITED_MAPPINGS = "org.jboss.errai.marshalling.rebind.api.InheritedMappings";
 
   /**
    * 3.0 Types *
