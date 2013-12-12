@@ -11,11 +11,10 @@
 
   <change-notes>
     <![CDATA[
-          v0.5.9<br>
+          v0.6.0<br>
           <small>
             <ul>
-               <li>Improve portable type validity inspection</li>
-               <li>Fix NPEs</li>
+               <li>Now supports navigation on id attributes</li>
             </ul>
           </small>
           ]]>
