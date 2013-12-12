@@ -21,7 +21,9 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
 import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
@@ -30,6 +32,7 @@ import org.jboss.errai.idea.plugin.ui.TemplateDataField;
 import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 import org.jboss.errai.idea.plugin.ui.model.TemplateMetaData;
 import org.jboss.errai.idea.plugin.util.AnnotationSearchResult;
+import org.jboss.errai.idea.plugin.util.AnnotationValueElement;
 import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.NotNull;
@@ -70,17 +73,8 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
     final Project project = getElement().getProject();
     DaemonCodeAnalyzer.getInstance(project).restart();
 
-    PsiElement el = getElement();
-    while (!(el instanceof XmlFile) && el != null) {
-      el = el.getParent();
-    }
-
-    if (el == null) {
-      return Collections.emptyList();
-    }
-
+    final XmlFile xmlFile = getXmlFile();
     final List<DataFieldRef> dataFieldRefs = new ArrayList<DataFieldRef>();
-    final XmlFile xmlFile = (XmlFile) el;
     final Multimap<String, TemplateDataField> allDataFieldTags
         = TemplateUtil.findAllDataFieldTags(xmlFile, xmlFile.getRootTag(), true);
 
@@ -98,6 +92,14 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
     return dataFieldRefs;
   }
 
+  private XmlFile getXmlFile() {
+    PsiElement el = getElement();
+    while (!(el instanceof XmlFile) && el != null) {
+      el = el.getParent();
+    }
+    return (XmlFile) el;
+  }
+
   @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final PsiElement element = getElement();
@@ -108,7 +110,21 @@ public class XmlDatafieldReference extends PsiReferenceBase<PsiElement> {
   @Nullable
   @Override
   public PsiElement resolve() {
-    return ((XmlAttribute) getElement()).getValueElement();
+    final XmlFile xmlFile = getXmlFile();
+    final Collection<TemplateMetaData> templateOwners = TemplateUtil.getTemplateOwners(xmlFile);
+    for (TemplateMetaData metaData : templateOwners) {
+      final Collection<AnnotationSearchResult> allAnnotatedElements =
+          Util.findAllAnnotatedElements(metaData.getTemplateClass(), Types.DATAFIELD);
+      for (AnnotationSearchResult element : allAnnotatedElements) {
+        final AnnotationValueElement annotationValueElement =
+            Util.getValueStringFromAnnotationWithDefault(element.getAnnotation());
+        if (annotationValueElement.getValue().equals(((XmlAttribute) getElement()).getValue())) {
+          return annotationValueElement.getLogicalElement();
+        }
+      }
+    }
+
+    return null;
   }
 
   @NotNull
