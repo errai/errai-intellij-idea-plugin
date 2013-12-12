@@ -54,5 +54,13 @@ public class ErraiUIReferenceContributor extends PsiReferenceContributor {
             return new XmlDatafieldReference[]{new XmlDatafieldReference((XmlAttribute) element, false)};
           }
         });
+    registrar.registerReferenceProvider(new XmlAttributeMatchingPattern(TemplateUtil.ID_ATTRIBUTE),
+        new PsiReferenceProvider() {
+          @NotNull
+          @Override
+          public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+            return new XmlDatafieldReference[]{(new XmlDatafieldReference((XmlAttribute) element, false))};
+          }
+        });
   }
 }

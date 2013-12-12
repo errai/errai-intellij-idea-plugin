@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import org.jboss.errai.idea.plugin.ui.TemplateDataField;
 import org.jboss.errai.idea.plugin.ui.TemplateUtil;
 import org.jboss.errai.idea.plugin.ui.model.TemplateMetaData;
@@ -55,7 +56,13 @@ public class DataFieldReference extends PsiReferenceBase<PsiLiteralExpression> {
       for (Map.Entry<String, TemplateDataField> entry : metaData.getAllDataFieldsInTemplate(considerRoot).entries()) {
         if (!considerRoot && rootNode.equals(entry.getKey())) continue;
 
-        final XmlAttribute attribute = entry.getValue().getTag().getAttribute(TemplateUtil.DATA_FIELD_TAG_ATTRIBUTE);
+        final XmlTag tag = entry.getValue().getTag();
+        final XmlAttribute attribute;
+        if (tag.getAttribute(TemplateUtil.DATA_FIELD_TAG_ATTRIBUTE) != null) {
+          attribute = tag.getAttribute(TemplateUtil.DATA_FIELD_TAG_ATTRIBUTE);
+        } else {
+          attribute = tag.getAttribute(TemplateUtil.ID_ATTRIBUTE);
+        }
 
         if (attribute != null) {
           map.put(entry.getKey(), attribute.getValueElement());
