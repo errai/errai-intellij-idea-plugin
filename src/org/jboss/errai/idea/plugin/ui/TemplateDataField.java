@@ -46,7 +46,11 @@ public class TemplateDataField {
 
   public XmlAttribute getDataFieldAttribute() {
     if (tag != null) {
-      return tag.getAttribute("data-field");
+      if (tag.getAttribute("data-field") != null) {
+        return tag.getAttribute("data-field");
+      } else {
+        return tag.getAttribute("id");
+      }
     }
     return null;
   }

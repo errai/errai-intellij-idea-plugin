@@ -66,6 +66,7 @@ import java.util.Set;
  */
 public class TemplateUtil {
   public static final String DATA_FIELD_TAG_ATTRIBUTE = "data-field";
+  public static final String ID_ATTRIBUTE = "id";
 
   private static final Key<DataFieldCacheHolder> dataFieldsCacheKey = Key.create("dataFieldsCache");
 
@@ -235,8 +236,14 @@ public class TemplateUtil {
       return references;
     }
 
-    if (includeRoot && rootTag.getAttribute(DATA_FIELD_TAG_ATTRIBUTE) != null) {
-      final XmlAttribute attribute = rootTag.getAttribute(DATA_FIELD_TAG_ATTRIBUTE);
+    if (includeRoot
+        && rootTag.getAttribute(DATA_FIELD_TAG_ATTRIBUTE) != null || rootTag.getAttribute(ID_ATTRIBUTE) != null) {
+      final XmlAttribute attribute;
+      if (rootTag.getAttribute(DATA_FIELD_TAG_ATTRIBUTE) != null) {
+        attribute = rootTag.getAttribute(DATA_FIELD_TAG_ATTRIBUTE);
+      } else {
+        attribute = rootTag.getAttribute(ID_ATTRIBUTE);
+      }
 
       if (attribute == null) {
         return references;
@@ -268,7 +275,12 @@ public class TemplateUtil {
   }
 
   private static void _scanTag(Multimap<String, TemplateDataField> foundTags, XmlTag xmlTag) {
-    XmlAttribute xmlAttribute = xmlTag.getAttribute(DATA_FIELD_TAG_ATTRIBUTE);
+    _scanTag(foundTags, xmlTag, DATA_FIELD_TAG_ATTRIBUTE);
+    _scanTag(foundTags, xmlTag, ID_ATTRIBUTE);
+  }
+
+  private static void _scanTag(Multimap<String, TemplateDataField> foundTags, XmlTag xmlTag, String dataFieldTagAttribute) {
+    XmlAttribute xmlAttribute = xmlTag.getAttribute(dataFieldTagAttribute);
     if (xmlAttribute != null) {
       foundTags.put(xmlAttribute.getValue(), new TemplateDataField(xmlTag, xmlAttribute.getValue()));
     }
