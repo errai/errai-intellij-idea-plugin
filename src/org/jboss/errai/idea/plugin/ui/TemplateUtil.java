@@ -34,6 +34,7 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -389,6 +390,15 @@ public class TemplateUtil {
       fileByRelativePath = null;
     }
 
+	// if we didn't find the file in the current container, 
+	// look for it by it's name (ie it might be under resources)
+    if (fileByRelativePath == null) {
+      PsiFile[] files = FilenameIndex.getFilesByName(project, fileName, projectScope(project));
+      if (files.length == 1) {
+        fileByRelativePath = files[0].getVirtualFile();
+      }
+    }
+
 
     final XmlTag rootTag;
     if (fileByRelativePath == null) {
@@ -408,8 +418,12 @@ public class TemplateUtil {
           = findAllDataFieldTags(fileByRelativePath, null, project, true);
 
       final Collection<TemplateDataField> dataFieldReference = allDataFieldTags.get(reference.getRootNode());
-      if (dataFieldReference.size() == 1) {
-        rootTag = dataFieldReference.iterator().next().getTag();
+      // if both data-field and id are the same, dataFieldReference will have
+      // two reference to the same element. So, the root tag is valid if we have
+      // any values in the iterator
+      Iterator<TemplateDataField> dataFieldIterator = dataFieldReference.iterator();
+      if (dataFieldIterator.hasNext()) {
+        rootTag = dataFieldIterator.next().getTag();
       }
       else {
         rootTag = null;
