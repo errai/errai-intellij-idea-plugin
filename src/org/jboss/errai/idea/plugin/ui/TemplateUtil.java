@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
@@ -53,6 +54,7 @@ import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -390,12 +392,21 @@ public class TemplateUtil {
       fileByRelativePath = null;
     }
 
-	// if we didn't find the file in the current container, 
-	// look for it by it's name (ie it might be under resources)
+    // if we didn't find the file in the current container,
+    // and this is a maven project, it might located in the resources folder
     if (fileByRelativePath == null) {
-      PsiFile[] files = FilenameIndex.getFilesByName(project, fileName, projectScope(project));
-      if (files.length == 1) {
-        fileByRelativePath = files[0].getVirtualFile();
+      // see if this is a maven project  check for a pom.xml in the root folder
+      VirtualFile vProjectDir = project.getBaseDir();
+      VirtualFile vPom = vProjectDir.findChild("pom.xml");
+      if (vPom != null) {
+        // look in the src/main/resources folder for the corresponding html file
+        String containerPath = virtualFile.getPath();
+        String resourcePath = containerPath.replaceAll("src/main/java", "src/main/resources");
+        File resourceFile = new File(resourcePath, fileName);
+        VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(resourceFile);
+        if (vf != null) {
+          fileByRelativePath = vf;
+        }
       }
     }
 
