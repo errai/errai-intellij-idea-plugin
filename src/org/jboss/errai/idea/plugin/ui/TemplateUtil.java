@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
@@ -34,6 +35,7 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -52,6 +54,7 @@ import org.jboss.errai.idea.plugin.util.Types;
 import org.jboss.errai.idea.plugin.util.Util;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -389,6 +392,24 @@ public class TemplateUtil {
       fileByRelativePath = null;
     }
 
+    // if we didn't find the file in the current container,
+    // and this is a maven project, it might located in the resources folder
+    if (fileByRelativePath == null) {
+      // see if this is a maven project  check for a pom.xml in the root folder
+      VirtualFile vProjectDir = project.getBaseDir();
+      VirtualFile vPom = vProjectDir.findChild("pom.xml");
+      if (vPom != null) {
+        // look in the src/main/resources folder for the corresponding html file
+        String containerPath = virtualFile.getPath();
+        String resourcePath = containerPath.replaceAll("src/main/java", "src/main/resources");
+        File resourceFile = new File(resourcePath, fileName);
+        VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(resourceFile);
+        if (vf != null) {
+          fileByRelativePath = vf;
+        }
+      }
+    }
+
 
     final XmlTag rootTag;
     if (fileByRelativePath == null) {
@@ -408,8 +429,12 @@ public class TemplateUtil {
           = findAllDataFieldTags(fileByRelativePath, null, project, true);
 
       final Collection<TemplateDataField> dataFieldReference = allDataFieldTags.get(reference.getRootNode());
-      if (dataFieldReference.size() == 1) {
-        rootTag = dataFieldReference.iterator().next().getTag();
+      // if both data-field and id are the same, dataFieldReference will have
+      // two reference to the same element. So, the root tag is valid if we have
+      // any values in the iterator
+      Iterator<TemplateDataField> dataFieldIterator = dataFieldReference.iterator();
+      if (dataFieldIterator.hasNext()) {
+        rootTag = dataFieldIterator.next().getTag();
       }
       else {
         rootTag = null;

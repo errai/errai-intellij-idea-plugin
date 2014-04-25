@@ -36,9 +36,12 @@ public class DataFieldLineMarkProvider extends RelatedItemLineMarkerProvider {
   private void createLineMark(PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result, PsiAnnotation annotation) {
     final String text = Util.getValueStringFromAnnotationWithDefault(annotation).getValue();
     final PsiElement psiElement = getAvailableDataFields(false, annotation).get(text);
-    NavigationGutterIconBuilder<PsiElement> builder =
-        NavigationGutterIconBuilder.create(ErraiActionGroup.ERRAI_ICON).setTargets(psiElement)
-            .setTooltipText("Navigate to '" + text + "' field");
-    result.add(builder.createLineMarkerInfo(element));
+    // don't try to add a marker if there is no element
+    if (psiElement != null) {
+      NavigationGutterIconBuilder<PsiElement> builder =
+          NavigationGutterIconBuilder.create(ErraiActionGroup.ERRAI_ICON).setTargets(psiElement)
+              .setTooltipText("Navigate to '" + text + "' field");
+      result.add(builder.createLineMarkerInfo(element));
+    }
   }
 }
